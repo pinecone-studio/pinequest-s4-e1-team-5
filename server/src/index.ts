@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { tutorRouter } from "./router/tutor.router";
+import { formulaRouter } from "./router/formula.router";
 
 const app = new Hono();
 
@@ -12,7 +13,7 @@ app.use(
     origin: clientUrl,
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allowHeaders: ["Content-Type", "Authorization"],
-  })
+  }),
 );
 
 app.get("/", (c) => {
@@ -30,6 +31,7 @@ app.get("/health", (c) => {
 });
 
 app.route("/api/tutor", tutorRouter);
+app.route("/api/formulas", formulaRouter);
 
 const port = Number(Bun.env.PORT ?? 4000);
 

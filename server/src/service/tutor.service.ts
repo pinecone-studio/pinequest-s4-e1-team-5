@@ -2,7 +2,7 @@ import { sql } from "../db";
 import { openai } from "../openai";
 import { verifyWithWolfram } from "./wolfram.service";
 
-type Subject = "math" | "physics";
+type Subject = "math" | "physics" | "geometry" | "chemistry";
 
 type SolveTutorInput = {
   problem: string;
@@ -147,8 +147,7 @@ export async function solveTutorService(input: SolveTutorInput) {
       final_answer,
       wolfram_query,
       wolfram_result,
-      is_verified,
-      openai_usage
+      is_verified
     )
     values (
       ${answer.grade},
@@ -164,8 +163,7 @@ export async function solveTutorService(input: SolveTutorInput) {
       ${answer.finalAnswer},
       ${answer.wolframQuery},
       ${wolfram.result},
-      ${wolfram.ok},
-      ${JSON.stringify(usage)}::jsonb
+      ${wolfram.ok}
     )
     returning id
   `;
