@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { tutorRouter } from "./router/tutor.router";
 
 const app = new Hono();
 
@@ -28,6 +29,7 @@ app.get("/health", (c) => {
   });
 });
 
+app.route("/api/tutor", tutorRouter);
 
 const port = Number(Bun.env.PORT ?? 4000);
 
