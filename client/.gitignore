@@ -4,6 +4,7 @@ node_modules
 # output
 out
 dist
+.next
 *.tgz
 
 # code coverage
@@ -26,6 +27,7 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 .eslintcache
 .cache
 *.tsbuildinfo
+_backup_next_client_before_portfolio
 
 # IntelliJ based IDEs
 .idea
