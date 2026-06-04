@@ -1,4 +1,4 @@
-// GlobalOverlay Styles - Torn Paper Aesthetic
+
 
 @font-face {
     font-family: 'Cabin Sketch';
@@ -32,7 +32,7 @@
     position: relative;
     background: #ffffff;
 
-    // Paper texture background
+    
     &::before {
         content: '';
         position: absolute;
@@ -47,27 +47,27 @@
         pointer-events: none;
     }
 
-    // Torn paper edges using clip-path
-    clip-path: polygon( // Top edge - torn
+    
+    clip-path: polygon( 
         0% 0%, 4% 1%, 8% 0%, 12% 1%, 16% 0%, 20% 1%, 24% 0%, 28% 1%, 32% 0%, 36% 1%,
         40% 0%, 44% 1%, 48% 0%, 52% 1%, 56% 0%, 60% 1%, 64% 0%, 68% 1%, 72% 0%, 76% 1%,
         80% 0%, 84% 1%, 88% 0%, 92% 1%, 96% 0%, 100% 0%,
-        // Right edge - torn
+        
         100% 0%, 99% 3%, 100% 6%, 98% 10%, 100% 14%, 99% 18%, 100% 22%, 98% 26%,
         100% 30%, 99% 35%, 100% 40%, 98% 45%, 100% 50%, 99% 55%, 100% 60%,
         98% 65%, 100% 70%, 99% 75%, 100% 80%, 98% 85%, 100% 90%, 99% 95%,
-        // Bottom edge - torn (going left)
+        
         100% 100%, 96% 99%, 92% 100%, 88% 98%, 84% 100%, 80% 99%, 76% 100%,
         72% 98%, 68% 100%, 64% 99%, 60% 100%, 56% 98%, 52% 100%, 48% 99%,
         44% 100%, 40% 98%, 36% 100%, 32% 99%, 28% 100%, 24% 98%, 20% 100%,
         16% 99%, 12% 100%, 8% 98%, 4% 100%, 0% 99%,
-        // Left edge - torn (going up)
+        
         0.5% 99.5%, 1% 95%, 0% 90%, 2% 85%, 0% 80%, 1% 75%, 0% 70%, 2% 65%,
         0% 60%, 1% 55%, 0% 50%, 2% 45%, 0% 40%, 1% 35%, 0% 30%, 2% 26%,
         0% 22%, 1% 18%, 0% 14%, 2% 10%, 0% 6%, 1% 3%, 0% 0%);
 
-    // Filter shadow doesn't work well directly on clipped elements in all browsers,
-    // so we apply a drop-shadow on its wrapper in inline styles.
+    
+    
 }
 
 .studio-close-btn {
@@ -112,7 +112,7 @@
     overflow: hidden;
     background: #000;
     position: relative;
-    padding-top: 56.25%; // 16:9 Aspect Ratio
+    padding-top: 56.25%; 
 
     iframe,
     video {
@@ -159,7 +159,7 @@
     cursor: pointer;
     margin-top: auto;
 
-    // Slight sketch styling
+    
     border-radius: 2px 255px 3px 255px / 255px 5px 225px 3px;
 
     &:hover {
@@ -175,17 +175,15 @@
     }
 }
 
-// Hide native scrollbar — custom torn-paper scrollbar replaces it
 .awards-scroll-container {
-    scrollbar-width: none; // Firefox
-    -ms-overflow-style: none; // IE/Edge
+    scrollbar-width: none; 
+    -ms-overflow-style: none; 
 
     &::-webkit-scrollbar {
-        display: none; // Chrome/Safari
+        display: none; 
     }
 }
 
-// Custom torn-paper scroll track
 .torn-scroll-track {
     position: absolute;
     right: 0;
@@ -197,14 +195,13 @@
     overflow: visible;
 }
 
-// Sketchy wavy scroll track line
 .torn-scroll-line {
     position: absolute;
     right: 8px;
     top: 5%;
     height: 90%;
     width: 2px;
-    // Hand-drawn dashed line
+    
     background: repeating-linear-gradient(to bottom,
             rgba(26, 26, 26, 0.2) 0px,
             rgba(26, 26, 26, 0.2) 4px,
@@ -212,7 +209,6 @@
             transparent 8px);
 }
 
-// Pencil-mark scroll thumb
 .torn-scroll-thumb {
     position: absolute;
     right: 2px;
@@ -232,12 +228,12 @@
         height: 28px;
         background: rgba(26, 26, 26, 0.15);
         border: 1.5px solid rgba(26, 26, 26, 0.4);
-        // Sketchy irregular border-radius
+        
         border-radius: 3px 255px 4px 255px / 255px 4px 225px 3px;
         transition: background 0.2s ease, border-color 0.2s ease;
     }
 
-    // Little horizontal pencil strokes inside thumb
+    
     &::after {
         content: '';
         position: absolute;

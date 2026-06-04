@@ -4,7 +4,7 @@
     left: 50%;
     transform: translateX(-50%) translateY(100px);
     opacity: 0;
-    pointer-events: none; // It's just a visual popup
+    pointer-events: none; 
     z-index: 110;
     background: #ffffff;
     padding: 12px 24px;
@@ -12,7 +12,7 @@
     align-items: center;
     gap: 16px;
 
-    // Torn edge styling
+    
     &::before {
         content: '';
         position: absolute;
@@ -33,7 +33,7 @@
 
     filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.15));
 
-    // Entry animation
+    
     animation: popupEnter 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 
     &.hiding {
@@ -76,7 +76,7 @@
             width: 18px;
             height: 18px;
             background: transparent;
-            // Draw animation
+            
             stroke-dasharray: 24;
             stroke-dashoffset: 24;
             animation: drawCheck 0.3s ease forwards 0.1s;
