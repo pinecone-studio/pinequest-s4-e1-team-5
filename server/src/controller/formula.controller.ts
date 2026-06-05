@@ -53,7 +53,13 @@ export async function seedAllController(c: Context) {
 export async function seedTopicController(c: Context) {
   try {
     const subject = c.req.param("subject") as Subject;
-    const topic = decodeURIComponent(c.req.param("topic"));
+    const topicParam = c.req.param("topic");
+
+    if (!topicParam) {
+      return c.json({ error: "topic is required" }, 400);
+    }
+
+    const topic = decodeURIComponent(topicParam);
 
     const result = await seedFormulasForTopic(subject, topic);
     return c.json({ ok: !result.error, ...result });

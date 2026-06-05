@@ -239,6 +239,7 @@ Return JSON only.`,
           {
             type: "input_image",
             image_url: `data:${mimeType};base64,${base64Image}`,
+            detail: "auto",
           },
           {
             type: "input_text",
