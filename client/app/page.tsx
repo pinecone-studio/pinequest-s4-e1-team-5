@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { SineCosineVisualizer } from "./components/SineCosineVisualizer";
 
 type Subject = "math" | "physics" | "geometry" | "chemistry";
 
@@ -98,8 +99,8 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#f7f8fb] px-5 py-10 text-slate-950">
-      <section className="mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-2xl flex-col justify-center">
-        <div className="mb-8">
+      <section className="mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-6xl flex-col justify-center">
+        <div className="mb-8 max-w-2xl">
           <p className="mb-3 text-sm font-medium text-slate-500">
             Томьёо санал болгох туслах
           </p>
@@ -108,7 +109,7 @@ export default function Home() {
           </h1>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="max-w-2xl space-y-4">
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {subjectOptions.map((option) => (
               <button
@@ -143,13 +144,15 @@ export default function Home() {
         </form>
 
         {error && (
-          <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div className="mt-6 max-w-2xl rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
           </div>
         )}
 
+        {subject === "math" && <SineCosineVisualizer />}
+
         {result && (
-          <article className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <article className="mt-8 max-w-2xl rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="mb-5 flex flex-wrap gap-2">
               <span
                 className={`rounded-full px-3 py-1 text-xs font-medium ${
@@ -208,7 +211,7 @@ export default function Home() {
         )}
 
         {verification && (
-          <article className="mt-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <article className="mt-4 max-w-2xl rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="mb-4 flex items-start justify-between gap-4">
               <div>
                 <p className="text-sm font-medium text-slate-500">
