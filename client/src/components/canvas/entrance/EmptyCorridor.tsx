@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useTexture } from '@react-three/drei';
+
+
 const EmptyCorridor = ({
   camera
 }) => {
@@ -11,6 +13,7 @@ const EmptyCorridor = ({
   const floorTexture = useTexture('/textures/entrance/floor_paper.webp');
   floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
   floorTexture.repeat.set(6.6, 20);
+
   useFrame(() => {
     if (!camera) return;
     const segmentLength = 40;
@@ -43,7 +46,7 @@ const CorridorSegmentEmpty = ({
             {}
             <mesh position={[0, -2, zCenter]} rotation={[-Math.PI / 2, 0, 0]}>
                 <planeGeometry args={[corridorWidth, length]} />
-                <meshBasicMaterial map={floorTexture} transparent={true} alphaTest={0.1} roughness={1} metalness={0} color="#e0e0e0" />
+                <meshBasicMaterial map={floorTexture} transparent={true} alphaTest={0.1} roughness={2} metalness={0} color="#65A30D" />
             </mesh>
 
             {}

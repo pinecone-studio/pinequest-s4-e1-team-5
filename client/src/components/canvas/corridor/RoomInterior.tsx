@@ -2,10 +2,11 @@ import { useMemo, memo, Suspense, useEffect } from 'react';
 import { Text } from '@react-three/drei';
 import { useTexture } from '@react-three/drei';
 import * as THREE from 'three';
-import GalleryRoom from '../rooms/Gallery/GalleryRoom';
-import StudioRoom from '../rooms/Studio/StudioRoom';
-import AboutRoom from '../rooms/About/AboutRoom';
-import ContactRoom from '../rooms/Contact/ContactRoom';
+import { MathRoom } from '../rooms/Mathematic/MathRoom';
+import { ChemistryRoom } from '../rooms/Chemistry/ChemistryRoom';
+import { PhysicRoom } from '../rooms/Physics/PhysicRoom';
+import { GeometryRoom } from '../rooms/Geometry/GeometryRoom';
+
 const ROOM_CONFIG = {
   corridorWidth: 2.2,
   corridorHeight: 2.4,
@@ -14,12 +15,7 @@ const ROOM_CONFIG = {
   roomHeight: 20,
   roomDepth: 25
 };
-const SUBTITLES = {
-  'THE GALLERY': 'Explore my creative projects',
-  'THE STUDIO': 'Watch behind the scenes',
-  'DEV DIARY': 'My development journey',
-  "LET'S CONNECT": 'Get in touch with me'
-};
+
 const NATURAL_TILE_W = 1582 / 94 * 0.15;
 const RoomInterior = memo(({
   label,
@@ -41,6 +37,7 @@ const RoomInterior = memo(({
   const wallTexSrc = useTexture('/textures/corridor/wall_texture.webp');
   const ceilingTexSrc = useTexture('/textures/corridor/ceiling_texture.webp');
   const bbTexSrc = useTexture('/textures/corridor/texturadoprogow.webp');
+
   const materials = useMemo(() => {
     const floorTex = floorTexSrc.clone();
     floorTex.needsUpdate = true;
@@ -66,6 +63,7 @@ const RoomInterior = memo(({
     bbRight.needsUpdate = true;
     bbRight.wrapS = bbRight.wrapT = THREE.RepeatWrapping;
     bbRight.repeat.set(corridorDepth / NATURAL_TILE_W, 1);
+    
     return {
       corridorFloor: new THREE.MeshBasicMaterial({
         color: '#e0e0e0',
@@ -126,6 +124,8 @@ const RoomInterior = memo(({
       })
     };
   }, [floorTexSrc, wallTexSrc, ceilingTexSrc, bbTexSrc]);
+
+
   const geometries = useMemo(() => ({
     corridorSideWall: new THREE.PlaneGeometry(corridorDepth, corridorHeight),
     corridorFloorCeiling: new THREE.PlaneGeometry(corridorWidth, corridorDepth),
@@ -135,9 +135,10 @@ const RoomInterior = memo(({
     roomSideWall: new THREE.PlaneGeometry(roomDepth, roomHeight),
     roomBackWall: new THREE.PlaneGeometry(roomWidth, roomHeight)
   }), []);
-  const isGallery = label === 'THE GALLERY';
+
+  const isMath = label === 'МАТЕМАТИК';
   useEffect(() => {
-    if (showRoom && !['THE GALLERY', 'THE STUDIO', 'THE ABOUT', "LET'S CONNECT"].includes(label)) {
+    if (showRoom && !['МАТЕМАТИК', 'ХИМИ', 'ФИЗИК', "ГЕОМЕТР"].includes(label)) {
       onReady?.();
     }
   }, [showRoom, label, onReady]);
@@ -166,21 +167,21 @@ const RoomInterior = memo(({
 
             {}
             {showRoom && <group>
-                    {isGallery ? <group position={[0, -0.5, -corridorDepth]}>
+                    {isMath ? <group position={[0, -0.5, -corridorDepth]}>
                             <Suspense fallback={null}>
-                                <GalleryRoom showRoom={showRoom} onReady={onReady} isExiting={isExiting} />
+                                <MathRoom showRoom={showRoom} onReady={onReady} isExiting={isExiting} />
                             </Suspense>
-                        </group> : label === 'THE STUDIO' ? <group position={[0, -0.5, -corridorDepth]}>
+                        </group> : label === 'ХИМИ' ? <group position={[0, -0.5, -corridorDepth]}>
                             <Suspense fallback={null}>
-                                <StudioRoom showRoom={showRoom} onReady={onReady} isExiting={isExiting} />
+                                <ChemistryRoom showRoom={showRoom} onReady={onReady} isExiting={isExiting} />
                             </Suspense>
-                        </group> : label === 'THE ABOUT' ? <group position={[0, -0.5, -corridorDepth]}>
+                        </group> : label === 'ФИЗИК' ? <group position={[0, -0.5, -corridorDepth]}>
                             <Suspense fallback={null}>
-                                <AboutRoom showRoom={showRoom} onReady={onReady} isExiting={isExiting} />
+                                <PhysicRoom showRoom={showRoom} onReady={onReady} isExiting={isExiting} />
                             </Suspense>
-                        </group> : label === "LET'S CONNECT" ? <group position={[0, -0.5, -corridorDepth]}>
+                        </group> : label === "ГЕОМЕТР" ? <group position={[0, -0.5, -corridorDepth]}>
                             <Suspense fallback={null}>
-                                <ContactRoom showRoom={showRoom} onReady={onReady} isExiting={isExiting} />
+                                <GeometryRoom showRoom={showRoom} onReady={onReady} isExiting={isExiting} />
                             </Suspense>
                         </group> : <group position={[0, roomHeight / 2 - corridorHeight / 2, roomZ]}>
                             {}
@@ -207,9 +208,7 @@ const RoomInterior = memo(({
                             </Text>
 
                             {}
-                            <Text position={[0, -1, -roomDepth / 2 + 2]} fontSize={0.8} color="#666666" anchorX="center" anchorY="middle" maxWidth={roomWidth * 0.7} textAlign="center">
-                                {SUBTITLES[label] || ''}
-                            </Text>
+                           
 
                             {}
                             {}

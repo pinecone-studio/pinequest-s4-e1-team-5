@@ -12,6 +12,7 @@ import NavigationUI from './components/ui/NavigationUI';
 import GlobalOverlay from './components/ui/GlobalOverlay';
 import ScreenReaderOverlay from './components/ui/ScreenReaderOverlay';
 import posthog from 'posthog-js';
+
 posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
   api_host: import.meta.env.VITE_POSTHOG_HOST,
   person_profiles: 'identified_only'
@@ -113,7 +114,7 @@ function AppContent() {
             alpha: false,
             powerPreference: settings.powerPreference,
             localClippingEnabled: true,
-            failIfMajorPerformanceCaveat: true
+            failIfMajorPerformanceCaveat: false
           }} dpr={settings.dpr} shadows={settings.shadows}>
               <color attach="background" args={['#fafafa']} />
               <fog attach="fog" args={['#fafafa', 15, 50]} />
@@ -133,7 +134,7 @@ function AppContent() {
 
           {}
           {isLoaded && <>
-              <NavigationUI />
+              {/* <NavigationUI /> */}
               <GlobalOverlay />
               <PaperTransition />
               <ScreenReaderOverlay />

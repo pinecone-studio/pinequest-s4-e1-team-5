@@ -2,8 +2,11 @@ import { useRef, useMemo, useState, useEffect } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { Text } from '@react-three/drei';
 import * as THREE from 'three';
+
+
 const RUBIK_SCRIBBLE_URL = '/fonts/RubikScribble-Regular.ttf';
 const CABIN_SKETCH_URL = '/fonts/CabinSketch-Regular.ttf';
+
 let hasPlayedDrawAnimation = false;
 const HeroText = ({
   position = [0, 0.3, 0]
@@ -34,48 +37,67 @@ const HeroText = ({
   const targetSplit = useRef(0);
   const floatY = useRef(0);
   const worldPosVec = useRef(new THREE.Vector3());
+
   const letters = useMemo(() => [{
-    char: 'I',
-    baseX: -0.95,
-    splitDir: -1.6,
-    delay: 0
-  }, {
     char: 'T',
-    baseX: -0.43,
-    splitDir: -0.6,
-    delay: 0
+    baseX: -1.4,
+    splitDir: -1.6,
+    delay: 0,
+    color: '#5F9EA0',
   }, {
     char: 'O',
-    baseX: 0.23,
-    splitDir: 0.6,
-    delay: 0
+    baseX: -0.6,
+    splitDir: -0.6,
+    delay: 0,
+    color: '#5F9EA0',
   }, {
     char: 'M',
+    baseX: 0.2,
+    splitDir: 0.6,
+    delay: 0,
+    color: '#5F9EA0',
+  }, {
+    char: 'Y',
     baseX: 0.95,
     splitDir: 1.8,
-    delay: 0
-  }], []);
+    delay: 0,
+    color: '#5F9EA0',
+  },{
+    char: 'O',
+    baseX: 1.67,
+    splitDir: 1.8,
+    delay: 0,
+    color: '#5F9EA0',
+  }
+], []);
+
   const taglineWords = useMemo(() => [{
     text: '<',
-    baseX: -0.85,
+    baseX: -1.3,
     splitDir: -1.5,
-    delay: 0
+    delay: 0,
+    color:'#4682B4'
   }, {
-    text: 'creative',
+    text: 'ШИНЖЛЭХ УХААНЫ',
     baseX: -0.4,
     splitDir: -0.8,
-    delay: 0
+    delay: 0,
+    color:'#4682B4'
   }, {
-    text: 'developer',
-    baseX: 0.4,
+    text: 'ШИНЭ ЭРИН',
+    baseX:1,
     splitDir: 0.8,
-    delay: 0
+    delay: 0,
+    color:'#4682B4'
   }, {
     text: '/>',
-    baseX: 0.85,
+    baseX: 1.68,
     splitDir: 1.5,
-    delay: 0
+    delay: 0,
+    color:'#4682B4'
   }], []);
+
+
   useFrame((state, delta) => {
     if (!groupRef.current) return;
     const time = state.clock.elapsedTime;
@@ -118,12 +140,12 @@ const HeroText = ({
   });
   return <group ref={groupRef} position={position} scale={[scale, scale, 1]}>
             {}
-            {letters.map((letter, i) => <Text key={letter.char} ref={el => letterRefs.current[i] = el} position={[letter.baseX, 0.2, 0]} fontSize={0.9} font={RUBIK_SCRIBBLE_URL} color="#ffffff" outlineWidth={0.012} outlineColor="#1a1a1a" anchorX="center" anchorY="middle" letterSpacing={0}>
+            {letters.map((letter, i) => <Text key={`${letter.char}-${i}`} ref={el => letterRefs.current[i] = el} position={[letter.baseX, 0.2, 0]} fontSize={0.9} font={RUBIK_SCRIBBLE_URL} color={letter.color} outlineWidth={0.012} outlineColor="#1a1a1a" anchorX="center" anchorY="middle" letterSpacing={0}>
                     {letter.char}
                 </Text>)}
 
             {}
-            {taglineWords.map((word, i) => <Text key={word.text} ref={el => taglineRefs.current[i] = el} position={[word.baseX, -0.55, 0.3]} fontSize={0.16} font={CABIN_SKETCH_URL} color="#555555" anchorX="center" anchorY="middle" letterSpacing={0.04}>
+            {taglineWords.map((word, i) => <Text key={word.text} ref={el => taglineRefs.current[i] = el} position={[word.baseX, -0.55, 0.3]} fontSize={0.16} font={CABIN_SKETCH_URL} color={word.color} anchorX="center" anchorY="middle" letterSpacing={0.04}>
                     {word.text}
                 </Text>)}
 
