@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { SineCosineVisualizer } from "./components/SineConsineVisualizer";
 
 type Subject = "math" | "physics" | "geometry" | "chemistry";
 
@@ -148,6 +149,8 @@ export default function Home() {
           </div>
         )}
 
+        {subject === "math" && <SineCosineVisualizer />}
+        
         {result && (
           <article className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="mb-5 flex flex-wrap gap-2">
