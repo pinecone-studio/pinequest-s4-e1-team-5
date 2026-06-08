@@ -2,6 +2,8 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { tutorRouter } from "./router/tutor.router";
 import { formulaRouter } from "./router/formula.router";
+import { quizRouter } from "./router/quiz.router";
+app.route("/api/quiz", quizRouter);
 
 const app = new Hono();
 
