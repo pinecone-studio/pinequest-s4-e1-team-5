@@ -1,3 +1,5 @@
+'use client'; 
+import Experience from "@/src/experience/Experience";
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
@@ -446,6 +448,11 @@ export default function Home() {
   }, [quiz, selectedAnswers]);
 
   return (
+    <main style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
+      <Experience />
+    </main>
+  );
+}
     <main className="min-h-screen bg-[#f7f8fb] px-5 py-10 text-slate-950">
       <section className="mx-auto flex w-full max-w-5xl flex-col gap-8">
         <div className="rounded-4xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
