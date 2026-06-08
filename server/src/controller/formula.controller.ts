@@ -31,7 +31,6 @@ export async function getFormulasController(c: Context) {
       return c.json({ data });
     }
 
-    // Filter байхгүй → бүх topic тоо харуулна
     const data = await getFormulaTopics();
     return c.json({ data });
   } catch (error) {

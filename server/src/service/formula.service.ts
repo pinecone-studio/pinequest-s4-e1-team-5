@@ -245,7 +245,7 @@ Return JSON only.`,
             text: `Энэ бодлогыг бодоход ямар томьёо(нууд) хэрэгтэй вэ?
 Томьёо бүрт:
 - name: томьёоны нэр (Монголоор)
-- formula: томьёоны тэмдэглэгээ 
+- formula: томьёоны тэмдэглэгээ (LaTeX)
 - usageInProblem: энэ бодлогод яагаад ашиглагддагийг товч тайлбарла (Монголоор)
 Мөн explanation-д бодлогын товч дүн шинжилгээ бич.`,
           },
@@ -265,4 +265,85 @@ Return JSON only.`,
   console.log("[formula] OpenAI vision usage:", response.usage);
 
   return JSON.parse(response.output_text) as FormulaIdentifyResult;
+}
+
+type FormulaInput = {
+  subject: Subject;
+  topic: string;
+  pod_title: string;
+  pod_content: string;
+  wolfram_query?: string;
+};
+
+export async function createFormula(input: FormulaInput) {
+  const rows = await sql`
+    insert into formulas (subject, topic, wolfram_query, pod_title, pod_content, is_seeded)
+    values (
+      ${input.subject},
+      ${input.topic},
+      ${input.wolfram_query ?? "manual"},
+      ${input.pod_title},
+      ${input.pod_content},
+      false
+    )
+    on conflict (subject, topic, pod_title) do update set
+      pod_content   = excluded.pod_content,
+      wolfram_query = excluded.wolfram_query
+    returning *
+  `;
+  return rows[0];
+}
+
+export async function createManyFormulas(
+  inputs: FormulaInput[],
+): Promise<{ saved: number; skipped: number }> {
+  let saved = 0;
+  let skipped = 0;
+
+  for (const input of inputs) {
+    try {
+      if (
+        !input.subject ||
+        !input.topic ||
+        !input.pod_title ||
+        !input.pod_content
+      ) {
+        skipped++;
+        continue;
+      }
+      await createFormula(input);
+      saved++;
+    } catch (err) {
+      console.error("[formula] bulk insert error:", err);
+      skipped++;
+    }
+  }
+
+  return { saved, skipped };
+}
+
+export async function updateFormula(
+  id: string,
+  fields: Partial<
+    Pick<FormulaInput, "topic" | "pod_title" | "pod_content" | "wolfram_query">
+  >,
+) {
+  const rows = await sql`
+    update formulas
+    set
+      topic         = coalesce(${fields.topic ?? null}, topic),
+      pod_title     = coalesce(${fields.pod_title ?? null}, pod_title),
+      pod_content   = coalesce(${fields.pod_content ?? null}, pod_content),
+      wolfram_query = coalesce(${fields.wolfram_query ?? null}, wolfram_query)
+    where id = ${id}::uuid
+    returning *
+  `;
+  return rows[0];
+}
+
+export async function deleteFormula(id: string) {
+  await sql`
+    delete from formulas
+    where id = ${id}::uuid
+  `;
 }
