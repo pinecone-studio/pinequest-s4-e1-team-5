@@ -3,7 +3,6 @@ import { cors } from "hono/cors";
 import { tutorRouter } from "./router/tutor.router";
 import { formulaRouter } from "./router/formula.router";
 import { quizRouter } from "./router/quiz.router";
-app.route("/api/quiz", quizRouter);
 
 const app = new Hono();
 
@@ -34,6 +33,7 @@ app.get("/health", (c) => {
 
 app.route("/api/tutor", tutorRouter);
 app.route("/api/formulas", formulaRouter);
+app.route("/api/quiz", quizRouter);
 
 const port = Number(Bun.env.PORT ?? 4000);
 
