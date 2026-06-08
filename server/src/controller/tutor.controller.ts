@@ -6,6 +6,17 @@ import {
   solveTutorService,
 } from "../service/tutor.service";
 
+const allowedSubjects = ["math", "physics", "geometry", "chemistry"] as const;
+
+type Subject = (typeof allowedSubjects)[number];
+
+function getSubject(value: unknown): Subject {
+  return typeof value === "string" &&
+    allowedSubjects.includes(value as Subject)
+    ? (value as Subject)
+    : "math";
+}
+
 export async function solveTutorController(c: Context) {
   try {
     const body = await c.req.json();
@@ -22,7 +33,7 @@ export async function solveTutorController(c: Context) {
     const result = await solveTutorService({
       problem: body.problem,
       grade: body.grade ?? 11,
-      subject: body.subject ?? "physics",
+      subject: getSubject(body.subject),
     });
 
     return c.json(result);
@@ -74,7 +85,7 @@ export async function generateExampleController(c: Context) {
       originalProblem: body.originalProblem,
       topic: typeof body.topic === "string" ? body.topic : "",
       grade: body.grade ?? 11,
-      subject: body.subject ?? "physics",
+      subject: getSubject(body.subject),
     });
 
     return c.json(result);
@@ -106,7 +117,7 @@ export async function generatePracticeController(c: Context) {
     const result = await generatePracticeService({
       topic: body.topic,
       grade: body.grade ?? 11,
-      subject: body.subject ?? "physics",
+      subject: getSubject(body.subject),
       difficulty: body.difficulty ?? "easy",
     });
 
