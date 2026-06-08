@@ -1,12 +1,15 @@
 import type { Context } from "hono";
 import {
+  createFormula,
+  createManyFormulas,
+  deleteFormula,
   getFormulaTopics,
   getFormulasBySubject,
   getFormulasBySubjectAndTopic,
-  identifyFormulasFromImage,
   searchFormulas,
   seedAllFormulas,
   seedFormulasForTopic,
+  updateFormula,
   type Subject,
 } from "../service/formula.service";
 
@@ -39,6 +42,73 @@ export async function getFormulasController(c: Context) {
   }
 }
 
+export async function createFormulaController(c: Context) {
+  try {
+    const body = await c.req.json();
+
+    const { subject, topic, pod_title, pod_content, wolfram_query } = body;
+
+    if (!subject || !topic || !pod_title || !pod_content) {
+      return c.json(
+        { error: "subject, topic, pod_title, pod_content required" },
+        400,
+      );
+    }
+
+    const row = await createFormula({
+      subject,
+      topic,
+      pod_title,
+      pod_content,
+      wolfram_query,
+    });
+    return c.json({ ok: true, data: row });
+  } catch (error) {
+    console.error(error);
+    return c.json({ error: "Failed to create formula" }, 500);
+  }
+}
+
+export async function createManyFormulasController(c: Context) {
+  try {
+    const body = await c.req.json();
+
+    if (!Array.isArray(body.formulas) || body.formulas.length === 0) {
+      return c.json({ error: "formulas array required" }, 400);
+    }
+
+    const result = await createManyFormulas(body.formulas);
+    return c.json({ ok: true, ...result });
+  } catch (error) {
+    console.error(error);
+    return c.json({ error: "Failed to bulk insert formulas" }, 500);
+  }
+}
+
+export async function updateFormulaController(c: Context) {
+  try {
+    const id = c.req.param("id");
+    const body = await c.req.json();
+
+    const row = await updateFormula(id, body);
+    return c.json({ ok: true, data: row });
+  } catch (error) {
+    console.error(error);
+    return c.json({ error: "Failed to update formula" }, 500);
+  }
+}
+
+export async function deleteFormulaController(c: Context) {
+  try {
+    const id = c.req.param("id");
+    await deleteFormula(id);
+    return c.json({ ok: true });
+  } catch (error) {
+    console.error(error);
+    return c.json({ error: "Failed to delete formula" }, 500);
+  }
+}
+
 export async function seedAllController(c: Context) {
   try {
     seedAllFormulas().catch(console.error);
@@ -62,7 +132,7 @@ export async function seedTopicController(c: Context) {
   }
 }
 
-export async function identifyFormulasController(c: Context) {
+export async function detectFormulasController(c: Context) {
   try {
     const body = await c.req.json();
 
@@ -70,12 +140,15 @@ export async function identifyFormulasController(c: Context) {
       return c.json({ error: "image (base64) is required" }, 400);
     }
 
-    const mimeType = body.mimeType ?? "image/jpeg";
-
-    const result = await identifyFormulasFromImage(body.image, mimeType);
+    const { detectAndFetchFormulas } =
+      await import("../service/formula.service");
+    const result = await detectAndFetchFormulas(
+      body.image,
+      body.mimeType ?? "image/jpeg",
+    );
     return c.json(result);
   } catch (error) {
     console.error(error);
-    return c.json({ error: "Image formula identification failed" }, 500);
+    return c.json({ error: "Formula detection failed" }, 500);
   }
 }
