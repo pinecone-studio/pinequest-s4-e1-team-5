@@ -5,6 +5,7 @@ import { FormEvent, useState } from "react";
 type Subject = "math" | "physics" | "geometry" | "chemistry";
 
 type TutorSolveResponse = {
+  cacheHit?: boolean;
   answer: {
     problemType: string;
     subject: Subject;
@@ -17,6 +18,15 @@ type TutorSolveResponse = {
     solutionSteps: string[];
     finalAnswer: string;
   };
+  verification: {
+    ok: boolean;
+    query: string;
+    result: string;
+    pods?: {
+      title: string;
+      plaintext: string;
+    }[];
+  };
 };
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
@@ -27,6 +37,10 @@ export default function Home() {
   const [result, setResult] = useState<TutorSolveResponse["answer"] | null>(
     null,
   );
+  const [verification, setVerification] = useState<
+    TutorSolveResponse["verification"] | null
+  >(null);
+  const [cacheHit, setCacheHit] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -37,12 +51,16 @@ export default function Home() {
     if (!trimmedProblem) {
       setError("Бодлогоо бичнэ үү.");
       setResult(null);
+      setVerification(null);
+      setCacheHit(false);
       return;
     }
 
     setError("");
     setIsLoading(true);
     setResult(null);
+    setVerification(null);
+    setCacheHit(false);
 
     try {
       const response = await fetch(`${API_URL}/api/tutor/solve`, {
@@ -63,7 +81,10 @@ export default function Home() {
         throw new Error(data?.error ?? "Томьёо олоход алдаа гарлаа.");
       }
 
-      setResult((data as TutorSolveResponse).answer);
+      const tutorData = data as TutorSolveResponse;
+      setResult(tutorData.answer);
+      setVerification(tutorData.verification);
+      setCacheHit(Boolean(tutorData.cacheHit));
     } catch (requestError) {
       setError(
         requestError instanceof Error
@@ -130,6 +151,15 @@ export default function Home() {
         {result && (
           <article className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="mb-5 flex flex-wrap gap-2">
+              <span
+                className={`rounded-full px-3 py-1 text-xs font-medium ${
+                  cacheHit
+                    ? "bg-emerald-50 text-emerald-700"
+                    : "bg-blue-50 text-blue-700"
+                }`}
+              >
+                {cacheHit ? "DB-ээс авсан" : "Шинээр үүсгэсэн"}
+              </span>
               <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
                 {subjectLabels[result.subject]}
               </span>
@@ -174,6 +204,52 @@ export default function Home() {
                 {result.unknownValue}
               </span>
             </p>
+          </article>
+        )}
+
+        {verification && (
+          <article className="mt-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="mb-4 flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-slate-500">
+                  Wolfram
+                </p>
+                <p className="mt-1 break-all font-mono text-sm text-slate-700">
+                  {verification.query || "none"}
+                </p>
+              </div>
+              <span
+                className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
+                  verification.ok
+                    ? "bg-emerald-50 text-emerald-700"
+                    : "bg-amber-50 text-amber-700"
+                }`}
+              >
+                {verification.ok ? "Wolfram OK" : "Wolfram байхгүй"}
+              </span>
+            </div>
+
+            {verification.pods && verification.pods.length > 0 ? (
+              <div className="space-y-3">
+                {verification.pods.slice(0, 4).map((pod) => (
+                  <section
+                    key={`${pod.title}-${pod.plaintext}`}
+                    className="rounded-2xl bg-slate-50 px-4 py-3"
+                  >
+                    <p className="mb-1 text-sm font-semibold text-slate-900">
+                      {pod.title}
+                    </p>
+                    <p className="whitespace-pre-wrap text-sm leading-6 text-slate-700">
+                      {pod.plaintext}
+                    </p>
+                  </section>
+                ))}
+              </div>
+            ) : (
+              <p className="whitespace-pre-wrap rounded-2xl bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700">
+                {verification.result}
+              </p>
+            )}
           </article>
         )}
       </section>
