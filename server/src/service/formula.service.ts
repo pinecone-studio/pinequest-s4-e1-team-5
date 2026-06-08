@@ -4,17 +4,6 @@ import { fetchWolframPods } from "./wolfram.service";
 
 export type Subject = "math" | "physics" | "geometry" | "chemistry";
 
-type FormulaIdentifyResult = {
-  formulas: IdentifiedFormula[];
-  explanation: string;
-};
-
-type IdentifiedFormula = {
-  name: string;
-  formula: string;
-  usageInProblem: string;
-};
-
 const WOLFRAM_QUERIES: Record<Subject, { topic: string; query: string }[]> = {
   math: [
     { topic: "Arithmetic", query: "sum of integers 1 to n" },
@@ -195,78 +184,6 @@ export async function getFormulaTopics() {
   return rows;
 }
 
-const IDENTIFY_SCHEMA = {
-  type: "object",
-  additionalProperties: false,
-  properties: {
-    formulas: {
-      type: "array",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        properties: {
-          name: { type: "string" },
-          formula: { type: "string" },
-          usageInProblem: { type: "string" },
-        },
-        required: ["name", "formula", "usageInProblem"],
-      },
-    },
-    explanation: { type: "string" },
-  },
-  required: ["formulas", "explanation"],
-};
-
-export async function identifyFormulasFromImage(
-  base64Image: string,
-  mimeType: "image/jpeg" | "image/png" | "image/webp" = "image/jpeg",
-): Promise<FormulaIdentifyResult> {
-  const response = await openai.responses.create({
-    model: "gpt-4.1-mini",
-    max_output_tokens: 800,
-    input: [
-      {
-        role: "system",
-        content: `You are a school math and physics tutor.
-The student will upload an image of a problem.
-Your job is to identify exactly which formulas are needed to solve it.
-Always respond in Mongolian.
-Return JSON only.`,
-      },
-      {
-        role: "user",
-        content: [
-          {
-            type: "input_image",
-            image_url: `data:${mimeType};base64,${base64Image}`,
-          },
-          {
-            type: "input_text",
-            text: `Энэ бодлогыг бодоход ямар томьёо(нууд) хэрэгтэй вэ?
-Томьёо бүрт:
-- name: томьёоны нэр (Монголоор)
-- formula: томьёоны тэмдэглэгээ (LaTeX)
-- usageInProblem: энэ бодлогод яагаад ашиглагддагийг товч тайлбарла (Монголоор)
-Мөн explanation-д бодлогын товч дүн шинжилгээ бич.`,
-          },
-        ],
-      },
-    ],
-    text: {
-      format: {
-        type: "json_schema",
-        name: "formula_identify",
-        strict: true,
-        schema: IDENTIFY_SCHEMA,
-      },
-    },
-  });
-
-  console.log("[formula] OpenAI vision usage:", response.usage);
-
-  return JSON.parse(response.output_text) as FormulaIdentifyResult;
-}
-
 type FormulaInput = {
   subject: Subject;
   topic: string;
@@ -346,4 +263,114 @@ export async function deleteFormula(id: string) {
     delete from formulas
     where id = ${id}::uuid
   `;
+}
+
+const DETECT_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    formulas: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          name: { type: "string" },
+          formula: { type: "string" },
+          usageInProblem: { type: "string" },
+        },
+        required: ["name", "formula", "usageInProblem"],
+      },
+    },
+    explanation: { type: "string" },
+  },
+  required: ["formulas", "explanation"],
+};
+
+type DetectedFormula = {
+  name: string;
+  formula: string;
+  usageInProblem: string;
+};
+
+type DetectedFormulaWithDB = {
+  detected: DetectedFormula;
+  dbMatches: any[];
+};
+
+type DetectAndFetchResult = {
+  explanation: string;
+  results: DetectedFormulaWithDB[];
+};
+
+export async function detectAndFetchFormulas(
+  base64Image: string,
+  mimeType: "image/jpeg" | "image/png" | "image/webp" = "image/jpeg",
+): Promise<DetectAndFetchResult> {
+  // 1. OpenAI vision — бодлогоос ямар томьёо хэрэгтэйг олно
+  const response = await openai.responses.create({
+    model: "gpt-4.1-mini",
+    max_output_tokens: 800,
+    input: [
+      {
+        role: "system",
+        content: `You are a school math and physics tutor.
+The student will upload an image of a problem.
+Identify exactly which formulas are needed to solve it.
+Always respond in Mongolian.
+Return JSON only.`,
+      },
+      {
+        role: "user",
+        content: [
+          {
+            type: "input_image",
+            image_url: `data:${mimeType};base64,${base64Image}`,
+          },
+          {
+            type: "input_text",
+            text: `Энэ бодлогыг бодоход ямар томьёо(нууд) хэрэгтэй вэ?
+Томьёо бүрт:
+- name: томьёоны нэр (Монголоор)
+- formula: томьёоны тэмдэглэгээ (LaTeX)
+- usageInProblem: энэ бодлогод яагаад ашиглагддагийг товч тайлбарла (Монголоор)
+Мөн explanation-д бодлогын товч дүн шинжилгээ бич.`,
+          },
+        ],
+      },
+    ],
+    text: {
+      format: {
+        type: "json_schema",
+        name: "formula_detect",
+        strict: true,
+        schema: DETECT_SCHEMA,
+      },
+    },
+  });
+
+  console.log("[formula] OpenAI vision usage:", response.usage);
+
+  const identified = JSON.parse(response.output_text) as {
+    formulas: DetectedFormula[];
+    explanation: string;
+  };
+
+  // 2. Томьёо бүрийг DB-с хайна
+  const results: DetectedFormulaWithDB[] = [];
+
+  for (const f of identified.formulas) {
+    const rows = await sql`
+      select *
+      from formulas
+      where pod_title   ilike ${"%" + f.name + "%"}
+         or pod_content ilike ${"%" + f.formula + "%"}
+      order by subject, topic
+      limit 5
+    `;
+
+    results.push({ detected: f, dbMatches: rows });
+  }
+
+  return { explanation: identified.explanation, results };
 }
