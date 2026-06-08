@@ -1,6 +1,9 @@
+import { array } from "zod";
 import { sql } from "../db";
 import { openai } from "../openai";
 import { fetchWolframPods } from "./wolfram.service";
+import { Items } from "openai/resources/conversations.mjs";
+import { required } from "zod/mini";
 
 export type Subject = "math" | "physics" | "geometry" | "chemistry";
 
@@ -356,7 +359,6 @@ Return JSON only.`,
     explanation: string;
   };
 
-  // 2. Томьёо бүрийг DB-с хайна
   const results: DetectedFormulaWithDB[] = [];
 
   for (const f of identified.formulas) {
@@ -373,4 +375,117 @@ Return JSON only.`,
   }
 
   return { explanation: identified.explanation, results };
+}
+
+type GradeRange = "1-5" | "6-9" | "10-12";
+
+type QuizQuestion = {
+  question: string;
+  options: [string, string, string, string];
+  correctIndex: number;
+  explanation: string;
+};
+
+type QuizResult = {
+  gradeRange: GradeRange;
+  subject: string;
+  topic: string;
+  questions: QuizQuestion[];
+};
+
+const QUIZ_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    questions: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          question: { type: "string" },
+          options: { type: "array  " },
+          correctIndex: { type: "number" },
+          explanation: { type: "string" },
+        },
+        required: ["question", "options", "correctIndex", "explanation"],
+      },
+    },
+  },
+  required: ["questions"],
+};
+
+const GRADE_PROMPTS: Record<GradeRange, string> = {
+  "1-5":
+    "The student is in grade 1-5 (age 6-11). Use very simple language and basic formulas only.",
+  "6-9":
+    "The student is in grade 6-9 (age 12-15). Use intermediate level formulas and concepts.",
+  "10-12":
+    "The student is in grade 10-12 (age 16-18). Use advanced formulas and deeper concepts.",
+};
+
+export async function generateQuizService(
+  gradeRange: GradeRange,
+  subject: Subject,
+  topic: string,
+  count: number = 5,
+): Promise<QuizResult> {
+  const formulas = await getFormulasBySubjectAndTopic(subject, topic);
+
+  const formulasContext =
+    formulas.length > 0
+      ? formulas.map((f) => `-${f.pod_title}:${f.pod_content}`).join("\n")
+      : `General ${subject} formulas for ${topic}`;
+
+  const response = await openai.responses.create({
+    model: "gpt-4.1-mini",
+    max_output_tokens: 1500,
+    input: [
+      {
+        role: "system",
+        content: `You are a school math and science quiz generator.
+${GRADE_PROMPTS[gradeRange]}
+Always respond in Mongolian.
+Generate quiz questions ONLY about formulas — not calculations.
+Question types (mix them):
+  - "Энэ томьёог хэн нээсэн бэ / ямар хуулиас гардаг вэ?"
+  - "Энэ бодлогыг бодоход ямар томьёо ашиглах вэ?"
+  - "Энэ томьёон дахь тэмдэглэгээ юуг илэрхийлэх вэ?"
+Each question must have exactly 4 options (a, b, c, d).
+correctIndex is 0-based (0=a, 1=b, 2=c, 3=d).
+explanation must be 1-2 sentences in Mongolian.
+Return JSON only.`,
+      },
+      {
+        role: "user",
+        content: `subject:${subject}
+                  topic:${topic}
+                  Grade range: ${gradeRange}
+                  Available formulas:${formulasContext}
+        
+                  Generate ${count} quiz questions based on these formulas.`,
+      },
+    ],
+    text: {
+      format: {
+        type: "json_schema",
+        name: "quiz_result",
+        strict: true,
+        schema: QUIZ_SCHEMA,
+      },
+    },
+  });
+
+  console.log("[quiz] OpenAI usage:", response.usage);
+
+  const parsed = JSON.parse(response.output_text) as {
+    questions: QuizQuestion[];
+  };
+
+  return {
+    gradeRange,
+    subject,
+    topic,
+    questions: parsed.questions,
+  };
 }
