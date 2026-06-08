@@ -50,7 +50,7 @@ type PracticeProblem = {
 };
 
 const SOLVE_SYSTEM_PROMPT = `
-You are a math and physics AI tutor for school students.
+You are a math, physics, geometry, and chemistry AI tutor for school students.
 Always answer in Mongolian.
 Return short JSON only.
 Extract: problem type, subject, grade, topic, given values, unknown value, formula, why the formula is used, steps, final answer.
@@ -63,7 +63,10 @@ const solveAnswerSchema = {
   additionalProperties: false,
   properties: {
     problemType: { type: "string" },
-    subject: { type: "string", enum: ["math", "physics"] },
+    subject: {
+      type: "string",
+      enum: ["math", "physics", "geometry", "chemistry"],
+    },
     grade: { type: "number" },
     topic: { type: "string" },
     givenValues: {
@@ -194,7 +197,7 @@ export async function generateExampleService(input: ExampleInput) {
       {
         role: "system",
         content:
-          "You are a math and physics AI tutor. Always answer in Mongolian. Return short JSON only.",
+          "You are a math, physics, geometry, and chemistry AI tutor. Always answer in Mongolian. Return short JSON only.",
       },
       {
         role: "user",
@@ -231,7 +234,7 @@ export async function generatePracticeService(input: PracticeInput) {
       {
         role: "system",
         content:
-          "You are a math and physics AI tutor. Always answer in Mongolian. Return short JSON only.",
+          "You are a math, physics, geometry, and chemistry AI tutor. Always answer in Mongolian. Return short JSON only.",
       },
       {
         role: "user",
