@@ -1,9 +1,6 @@
-import { array } from "zod";
 import { sql } from "../db";
 import { openai } from "../openai";
 import { fetchWolframPods } from "./wolfram.service";
-import { Items } from "openai/resources/conversations.mjs";
-import { required } from "zod/mini";
 
 export type Subject = "math" | "physics" | "geometry" | "chemistry";
 
@@ -404,7 +401,12 @@ const QUIZ_SCHEMA = {
         additionalProperties: false,
         properties: {
           question: { type: "string" },
-          options: { type: "array  " },
+          options: {
+            type: "array",
+            items: { type: "string" },
+            minItems: 4,
+            maxItems: 4,
+          },
           correctIndex: { type: "number" },
           explanation: { type: "string" },
         },
@@ -453,6 +455,7 @@ Question types (mix them):
   - "Энэ томьёон дахь тэмдэглэгээ юуг илэрхийлэх вэ?"
 Each question must have exactly 4 options (a, b, c, d).
 correctIndex is 0-based (0=a, 1=b, 2=c, 3=d).
+Vary the correct answer position. Do not always put the correct option first.
 explanation must be 1-2 sentences in Mongolian.
 Return JSON only.`,
       },
@@ -486,6 +489,34 @@ Return JSON only.`,
     gradeRange,
     subject,
     topic,
-    questions: parsed.questions,
+    questions: parsed.questions.map(shuffleQuizQuestion),
+  };
+}
+
+function shuffleQuizQuestion(question: QuizQuestion): QuizQuestion {
+  const normalizedOptions = question.options.slice(0, 4);
+  const safeCorrectIndex =
+    question.correctIndex >= 0 && question.correctIndex < normalizedOptions.length
+      ? question.correctIndex
+      : 0;
+  const shuffled = normalizedOptions
+    .map((option, index) => ({
+      option,
+      isCorrect: index === safeCorrectIndex,
+      sort: Math.random(),
+    }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ option, isCorrect }) => ({ option, isCorrect }));
+  const nextCorrectIndex = shuffled.findIndex((entry) => entry.isCorrect);
+
+  return {
+    ...question,
+    options: shuffled.map((entry) => entry.option) as [
+      string,
+      string,
+      string,
+      string,
+    ],
+    correctIndex: nextCorrectIndex >= 0 ? nextCorrectIndex : 0,
   };
 }
