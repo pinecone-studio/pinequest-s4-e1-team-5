@@ -1,6 +1,4 @@
 'use client'; 
-import Experience from "@/src/experience/Experience";
-"use client";
 
 import { FormEvent, useMemo, useState } from "react";
 import { SineCosineVisualizer } from "./components/SineConsineVisualizer";
