@@ -81,7 +81,6 @@ export async function seedFormulasForTopic(
   let skipped = 0;
 
   for (const pod of wolframResult.pods) {
-    // Хоосон эсвэл хэт богино pod-ыг орхино
     if (!pod.title || pod.plaintext.trim().length < 3) {
       skipped++;
       continue;
@@ -128,7 +127,7 @@ export async function seedAllFormulas(): Promise<void> {
   for (const subject of subjects) {
     for (const { topic } of WOLFRAM_QUERIES[subject]) {
       await seedFormulasForTopic(subject, topic);
-      // Rate limit-аас зайлсхийхийн тулд жаахан хүлээнэ
+
       await new Promise((r) => setTimeout(r, 800));
     }
   }
@@ -307,7 +306,6 @@ export async function detectAndFetchFormulas(
   base64Image: string,
   mimeType: "image/jpeg" | "image/png" | "image/webp" = "image/jpeg",
 ): Promise<DetectAndFetchResult> {
-  // 1. OpenAI vision — бодлогоос ямар томьёо хэрэгтэйг олно
   const response = await openai.responses.create({
     model: "gpt-4.1-mini",
     max_output_tokens: 800,
@@ -326,6 +324,7 @@ Return JSON only.`,
           {
             type: "input_image",
             image_url: `data:${mimeType};base64,${base64Image}`,
+            detail: "auto",
           },
           {
             type: "input_text",
@@ -496,7 +495,8 @@ Return JSON only.`,
 function shuffleQuizQuestion(question: QuizQuestion): QuizQuestion {
   const normalizedOptions = question.options.slice(0, 4);
   const safeCorrectIndex =
-    question.correctIndex >= 0 && question.correctIndex < normalizedOptions.length
+    question.correctIndex >= 0 &&
+    question.correctIndex < normalizedOptions.length
       ? question.correctIndex
       : 0;
   const shuffled = normalizedOptions
