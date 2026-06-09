@@ -457,6 +457,14 @@ export default function Home() {
               <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
                 Бодлогоо бич. Ашиглах томьёог хар.
               </h1>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <a
+                  href="/vector-addition"
+                  className="inline-flex h-12 items-center rounded-full bg-slate-950 px-6 text-sm font-semibold text-white transition hover:bg-slate-800"
+                >
+                  Vector Addition
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -1077,26 +1085,6 @@ function ToolPanel({
   );
 }
 
-function GuideStep({
-  number,
-  title,
-  body,
-}: {
-  number: string;
-  title: string;
-  body: string;
-}) {
-  return (
-    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-      <div className="mb-3 flex h-8 w-8 items-center justify-center rounded-full bg-slate-950 text-sm font-semibold text-white">
-        {number}
-      </div>
-      <p className="text-sm font-semibold text-slate-950">{title}</p>
-      <p className="mt-1 text-xs leading-5 text-slate-500">{body}</p>
-    </div>
-  );
-}
-
 function FormulaCard({ formula }: { formula: FormulaRow }) {
   return (
     <section className="rounded-2xl bg-white px-4 py-3">
@@ -1244,11 +1232,5 @@ const toolTabs: {
     label: "Сорил",
     description: "Сонгосон topic-оор тест үүсгэж өөрийгөө шалгана.",
     step: "03",
-  },
-  {
-    value: "history",
-    label: "Түүх",
-    description: "Өмнө хадгалсан бодлого, томьёо, хариуг харна.",
-    step: "04",
   },
 ];
