@@ -7,17 +7,19 @@ import PaperTransition from './components/dom/PaperTransition';
 import { AudioProvider, useAudio } from './context/AudioManager';
 import { initAudio } from './utils/audioManager';
 import { PerformanceProvider, usePerformance } from './context/PerformanceContext';
-import { SceneProvider } from './context/SceneContext';
+import { SceneProvider, useScene } from './context/SceneContext';
 import NavigationUI from './components/ui/NavigationUI';
 import GlobalOverlay from './components/ui/GlobalOverlay';
 import ScreenReaderOverlay from './components/ui/ScreenReaderOverlay';
 import posthog from 'posthog-js';
+
 
 posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
   api_host: import.meta.env.VITE_POSTHOG_HOST,
   person_profiles: 'identified_only'
 });
 const Experience = lazy(() => import('./components/canvas/Experience'));
+const MathApp = lazy(() => import('./components/canvas/rooms/Mathematic/App'));
 import './styles/main.scss';
 import { ENTRANCE_TEXTURES, CORRIDOR_TEXTURES, UI_TEXTURES, PRELOAD_ALL, PRELOAD_LOADER, ABOUT_TEXTURES, IMAGE_ASSETS, filterTexturesByDevice } from './config/texturePreloadList';
 import { TextureLoader } from 'three';
@@ -82,6 +84,22 @@ const PaperSceneBackground = () => {
   }, [scene, texture]);
   return null;
 };
+const MathRoomOverlay = () => {
+  const {
+    currentRoom
+  } = useScene();
+  if (currentRoom !== 'math') return null;
+  return <div style={{
+    position: 'fixed',
+    inset: 0,
+    zIndex: 40,
+    background: '#2a2620'
+  }}>
+      <Suspense fallback={null}>
+        <MathApp />
+      </Suspense>
+    </div>;
+};
 function AppContent() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [sceneReady, setSceneReady] = useState(false);
@@ -137,6 +155,7 @@ function AppContent() {
               {/* <NavigationUI /> */}
               <GlobalOverlay />
               <PaperTransition />
+              <MathRoomOverlay />
               <ScreenReaderOverlay />
             </>}
 
