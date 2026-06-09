@@ -3,6 +3,8 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { Text } from '@react-three/drei';
 import * as THREE from 'three';
 import gsap from 'gsap';
+
+
 const LoopDoors = ({
   position = [0, 0, -70],
   corridorHeight = 3.5,

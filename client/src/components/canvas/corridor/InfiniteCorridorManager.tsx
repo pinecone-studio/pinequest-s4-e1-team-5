@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import CorridorSegment, { SEGMENT_LENGTH } from './CorridorSegment';
+
 const SegmentVisibilityWrapper = ({
   children,
   segmentIndex
