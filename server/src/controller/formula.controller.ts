@@ -88,6 +88,11 @@ export async function createManyFormulasController(c: Context) {
 export async function updateFormulaController(c: Context) {
   try {
     const id = c.req.param("id");
+
+    if (!id) {
+      return c.json({ error: "ID is required" }, 400);
+    }
+
     const body = await c.req.json();
 
     const row = await updateFormula(id, body);
@@ -101,7 +106,13 @@ export async function updateFormulaController(c: Context) {
 export async function deleteFormulaController(c: Context) {
   try {
     const id = c.req.param("id");
+
+    if (!id) {
+      return c.json({ error: "ID is required" }, 400);
+    }
+
     await deleteFormula(id);
+
     return c.json({ ok: true });
   } catch (error) {
     console.error(error);
@@ -122,7 +133,13 @@ export async function seedAllController(c: Context) {
 export async function seedTopicController(c: Context) {
   try {
     const subject = c.req.param("subject") as Subject;
-    const topic = decodeURIComponent(c.req.param("topic"));
+    const topicParam = c.req.param("topic");
+
+    if (!topicParam) {
+      return c.json({ error: "Topic is required" }, 400);
+    }
+
+    const topic = decodeURIComponent(topicParam);
 
     const result = await seedFormulasForTopic(subject, topic);
     return c.json({ ok: !result.error, ...result });
