@@ -5,7 +5,6 @@ import { addLeftBoard } from "./LeftBoard";
 import { addRightBoard } from "./RightBoard";
 import { addAmbientMath } from "./AmbientMath";
 
-
 type Formula = {
   id: string;
   title: string;
