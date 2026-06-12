@@ -6,9 +6,8 @@ import DoorSection from './DoorSection';
 import SegmentDoors from './SegmentDoors';
 import Avatar from './Avatar';
 import HeroText from './HeroText';
-
-
-
+import Doodles from './Doodles';
+import CorridorDecorations from './CorridorDecorations';
 const SEGMENT_LENGTH = 80;
 const WALL_X_OUTER = 3.5;
 const WALL_X_INNER = 1.7;
@@ -22,39 +21,38 @@ const CorridorSegment = ({
   setCameraOverride
 }) => {
   const zOffset = 10 - segmentIndex * SEGMENT_LENGTH;
-  
   const doors = useMemo(() => {
     const doorDefs = [{
-      id: `math-${segmentIndex}`,
-      roomId: 'math',
+      id: `gallery-${segmentIndex}`,
+      roomId: 'gallery',
       relativeZ: -18,
       side: 'left',
-      label: 'МАТЕМАТИК',
+      label: 'THE GALLERY',
       icon: '◈',
       color: '#f5efe6'
     }, {
-      id: `chemistry-${segmentIndex}`,
-      roomId: 'chemistry',
+      id: `studio-${segmentIndex}`,
+      roomId: 'studio',
       relativeZ: -32,
       side: 'right',
-      label: 'ХИМИ',
+      label: 'THE STUDIO',
       icon: '▶',
       color: '#e6f5ef'
     }, {
-      id: `physic-${segmentIndex}`,
-      roomId: 'physic',
+      id: `about-${segmentIndex}`,
+      roomId: 'about',
       relativeZ: -48,
       side: 'left',
-      label: 'ФИЗИК',
+      label: 'THE ABOUT',
       icon: '★',
       color: '#efe6f5',
       enterDistance: 25
     }, {
-      id: `geometry-${segmentIndex}`,
-      roomId: 'geometry',
+      id: `connect-${segmentIndex}`,
+      roomId: 'contact',
       relativeZ: -62,
       side: 'right',
-      label: "ГЕОМЕТР",
+      label: "LET'S CONNECT",
       icon: '✉',
       color: '#f5e6e6'
     }];
@@ -85,7 +83,7 @@ const CorridorSegment = ({
 
 
                 {}
-               
+                <Doodles />
 
                 {}
                 <Text position={[1.7, 1.4, 0.3]} fontSize={0.12} color="#ccc" anchorX="center">
@@ -100,7 +98,7 @@ const CorridorSegment = ({
             {}
             {}
 
-          
+            <CorridorDecorations segmentLength={SEGMENT_LENGTH} zOffset={zOffset} corridorWidth={WALL_X_OUTER * 2} corridorHeight={3.5} zClip={zClip} setCameraOverride={setCameraOverride} />
 
             {}
             {!hideSegmentDoors && <SegmentDoors position={[0, 0, zOffset - SEGMENT_LENGTH + 5]} corridorHeight={3.5} />}

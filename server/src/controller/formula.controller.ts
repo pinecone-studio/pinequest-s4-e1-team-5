@@ -96,13 +96,13 @@ export async function updateFormulaController(c: Context) {
     const body = await c.req.json();
 
     const row = await updateFormula(id, body);
+
     return c.json({ ok: true, data: row });
   } catch (error) {
     console.error(error);
     return c.json({ error: "Failed to update formula" }, 500);
   }
 }
-
 export async function deleteFormulaController(c: Context) {
   try {
     const id = c.req.param("id");
@@ -132,13 +132,14 @@ export async function seedAllController(c: Context) {
 
 export async function seedTopicController(c: Context) {
   try {
-    const subject = c.req.param("subject") as Subject;
+    const subjectParam = c.req.param("subject");
     const topicParam = c.req.param("topic");
 
-    if (!topicParam) {
-      return c.json({ error: "Topic is required" }, 400);
+    if (!subjectParam || !topicParam) {
+      return c.json({ error: "subject and topic are required" }, 400);
     }
 
+    const subject = subjectParam as Subject;
     const topic = decodeURIComponent(topicParam);
 
     const result = await seedFormulasForTopic(subject, topic);

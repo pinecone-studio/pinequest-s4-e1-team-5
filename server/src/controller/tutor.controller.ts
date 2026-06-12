@@ -43,6 +43,7 @@ export async function solveTutorController(c: Context) {
     return c.json(
       {
         error: "Tutor solve request failed",
+        stage: "solve",
       },
       500
     );

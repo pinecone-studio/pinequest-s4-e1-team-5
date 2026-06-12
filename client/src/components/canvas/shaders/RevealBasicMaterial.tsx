@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { extend } from '@react-three/fiber';
-
 class RevealBasicMaterial extends THREE.MeshBasicMaterial {
   constructor(params = {}) {
     super(params);

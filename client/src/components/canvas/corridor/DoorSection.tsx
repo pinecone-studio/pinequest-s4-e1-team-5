@@ -21,25 +21,23 @@ const DOOR_AUDIO_SETTINGS = {
   rolloff: 2,
   closeDelay: 0.5
 };
-
 const WALL_DX = WALL_X_OUTER - WALL_X_INNER;
 const WALL_DZ = DOOR_Z_SPAN;
 const WALL_LENGTH = Math.sqrt(WALL_DX * WALL_DX + WALL_DZ * WALL_DZ);
 const BASE_WALL_ANGLE = Math.atan2(WALL_DX, WALL_DZ);
 const DOOR_LOOK_ANGLE = Math.PI * 0.334;
 const DOOR_ALIGN_X = 1.2;
-
 const DOOR_TEXTURES = {
-  'МАТЕМАТИК': '/textures/corridor/doors/drzwiprojekty.webp',
-  'ХИМИ': '/textures/corridor/doors/drzwisocial.webp',
-  'ФИЗИК': '/textures/corridor/doors/drzwiabout.webp',
-  "ГЕОМЕТР": '/textures/corridor/doors/drzwikontakt.webp'
+  'THE GALLERY': '/textures/corridor/doors/drzwiprojekty.webp',
+  'THE STUDIO': '/textures/corridor/doors/drzwisocial.webp',
+  'THE ABOUT': '/textures/corridor/doors/drzwiabout.webp',
+  "LET'S CONNECT": '/textures/corridor/doors/drzwikontakt.webp'
 };
 const DOOR_PAINTED_TEXTURES = {
-  'МАТЕМАТИК': '/textures/corridor/doors/drzwiprojekty_painted.webp',
-  'ХИМИ': '/textures/corridor/doors/drzwisocial_painted.webp',
-  'ФИЗИК': '/textures/corridor/doors/drzwiabout_painted.webp',
-  "ГЕОМЕТР": '/textures/corridor/doors/drzwikontakt_painted.webp'
+  'THE GALLERY': '/textures/corridor/doors/drzwiprojekty_painted.webp',
+  'THE STUDIO': '/textures/corridor/doors/drzwisocial_painted.webp',
+  'THE ABOUT': '/textures/corridor/doors/drzwiabout_painted.webp',
+  "LET'S CONNECT": '/textures/corridor/doors/drzwikontakt_painted.webp'
 };
 const DoorSection = ({
   position,
@@ -96,13 +94,12 @@ const DoorSection = ({
   const hoverAudioRef = useRef();
   const openAudioRef = useRef();
   const closeAudioRef = useRef();
- 
   const doorId = useMemo(() => {
     if (roomId) return roomId;
-    if (label === 'МАТЕМАТИК') return 'math';
-    if (label === 'ХИМИ') return 'chemistry';
-    if (label === 'ФИЗИК') return 'physic';
-    if (label === "ГЕОМЕТР") return 'geometry';
+    if (label === 'THE GALLERY') return 'gallery';
+    if (label === 'THE STUDIO') return 'studio';
+    if (label === 'THE ABOUT') return 'about';
+    if (label === "LET'S CONNECT") return 'contact';
     return null;
   }, [label, roomId]);
   useEffect(() => {
@@ -158,11 +155,11 @@ const DoorSection = ({
     tex.offset.set(0.5, 0.5);
     return tex;
   }, [originalWallTexture]);
-  const doorTexturePath = DOOR_TEXTURES[label] || DOOR_TEXTURES['МАТЕМАТИК'];
+  const doorTexturePath = DOOR_TEXTURES[label] || DOOR_TEXTURES['THE GALLERY'];
   const doorTexture = useTexture(doorTexturePath);
   const isTouch = isTouchDevice();
   const dummyTex = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-  const doorPaintedTexturePath = DOOR_PAINTED_TEXTURES[label] || DOOR_PAINTED_TEXTURES['МАТЕМАТИК'];
+  const doorPaintedTexturePath = DOOR_PAINTED_TEXTURES[label] || DOOR_PAINTED_TEXTURES['THE GALLERY'];
   const doorPaintedTexture = useTexture(isTouch ? dummyTex : doorPaintedTexturePath);
   const frameTexture = useTexture('/textures/corridor/doors/ramkasingledoors.webp');
   const handleTexture = useTexture('/textures/corridor/doors/klamkadodrzwi.webp');
@@ -192,7 +189,7 @@ const DoorSection = ({
     tex.repeat.set(doorBoardWidth / NATURAL_TILE_W, 1);
     return tex;
   }, [baseboardTexture]);
-  const doorRatio = label === 'ХИМИ' ? 0.388 : 0.376;
+  const doorRatio = label === 'THE STUDIO' ? 0.388 : 0.376;
   const doorHeight = 2.5;
   const doorWidth = doorHeight * doorRatio * 1.12;
   const frameHeight = 2.5;
@@ -360,7 +357,12 @@ const DoorSection = ({
     if (!doorRef.current) return;
     setIsOpen(true);
     const openAngle = side === 'left' ? Math.PI * 0.6 : -Math.PI * 0.6;
-    
+    if (!fastMode && openAudioRef.current) {
+      const vol = isMuted ? 0 : DOOR_AUDIO_SETTINGS.openVolume * globalVolume;
+      openAudioRef.current.setVolume(vol);
+      if (openAudioRef.current.isPlaying) openAudioRef.current.stop();
+      openAudioRef.current.play();
+    }
     const handleDuration = fastMode ? 0.01 : 0.15;
     const doorDuration = fastMode ? 0.01 : 0.7;
     const flyDuration = fastMode ? 0.01 : 1.5;
@@ -504,7 +506,16 @@ const DoorSection = ({
     if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
     if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
     setIsAnimating(true);
-    
+    if (closeAudioRef.current) {
+      setTimeout(() => {
+        const vol = isMuted ? 0 : DOOR_AUDIO_SETTINGS.closeVolume * globalVolume;
+        if (closeAudioRef.current) {
+          closeAudioRef.current.setVolume(vol);
+          if (closeAudioRef.current.isPlaying) closeAudioRef.current.stop();
+          closeAudioRef.current.play();
+        }
+      }, DOOR_AUDIO_SETTINGS.closeDelay * 1000);
+    }
     if (handleRef.current) {
       gsap.to(handleRef.current.rotation, {
         z: 0,
@@ -548,7 +559,14 @@ const DoorSection = ({
     if (isOpen || isAnimating) return;
     setIsHovered(true);
     document.body.style.cursor = "pointer";
-   
+    if (hoverAudioRef.current && !isHovered) {
+      const vol = isMuted ? 0 : DOOR_AUDIO_SETTINGS.hoverVolume * globalVolume;
+      hoverAudioRef.current.setVolume(vol);
+      if (hoverAudioRef.current.isPlaying) hoverAudioRef.current.stop();
+      if (hoverAudioRef.current.context.state === 'running') {
+        hoverAudioRef.current.play();
+      }
+    }
     if (doorRef.current) {
       gsap.to(doorRef.current.rotation, {
         y: side === 'left' ? 0.15 : -0.15,
@@ -689,30 +707,34 @@ const DoorSection = ({
                     {}
                     <group position={[0, doorHeight / 2 + 0.45, 0.08]}>
                         {}
-                        <mesh >
+                        <mesh>
                             {}
                             <planeGeometry args={[1.3, 0.65]} />
-                            <meshBasicMaterial color="#e0e0e0" map={signTexture} transparent={false} alphaTest={0.1} depthWrite={false}  />
+                            <meshBasicMaterial color="#e0e0e0" map={signTexture} transparent={true} alphaTest={0.1} roughness={0.8} />
                         </mesh>
 
                         {}
-                        {label === 'МАТЕМАТИК' && <group position={[0, 0, 0.05]}>
-                               
-                                <Text  font="/fonts/CabinSketch-Bold.ttf" fontSize={0.2} color="#111111" anchorX="center" anchorY="middle" position={[0, +0.02,  0.0]}>
-                                    МАТЕМАТИК
+                        {label === 'THE GALLERY' && <group position={[0, 0, 0.01]}>
+                                <Text font="/fonts/CabinSketch-Bold.ttf" fontSize={0.25} color="#111111" anchorX="center" anchorY="bottom" position={[0, -0.02, 0]}>
+                                    THE
+                                </Text>
+                                <Text font="/fonts/CabinSketch-Bold.ttf" fontSize={0.25} color="#111111" anchorX="center" anchorY="top" position={[0, +0.02, 0]}>
+                                    GALLERY
                                 </Text>
                             </group>}
-                        {label === 'ХИМИ' && <group position={[0, 0, 0.01]}>
-                                
-                                <Text font="/fonts/CabinSketch-Bold.ttf" fontSize={0.25} color="#111111" anchorX="center" anchorY="middle" position={[0, +0.03, 0]}>
-                                    ХИМИ
+                        {label === 'THE STUDIO' && <group position={[0, 0, 0.01]}>
+                                <Text font="/fonts/CabinSketch-Bold.ttf" fontSize={0.25} color="#111111" anchorX="center" anchorY="bottom" position={[0, -0.02, 0]}>
+                                    THE
+                                </Text>
+                                <Text font="/fonts/CabinSketch-Bold.ttf" fontSize={0.25} color="#111111" anchorX="center" anchorY="top" position={[0, +0.03, 0]}>
+                                    STUDIO
                                 </Text>
                             </group>}
-                        {label === 'ФИЗИК' && <Text font="/fonts/CabinSketch-Bold.ttf" fontSize={0.30} color="#111111" anchorX="center" anchorY="middle" position={[0, 0, 0.01]}>
-                                ФИЗИК
+                        {label === 'THE ABOUT' && <Text font="/fonts/CabinSketch-Bold.ttf" fontSize={0.30} color="#111111" anchorX="center" anchorY="middle" position={[0, 0, 0.01]}>
+                                ABOUT
                             </Text>}
-                        {label === "ГЕОМЕТР" && <Text font="/fonts/CabinSketch-Bold.ttf" fontSize={0.25} color="#111111" anchorX="center" anchorY="middle" position={[0, 0, 0.01]}>
-                                ГЕОМЕТР
+                        {label === "LET'S CONNECT" && <Text font="/fonts/CabinSketch-Bold.ttf" fontSize={0.25} color="#111111" anchorX="center" anchorY="middle" position={[0, 0, 0.01]}>
+                                CONTACT
                             </Text>}
                     </group>
 
@@ -737,13 +759,13 @@ const DoorSection = ({
                         </mesh>
 
                         {}
-                        <mesh ref={doorPaintedRef} position={[doorMeshX, -0.2, -0.001]} scale={[side === 'right' && label !== 'ХИМИ' ? -1 : 1, 1, 1]}>
+                        <mesh ref={doorPaintedRef} position={[doorMeshX, -0.2, -0.001]} scale={[side === 'right' && label !== 'THE STUDIO' ? -1 : 1, 1, 1]}>
                             <planeGeometry args={[doorWidth, doorHeight]} />
                             <meshBasicMaterial color="#e0e0e0" map={doorPaintedTexture} transparent={true} alphaTest={0.5} roughness={0.8} />
                         </mesh>
 
                         {}
-                        <mesh position={[doorMeshX, -0.2, 0]} scale={[side === 'right' && label !== 'ХИМИ' ? -1 : 1, 1, 1]}>
+                        <mesh position={[doorMeshX, -0.2, 0]} scale={[side === 'right' && label !== 'THE STUDIO' ? -1 : 1, 1, 1]}>
                             <planeGeometry args={[doorWidth, doorHeight]} />
                             <revealMaterial color="#e0e0e0" ref={doorMaterialRef} map={doorTexture} transparent={true} alphaTest={0.1} roughness={0.8} uProgress={0.0} />
                         </mesh>
@@ -771,9 +793,9 @@ const DoorSection = ({
                 </group>
 
                 {}
-                {/* <PositionalAudio ref={hoverAudioRef} url="/sounds/uchyleniedrzwi.mp3" distanceModel="exponential" rolloffFactor={DOOR_AUDIO_SETTINGS.rolloff} refDistance={DOOR_AUDIO_SETTINGS.distance} loop={false} />
+                <PositionalAudio ref={hoverAudioRef} url="/sounds/uchyleniedrzwi.mp3" distanceModel="exponential" rolloffFactor={DOOR_AUDIO_SETTINGS.rolloff} refDistance={DOOR_AUDIO_SETTINGS.distance} loop={false} />
                 <PositionalAudio ref={openAudioRef} url="/sounds/otwarciedrzwi.mp3" distanceModel="exponential" rolloffFactor={DOOR_AUDIO_SETTINGS.rolloff} refDistance={DOOR_AUDIO_SETTINGS.distance} loop={false} />
-                <PositionalAudio ref={closeAudioRef} url="/sounds/zamknieciedrzwi.mp3" distanceModel="exponential" rolloffFactor={DOOR_AUDIO_SETTINGS.rolloff} refDistance={DOOR_AUDIO_SETTINGS.distance} loop={false} /> */}
+                <PositionalAudio ref={closeAudioRef} url="/sounds/zamknieciedrzwi.mp3" distanceModel="exponential" rolloffFactor={DOOR_AUDIO_SETTINGS.rolloff} refDistance={DOOR_AUDIO_SETTINGS.distance} loop={false} />
             </group>
         </group>;
 };
