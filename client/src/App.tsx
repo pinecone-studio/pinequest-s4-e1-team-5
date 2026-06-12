@@ -21,6 +21,7 @@ posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
 const Experience = lazy(() => import('./components/canvas/Experience'));
 const MathApp = lazy(() => import('./components/canvas/rooms/Mathematic/App'));
 const PhysicApp = lazy(() => import('./components/canvas/rooms/Physics/PhysicApp'));
+const GeometryApp = lazy(() => import('./components/canvas/rooms/Geometry/GeometryApp'));
 import './styles/main.scss';
 import { ENTRANCE_TEXTURES, CORRIDOR_TEXTURES, UI_TEXTURES, PRELOAD_ALL, PRELOAD_LOADER, ABOUT_TEXTURES, IMAGE_ASSETS, filterTexturesByDevice } from './config/texturePreloadList';
 import { TextureLoader } from 'three';
@@ -117,6 +118,22 @@ const PhysicRoomOverlay = () => {
       </Suspense>
     </div>;
 };
+const GeometryRoomOverlay = () => {
+  const {
+    currentRoom
+  } = useScene();
+  if (currentRoom !== 'geometry') return null;
+  return <div style={{
+    position: 'fixed',
+    inset: 0,
+    zIndex: 40,
+    background: '#1a1428'
+  }}>
+      <Suspense fallback={null}>
+        <GeometryApp />
+      </Suspense>
+    </div>;
+};
 function AppContent() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [sceneReady, setSceneReady] = useState(false);
@@ -174,6 +191,7 @@ function AppContent() {
               <PaperTransition />
               <MathRoomOverlay />
               <PhysicRoomOverlay />
+              <GeometryRoomOverlay />
               <ScreenReaderOverlay />
             </>}
 
