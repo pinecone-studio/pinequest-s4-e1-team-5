@@ -2,10 +2,10 @@ import { memo, useEffect, useRef } from 'react';
 import { useThree } from '@react-three/fiber';
 import { useScene } from '../../../context/SceneContext';
 const DOOR_POSITIONS_Z = {
-  'math': -6,
-  'chemistry': -20,
-  'physic': -36,
-  'geometry': -50
+  'gallery': -6,
+  'studio': -20,
+  'about': -36,
+  'contact': -50
 };
 const TeleportRoom = memo(() => {
   const {

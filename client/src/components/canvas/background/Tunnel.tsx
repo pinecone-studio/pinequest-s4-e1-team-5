@@ -2,8 +2,6 @@ import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useTexture } from '@react-three/drei';
 import * as THREE from 'three';
-
-
 const Tunnel = ({
   parallax = {
     x: 0,
