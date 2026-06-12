@@ -6,6 +6,7 @@ import DoorSection from "./DoorSection";
 import SegmentDoors from "./SegmentDoors";
 import Avatar from "./Avatar";
 import HeroText from "./HeroText";
+import CorridorDecorations from "./CorridorDecorations";
 
 const SEGMENT_LENGTH = 80;
 const WALL_X_OUTER = 3.5;
@@ -104,6 +105,9 @@ const CorridorSegment = ({
           #{segmentIndex}
         </Text>
       </group>
+
+      {}
+      <CorridorDecorations zOffset={zOffset} />
 
       {}
       {}
