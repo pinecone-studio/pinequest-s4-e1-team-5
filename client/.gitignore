@@ -1,0 +1,8 @@
+node_modules
+dist
+.next
+.env
+.env.local
+.DS_Store
+_backup_next_client_before_portfolio
+EOF
