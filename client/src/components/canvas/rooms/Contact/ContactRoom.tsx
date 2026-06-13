@@ -1,68 +1,52 @@
-import { useRef, useState, useEffect, useCallback } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
-import { Text, PositionalAudio } from '@react-three/drei';
-import * as THREE from 'three';
-import gsap from 'gsap';
-import MessagePaper from './MessagePaper';
-import SocialBarrel from './SocialBarrel';
-import { useScene } from '../../../../context/SceneContext';
-import GalleryClouds from '../Gallery/GalleryClouds';
-import { useAchievements } from '../../../../context/AchievementsContext';
-import { useAudio } from '../../../../context/AudioManager';
-import { useTexture } from '@react-three/drei';
-import { usePaintMaterial } from '../Gallery/usePaintMaterial';
+import { useRef, useState, useEffect, useCallback } from "react";
+import { useFrame, useThree } from "@react-three/fiber";
+import { Text, PositionalAudio } from "@react-three/drei";
+import * as THREE from "three";
+import gsap from "gsap";
+import MessagePaper from "./MessagePaper";
+import SocialBarrel from "./SocialBarrel";
+import { useScene } from "../../../../context/SceneContext";
+import GalleryClouds from "../Gallery/GalleryClouds";
+import { useAchievements } from "../../../../context/AchievementsContext";
+import { useAudio } from "../../../../context/AudioManager";
+import { useTexture } from "@react-three/drei";
+import { usePaintMaterial } from "../Gallery/usePaintMaterial";
 const WAVE_LAYERS = 4;
 export const AUDIO_SETTINGS = {
   volume: 2,
   distance: 2,
-  rolloff: 1.2
+  rolloff: 1.2,
 };
 export const LATARNIA_SETTINGS = {
   position: [-10, 5, -20],
   rotation: [0, 0.1, 0],
-  scale: [4.49, 5]
+  scale: [4.49, 5],
 };
 export const STATEK_SETTINGS = {
   position: [0, 1.6, -15],
   rotation: [0, -0.2, 0],
-  scale: [3.35, 1.3]
+  scale: [3.35, 1.3],
 };
 const CAMERA_SETTINGS = {
   lookDownAngle: -1.2,
   forceCenterY: -1.05,
   forceStraightZ: 0,
-  lerpSpeed: 2.5
+  lerpSpeed: 2.5,
 };
 const PHASE = {
-  ENTERING: 'entering',
-  LOOKING_DOWN: 'looking_down',
-  WRITING: 'writing',
-  ROLLING: 'rolling',
-  HOLDING: 'holding',
-  THROWING: 'throwing',
-  DONE: 'done'
+  ENTERING: "entering",
+  LOOKING_DOWN: "looking_down",
+  WRITING: "writing",
+  ROLLING: "rolling",
+  HOLDING: "holding",
+  THROWING: "throwing",
+  DONE: "done",
 };
-const ContactRoom = ({
-  showRoom,
-  onReady,
-  isExiting,
-  isWarmup
-}) => {
-  const {
-    camera
-  } = useThree();
-  const {
-    isTeleporting
-  } = useScene();
-  const {
-    showTutorial,
-    unlockAchievement,
-    hidePopup
-  } = useAchievements();
-  const {
-    globalVolume,
-    isMuted
-  } = useAudio();
+const ContactRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
+  const { camera } = useThree();
+  const { isTeleporting } = useScene();
+  const { showTutorial, unlockAchievement, hidePopup } = useAchievements();
+  const { globalVolume, isMuted } = useAudio();
   const effectiveVolume = isMuted ? 0 : AUDIO_SETTINGS.volume * globalVolume;
   const audioRef = useRef();
   useEffect(() => {
@@ -94,9 +78,9 @@ const ContactRoom = ({
     }
   }, [seaTexture, moloTexture]);
   useEffect(() => {
-    camera.rotation.reorder('YXZ');
+    camera.rotation.reorder("YXZ");
     return () => {
-      camera.rotation.reorder('XYZ');
+      camera.rotation.reorder("XYZ");
     };
   }, [camera]);
   const groupRef = useRef();
@@ -105,14 +89,14 @@ const ContactRoom = ({
     animatePaint,
     resetPaint,
     uniformsData,
-    updateRoomOrigin
+    updateRoomOrigin,
   } = usePaintMaterial({
     dirX: 1.0,
     dirY: 0.0,
     dirZ: -0.1,
     startDist: -5.0,
     endDist: 55.0,
-    noiseAxes: 'yz'
+    noiseAxes: "yz",
   });
   const [isTransitioning, setIsTransitioning] = useState(false);
   const wasTeleportedRef = useRef(false);
@@ -163,7 +147,8 @@ const ContactRoom = ({
     }
   }, [isTeleporting]);
   useEffect(() => {
-    if (hasSignaledReady.current && !hasAnimatedDown.current && showRoom) {}
+    if (hasSignaledReady.current && !hasAnimatedDown.current && showRoom) {
+    }
     if (!showRoom) {
       hasExitTriggered.current = false;
       if (hasAnimatedDown.current) {
@@ -201,15 +186,27 @@ const ContactRoom = ({
       if (frameCount.current >= FRAMES_TO_WAIT) {
         hasSignaledReady.current = true;
         onReady?.();
-        if (!isWarmup) setTimeout(() => showTutorial('contact_submit'), 2000);
+        if (!isWarmup) setTimeout(() => showTutorial("contact_submit"), 2000);
       }
     }
     if (hasAnimatedDown.current && !isExiting && !hasExitTriggered.current) {
       const safeDelta = Math.min(delta, 0.033);
       const lerpSpeed = safeDelta * CAMERA_SETTINGS.lerpSpeed;
-      camera.rotation.x = THREE.MathUtils.lerp(camera.rotation.x, targetRotX.current, lerpSpeed);
-      camera.rotation.y = THREE.MathUtils.lerp(camera.rotation.y, targetRotY.current, lerpSpeed);
-      camera.rotation.z = THREE.MathUtils.lerp(camera.rotation.z, targetRotZ.current, lerpSpeed);
+      camera.rotation.x = THREE.MathUtils.lerp(
+        camera.rotation.x,
+        targetRotX.current,
+        lerpSpeed,
+      );
+      camera.rotation.y = THREE.MathUtils.lerp(
+        camera.rotation.y,
+        targetRotY.current,
+        lerpSpeed,
+      );
+      camera.rotation.z = THREE.MathUtils.lerp(
+        camera.rotation.z,
+        targetRotZ.current,
+        lerpSpeed,
+      );
     }
     const time = state.clock.getElapsedTime();
     waveRefs.current.forEach((ref, i) => {
@@ -223,12 +220,16 @@ const ContactRoom = ({
     if (statekRef.current) {
       const bobSpeed = 0.8;
       const bobAmplitude = 0.3;
-      statekRef.current.position.y = STATEK_SETTINGS.position[1] + Math.sin(time * bobSpeed) * bobAmplitude;
+      statekRef.current.position.y =
+        STATEK_SETTINGS.position[1] + Math.sin(time * bobSpeed) * bobAmplitude;
       const sailSpeed = 0.04;
       const sailAmplitude = 12;
-      statekRef.current.position.x = STATEK_SETTINGS.position[0] + Math.sin(time * sailSpeed) * sailAmplitude;
+      statekRef.current.position.x =
+        STATEK_SETTINGS.position[0] +
+        Math.sin(time * sailSpeed) * sailAmplitude;
       const rollAmplitude = 0.05;
-      statekRef.current.rotation.z = Math.sin(time * bobSpeed * 1.2) * rollAmplitude;
+      statekRef.current.rotation.z =
+        Math.sin(time * bobSpeed * 1.2) * rollAmplitude;
     }
   });
   const [isMobile, setIsMobile] = useState(false);
@@ -237,65 +238,152 @@ const ContactRoom = ({
       setIsMobile(window.innerWidth < 1000);
     };
     checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
-  return <group ref={groupRef} position={[0, -0.7, -5]}>
-            {!isWarmup && <PositionalAudio ref={audioRef} url="/sounds/szummorza.mp3" distanceModel="exponential" refDistance={AUDIO_SETTINGS.distance} rolloffFactor={AUDIO_SETTINGS.rolloff} loop autoplay volume={effectiveVolume} />}
+  return (
+    <group ref={groupRef} position={[0, -0.7, -5]}>
+      {!isWarmup && (
+        <PositionalAudio
+          ref={audioRef}
+          url="/sounds/szummorza.mp3"
+          distanceModel="exponential"
+          refDistance={AUDIO_SETTINGS.distance}
+          rolloffFactor={AUDIO_SETTINGS.rolloff}
+          loop
+          autoplay
+          volume={effectiveVolume}
+        />
+      )}
 
-            {}
-            <GalleryClouds count={45} seed={88} rotationOffset={[0, 1, 0]} />
+      {}
+      <GalleryClouds count={45} seed={88} rotationOffset={[0, 1, 0]} />
 
-            {}
-            <group position={[0, -1, -8]}>
-                {Array.from({
-        length: WAVE_LAYERS
-      }).map((_, i) => <mesh key={i} ref={el => waveRefs.current[i] = el} position={[0, -i * 0.1, -i * 8]} rotation={[-Math.PI / 2.5, 0, 0]}>
-                        <planeGeometry args={[80, 30]} />
-                        <meshBasicMaterial map={seaTexture} color="#ffffff" transparent={true} opacity={1 - i * 0.1} side={THREE.DoubleSide} toneMapped={false} onBeforeCompile={onBeforeCompile} />
-                    </mesh>)}
-            </group>
+      {}
+      <group position={[0, -1, -8]}>
+        {Array.from({
+          length: WAVE_LAYERS,
+        }).map((_, i) => (
+          <mesh
+            key={i}
+            ref={(el) => (waveRefs.current[i] = el)}
+            position={[0, -i * 0.1, -i * 8]}
+            rotation={[-Math.PI / 2.5, 0, 0]}
+          >
+            <planeGeometry args={[80, 30]} />
+            <meshBasicMaterial
+              map={seaTexture}
+              color="#ffffff"
+              transparent={true}
+              opacity={1 - i * 0.1}
+              side={THREE.DoubleSide}
+              toneMapped={false}
+              onBeforeCompile={onBeforeCompile}
+            />
+          </mesh>
+        ))}
+      </group>
 
-            {}
-            {}
-            <SocialBarrel position={isMobile ? [-1.2, 0.5, -10] : [-3, 0.5, -10]} rotation={[0, 0.2, 0]} texturePath="/textures/contact/beczka.webp" label="LINKEDIN" onClick={() => window.open('https://www.linkedin.com/in/tomasz-szmajda-259337305/', '_blank')} paintOnBeforeCompile={onBeforeCompile} paintUniforms={uniformsData} />
-            {}
-            <SocialBarrel position={isMobile ? [-1.5, -0.3, -7] : [-5, -0.3, -8]} rotation={[0, 0.3, 0]} texturePath="/textures/contact/beczka.webp" label="GITHUB" onClick={() => window.open('https://github.com/ITomPoland', '_blank')} paintOnBeforeCompile={onBeforeCompile} paintUniforms={uniformsData} />
-            {}
-            <SocialBarrel position={isMobile ? [1.2, 0.5, -10] : [3, 0.5, -10]} rotation={[0, -0.2, 0]} texturePath="/textures/contact/beczka.webp" label="FACEBOOK" onClick={() => window.open('https://www.facebook.com/tomasz.szmajda.58/', '_blank')} paintOnBeforeCompile={onBeforeCompile} paintUniforms={uniformsData} />
-            {}
-            <SocialBarrel position={isMobile ? [1.5, -0.3, -7] : [5, -0.3, -8]} rotation={[0, -0.3, 0]} texturePath="/textures/contact/beczka.webp" label="INSTAGRAM" onClick={() => window.open('https://www.instagram.com/itom.dev/', '_blank')} paintOnBeforeCompile={onBeforeCompile} paintUniforms={uniformsData} />
-            {}
-            <SocialBarrel position={isMobile ? [0, -0.7, -6] : [0, -0.7, -7]} rotation={[0, 0, 0]} texturePath="/textures/contact/beczka.webp" label="MESSAGE" onClick={handleMailSelect} paintOnBeforeCompile={onBeforeCompile} paintUniforms={uniformsData} />
+      {}
 
+      {}
 
-            {}
-            <mesh position={[0, 0.05, 1.8]} rotation={[-Math.PI / 2, 0, 0]}>
-                <planeGeometry args={[2.5, 7]} />
-                <meshBasicMaterial map={moloTexture} color="#e0e0e0" roughness={0.8} side={THREE.DoubleSide} transparent onBeforeCompile={onBeforeCompile} />
-            </mesh>
+      {}
+      <SocialBarrel
+        position={isMobile ? [-1.5, -0.3, -7] : [-5, -0.3, -8]}
+        rotation={[0, 0.3, 0]}
+        texturePath="/textures/contact/beczka.webp"
+        label="INTERACTIVE"
+        // onClick={() => window.open("https://github.com/ITomPoland", "_blank")}
+        paintOnBeforeCompile={onBeforeCompile}
+        paintUniforms={uniformsData}
+      />
+      {}
 
-            {}
-            <mesh position={LATARNIA_SETTINGS.position} rotation={LATARNIA_SETTINGS.rotation}>
-                <planeGeometry args={LATARNIA_SETTINGS.scale} />
-                <meshBasicMaterial color="#e0e0e0" map={latarniaTexture} transparent alphaTest={0.5} side={THREE.DoubleSide} onBeforeCompile={onBeforeCompile} />
-            </mesh>
+      {}
 
-            {}
-            <mesh ref={statekRef} position={STATEK_SETTINGS.position} rotation={STATEK_SETTINGS.rotation}>
-                <planeGeometry args={STATEK_SETTINGS.scale} />
-                <meshBasicMaterial color="#e0e0e0" map={statekTexture} transparent alphaTest={0.5} side={THREE.DoubleSide} onBeforeCompile={onBeforeCompile} />
-            </mesh>
+      <SocialBarrel
+        position={isMobile ? [1.5, -0.3, -7] : [5, -0.3, -8]}
+        rotation={[0, -0.3, 0]}
+        texturePath="/textures/contact/beczka.webp"
+        label="AI QUIZ"
+        // onClick={() =>
+        //   window.open("https://www.instagram.com/itom.dev/", "_blank")
+        // }
+        paintOnBeforeCompile={onBeforeCompile}
+        paintUniforms={uniformsData}
+      />
 
-            {}
-            {}
-            <group visible={!showSelection}>
-                <MessagePaper position={[0, 0.07, 2]} onSend={data => {
-        unlockAchievement('contact_submit');
-      }} />
-            </group>
+      {}
 
+      <SocialBarrel
+        position={isMobile ? [0, -0.7, -6] : [0, -0.7, -7]}
+        rotation={[0, 0, 0]}
+        texturePath="/textures/contact/beczka.webp"
+        label="TOMYO"
+        // onClick={handleMailSelect}
+        paintOnBeforeCompile={onBeforeCompile}
+        paintUniforms={uniformsData}
+      />
 
-        </group>;
+      {}
+      <mesh position={[0, 0.05, 1.8]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[2.5, 7]} />
+        <meshBasicMaterial
+          map={moloTexture}
+          color="#e0e0e0"
+          roughness={0.8}
+          side={THREE.DoubleSide}
+          transparent
+          onBeforeCompile={onBeforeCompile}
+        />
+      </mesh>
+
+      {}
+
+      <mesh
+        position={LATARNIA_SETTINGS.position}
+        rotation={LATARNIA_SETTINGS.rotation}
+      >
+        <planeGeometry args={LATARNIA_SETTINGS.scale} />
+        <meshBasicMaterial
+          color="#e0e0e0"
+          map={latarniaTexture}
+          transparent
+          alphaTest={0.5}
+          side={THREE.DoubleSide}
+          onBeforeCompile={onBeforeCompile}
+        />
+      </mesh>
+
+      {}
+      <mesh
+        ref={statekRef}
+        position={STATEK_SETTINGS.position}
+        rotation={STATEK_SETTINGS.rotation}
+      >
+        <planeGeometry args={STATEK_SETTINGS.scale} />
+        <meshBasicMaterial
+          color="#e0e0e0"
+          map={statekTexture}
+          transparent
+          alphaTest={0.5}
+          side={THREE.DoubleSide}
+          onBeforeCompile={onBeforeCompile}
+        />
+      </mesh>
+
+      {}
+      {}
+      <group visible={!showSelection}>
+        <MessagePaper
+          position={[0, 0.07, 2]}
+          onSend={(data) => {
+            unlockAchievement("contact_submit");
+          }}
+        />
+      </group>
+    </group>
+  );
 };
 export default ContactRoom;
