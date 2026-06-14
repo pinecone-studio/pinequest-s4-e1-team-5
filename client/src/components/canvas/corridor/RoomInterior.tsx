@@ -71,7 +71,7 @@ const RoomInterior = memo(({
         side: THREE.DoubleSide
       }),
       corridorWallL: new THREE.MeshBasicMaterial({
-        color: '#e0e0e0',
+        color: '#F5F5DC',
         map: wallTexL,
         side: THREE.DoubleSide
       }),
@@ -136,9 +136,9 @@ const RoomInterior = memo(({
     roomBackWall: new THREE.PlaneGeometry(roomWidth, roomHeight)
   }), []);
 
-  const isMath = label === 'МАТЕМАТИК';
+  const isMath = label === 'MATHS';
   useEffect(() => {
-    if (showRoom && !['МАТЕМАТИК', 'ХИМИ', 'ФИЗИК', "ГЕОМЕТР"].includes(label)) {
+    if (showRoom && !['MATHS', 'CHEMISTRY', 'PHYSICS', "GEOMETRY"].includes(label)) {
       onReady?.();
     }
   }, [showRoom, label, onReady]);
@@ -171,15 +171,15 @@ const RoomInterior = memo(({
                             <Suspense fallback={null}>
                                 <MathRoom showRoom={showRoom} onReady={onReady} isExiting={isExiting} />
                             </Suspense>
-                        </group> : label === 'ХИМИ' ? <group position={[0, -0.5, -corridorDepth]}>
+                        </group> : label === 'CHEMISTRY' ? <group position={[0, -0.5, -corridorDepth]}>
                             <Suspense fallback={null}>
                                 <ChemistryRoom showRoom={showRoom} onReady={onReady} isExiting={isExiting} />
                             </Suspense>
-                        </group> : label === 'ФИЗИК' ? <group position={[0, -0.5, -corridorDepth]}>
+                        </group> : label === 'PHYSICS' ? <group position={[0, -0.5, -corridorDepth]}>
                             <Suspense fallback={null}>
                                 <PhysicRoom showRoom={showRoom} onReady={onReady} isExiting={isExiting} />
                             </Suspense>
-                        </group> : label === "ГЕОМЕТР" ? <group position={[0, -0.5, -corridorDepth]}>
+                        </group> : label === "GEOMETRY" ? <group position={[0, -0.5, -corridorDepth]}>
                             <Suspense fallback={null}>
                                 <GeometryRoom showRoom={showRoom} onReady={onReady} isExiting={isExiting} />
                             </Suspense>

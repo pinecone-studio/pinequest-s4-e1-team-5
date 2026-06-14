@@ -24,7 +24,7 @@ const SignSystem = props => {
             {}
             <mesh position={[-0.05, 2.05, 0.65]}>
                 <planeGeometry args={[2.7, 0.4]} />
-                <meshBasicMaterial color="#A67C52" map={mountTexture} transparent={true} side={THREE.DoubleSide} />
+                <meshBasicMaterial color="#D2B48C" map={mountTexture} transparent={true} side={THREE.DoubleSide} />
             </mesh>
 
             {}
@@ -35,7 +35,7 @@ const SignSystem = props => {
                 <mesh position={[0, -0.4, 0]}>
                     {}
                     <planeGeometry args={[2, 1]} />
-                    <meshBasicMaterial color="#A67C52" map={signTexture} transparent={true} side={THREE.DoubleSide} depthWrite={false} />
+                    <meshBasicMaterial color="#D2B48C" map={signTexture} transparent={true} side={THREE.DoubleSide} depthWrite={false} />
                 </mesh>
             </group>
         </group>;

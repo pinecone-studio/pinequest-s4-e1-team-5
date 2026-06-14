@@ -14,13 +14,13 @@ const PaperBackground = () => {
             {}
             <mesh position={[0, 0, -8]}>
                 <planeGeometry args={[25, 18]} />
-                <meshBasicMaterial map={paperTexture} color="#fafafa" roughness={1} metalness={0} />
+                <meshStandardMaterial map={paperTexture} color="#0a0a0c" roughness={0.8} metalness={0} />
             </mesh>
 
             {}
             <mesh position={[0, -2.5, -2]} rotation={[-Math.PI / 2.5, 0, 0]}>
                 <planeGeometry args={[20, 15]} />
-                <meshBasicMaterial color="#f5f5f5" roughness={1} metalness={0} transparent opacity={0.9} />
+                <meshStandardMaterial color="#1a1c22" roughness={1} metalness={0} metalness={0.8} transparent opacity={0.9} />
             </mesh>
 
             {}

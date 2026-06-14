@@ -4,7 +4,7 @@ import { useScene } from '../../../context/SceneContext';
 const DOOR_POSITIONS_Z = {
   'math': -6,
   'chemistry': -20,
-  'physic': -36,
+  'physics': -36,
   'geometry': -50
 };
 const TeleportRoom = memo(() => {

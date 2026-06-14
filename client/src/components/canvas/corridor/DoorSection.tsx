@@ -30,16 +30,16 @@ const DOOR_LOOK_ANGLE = Math.PI * 0.334;
 const DOOR_ALIGN_X = 1.2;
 
 const DOOR_TEXTURES = {
-  'МАТЕМАТИК': '/textures/corridor/doors/drzwiprojekty.webp',
-  'ХИМИ': '/textures/corridor/doors/drzwisocial.webp',
-  'ФИЗИК': '/textures/corridor/doors/drzwiabout.webp',
-  "ГЕОМЕТР": '/textures/corridor/doors/drzwikontakt.webp'
+  'MATHS': '/textures/corridor/doors/math_door.png',
+  'CHEMISTRY': '/textures/corridor/doors/chemistry_door.png',
+  'PHYSICS': '/textures/corridor/doors/physics_door.png',
+  "GEOMETRY": '/textures/corridor/doors/Geometry_door.png'
 };
 const DOOR_PAINTED_TEXTURES = {
-  'МАТЕМАТИК': '/textures/corridor/doors/drzwiprojekty_painted.webp',
-  'ХИМИ': '/textures/corridor/doors/drzwisocial_painted.webp',
-  'ФИЗИК': '/textures/corridor/doors/drzwiabout_painted.webp',
-  "ГЕОМЕТР": '/textures/corridor/doors/drzwikontakt_painted.webp'
+  'MATHS': '/textures/corridor/doors/math_door.png',
+  'CHEMISTRY': '/textures/corridor/doors/chemistry_door.png',
+  'PHYSICS': '/textures/corridor/doors/physics_door.png',
+  "GEOMETRY": '/textures/corridor/doors/Geometry_door.png'
 };
 const DoorSection = ({
   position,
@@ -99,10 +99,10 @@ const DoorSection = ({
  
   const doorId = useMemo(() => {
     if (roomId) return roomId;
-    if (label === 'МАТЕМАТИК') return 'math';
-    if (label === 'ХИМИ') return 'chemistry';
-    if (label === 'ФИЗИК') return 'physic';
-    if (label === "ГЕОМЕТР") return 'geometry';
+    if (label === 'MATHS') return 'math';
+    if (label === 'CHEMISTRY') return 'chemistry';
+    if (label === 'PHYSICS') return 'physics';
+    if (label === "GEOMETRY") return 'geometry';
     return null;
   }, [label, roomId]);
   useEffect(() => {
@@ -158,11 +158,11 @@ const DoorSection = ({
     tex.offset.set(0.5, 0.5);
     return tex;
   }, [originalWallTexture]);
-  const doorTexturePath = DOOR_TEXTURES[label] || DOOR_TEXTURES['МАТЕМАТИК'];
+  const doorTexturePath = DOOR_TEXTURES[label] || DOOR_TEXTURES['MATHS'];
   const doorTexture = useTexture(doorTexturePath);
   const isTouch = isTouchDevice();
   const dummyTex = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-  const doorPaintedTexturePath = DOOR_PAINTED_TEXTURES[label] || DOOR_PAINTED_TEXTURES['МАТЕМАТИК'];
+  const doorPaintedTexturePath = DOOR_PAINTED_TEXTURES[label] || DOOR_PAINTED_TEXTURES['MATHS'];
   const doorPaintedTexture = useTexture(isTouch ? dummyTex : doorPaintedTexturePath);
   const frameTexture = useTexture('/textures/corridor/doors/ramkasingledoors.webp');
   const handleTexture = useTexture('/textures/corridor/doors/klamkadodrzwi.webp');
@@ -192,7 +192,7 @@ const DoorSection = ({
     tex.repeat.set(doorBoardWidth / NATURAL_TILE_W, 1);
     return tex;
   }, [baseboardTexture]);
-  const doorRatio = label === 'ХИМИ' ? 0.388 : 0.376;
+  const doorRatio = label === 'CHEMISTRY' ? 0.388 : 0.376;
   const doorHeight = 2.5;
   const doorWidth = doorHeight * doorRatio * 1.12;
   const frameHeight = 2.5;
@@ -638,7 +638,7 @@ const DoorSection = ({
             <group ref={groupRef}>
                 {}
                 <mesh position={[wallOffsetX, 0, 0]} geometry={wallWithHoleGeometry}>
-                    <meshBasicMaterial color="#e0e0e0" map={wallTexture} roughness={1} metalness={0} side={THREE.DoubleSide} />
+                    <meshBasicMaterial color="#F5F5DC" map={wallTexture} roughness={1} metalness={0} side={THREE.DoubleSide} />
                 </mesh>
 
                 {}
@@ -680,7 +680,7 @@ const DoorSection = ({
         threshTex.repeat.set(THRESH_W / NATURAL_TILE_W, 1);
         return <mesh position={[wallOffsetX, -CORRIDOR_HEIGHT / 2 + 0.005, 0.02]} rotation={[-Math.PI / 2, 0, 0]}>
                             <planeGeometry args={[THRESH_W, THRESH_D]} />
-                            <meshBasicMaterial color="#e0e0e0" map={threshTex} roughness={0.9} metalness={0} side={THREE.DoubleSide} />
+                            <meshBasicMaterial color="#C19A6B" map={threshTex} roughness={0.9} metalness={0} side={THREE.DoubleSide} />
                         </mesh>;
       })()}
 
@@ -692,27 +692,27 @@ const DoorSection = ({
                         <mesh >
                             {}
                             <planeGeometry args={[1.3, 0.65]} />
-                            <meshBasicMaterial color="#e0e0e0" map={signTexture} transparent={false} alphaTest={0.1} depthWrite={false}  />
+                            <meshBasicMaterial color="#C19A6B" map={signTexture} transparent={false} alphaTest={0.1} depthWrite={false}  />
                         </mesh>
 
                         {}
-                        {label === 'МАТЕМАТИК' && <group position={[0, 0, 0.05]}>
+                        {label === 'MATHS' && <group position={[0, 0, 0.05]}>
                                
                                 <Text  font="/fonts/CabinSketch-Bold.ttf" fontSize={0.2} color="#111111" anchorX="center" anchorY="middle" position={[0, +0.02,  0.0]}>
-                                    МАТЕМАТИК
+                                    MATHS
                                 </Text>
                             </group>}
-                        {label === 'ХИМИ' && <group position={[0, 0, 0.01]}>
+                        {label === 'CHEMISTRY' && <group position={[0, 0, 0.01]}>
                                 
                                 <Text font="/fonts/CabinSketch-Bold.ttf" fontSize={0.25} color="#111111" anchorX="center" anchorY="middle" position={[0, +0.03, 0]}>
-                                    ХИМИ
+                                    CHEMISTRY
                                 </Text>
                             </group>}
-                        {label === 'ФИЗИК' && <Text font="/fonts/CabinSketch-Bold.ttf" fontSize={0.30} color="#111111" anchorX="center" anchorY="middle" position={[0, 0, 0.01]}>
-                                ФИЗИК
+                        {label === 'PHYSICS' && <Text font="/fonts/CabinSketch-Bold.ttf" fontSize={0.30} color="#111111" anchorX="center" anchorY="middle" position={[0, 0, 0.01]}>
+                                PHYSICS
                             </Text>}
-                        {label === "ГЕОМЕТР" && <Text font="/fonts/CabinSketch-Bold.ttf" fontSize={0.25} color="#111111" anchorX="center" anchorY="middle" position={[0, 0, 0.01]}>
-                                ГЕОМЕТР
+                        {label === "GEOMETRY" && <Text font="/fonts/CabinSketch-Bold.ttf" fontSize={0.25} color="#111111" anchorX="center" anchorY="middle" position={[0, 0, 0.01]}>
+                                GEOMETRY
                             </Text>}
                     </group>
 
@@ -720,7 +720,7 @@ const DoorSection = ({
                     {}
                     <mesh position={[0, -0.1, 0.04]} scale={[side === 'right' ? -1 : 1, 1, 1]}>
                         <planeGeometry args={[frameWidth, frameHeight]} />
-                        <meshBasicMaterial color="#e0e0e0" map={frameTexture} transparent={true} alphaTest={0.1} roughness={0.9} />
+                        <meshBasicMaterial color="#C19A6B" map={frameTexture} transparent={true} alphaTest={0.1} roughness={0.9} />
                     </mesh>
 
                     {}

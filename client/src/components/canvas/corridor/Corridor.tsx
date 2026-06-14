@@ -16,9 +16,10 @@ const Corridor = ({
   const zOffset = -length / 2 + 5;
   return <group>
             {}
+    
             <mesh position={[0, -corridorHeight / 2, zOffset]} rotation={[-Math.PI / 2, 0, 0]}>
                 <planeGeometry args={[corridorWidth, length]} />
-                <meshBasicMaterial color="#f5f2eb" roughness={1} metalness={0} />
+                <meshStandardMaterial color="#dccab0" roughness={0.9} metalness={0.05}  />
             </mesh>
 
             {}
@@ -69,7 +70,7 @@ const SketchDecorations = ({
             {}
             <mesh position={[-corridorWidth / 2 + 0.01, -corridorHeight / 2 + 0.08, zOffset]} rotation={[0, Math.PI / 2, 0]}>
                 <planeGeometry args={[length, 0.06]} />
-                <meshBasicMaterial color="#ccc" side={2} />
+                <meshBasicMaterial color="#A0522D" side={2} />
             </mesh>
             <mesh position={[corridorWidth / 2 - 0.01, -corridorHeight / 2 + 0.08, zOffset]} rotation={[0, -Math.PI / 2, 0]}>
                 <planeGeometry args={[length, 0.06]} />
