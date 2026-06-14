@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { Text, useTexture, PositionalAudio } from '@react-three/drei';
+import { useTexture, PositionalAudio } from '@react-three/drei';
 import * as THREE from 'three';
 import gsap from 'gsap';
 import RoomInterior from './RoomInterior';
@@ -646,7 +646,13 @@ const DoorSection = ({
   const doorPivotX = side === 'left' ? -doorWidth / 2 : doorWidth / 2;
   const doorMeshX = side === 'left' ? doorWidth / 2 : -doorWidth / 2;
   const handlePivotX = side === 'left' ? doorWidth * 0.25 : -doorWidth * 0.25;
-  const signTextureUrl = '/textures/corridor/pustatabliczka.webp';
+  const SIGN_TEXTURES_MAP = {
+    'THE GALLERY': '/textures/corridor/backups/thegallerysign.webp',
+    'THE STUDIO': '/textures/corridor/backups/thestudiosign.webp',
+    'THE ABOUT': '/textures/corridor/backups/aboutsign.webp',
+    "LET'S CONNECT": '/textures/corridor/backups/contactsign.webp',
+  };
+  const signTextureUrl = SIGN_TEXTURES_MAP[label] || '/textures/corridor/pustatabliczka.webp';
   const signLegacyRatio = 1.792;
   const signHeight = 0.55;
   const signWidth = signHeight * signLegacyRatio;
@@ -713,29 +719,6 @@ const DoorSection = ({
                             <meshBasicMaterial color="#e0e0e0" map={signTexture} transparent={true} alphaTest={0.1} roughness={0.8} />
                         </mesh>
 
-                        {}
-                        {label === 'THE GALLERY' && <group position={[0, 0, 0.01]}>
-                                <Text font="/fonts/CabinSketch-Bold.ttf" fontSize={0.25} color="#111111" anchorX="center" anchorY="bottom" position={[0, -0.02, 0]}>
-                                    THE
-                                </Text>
-                                <Text font="/fonts/CabinSketch-Bold.ttf" fontSize={0.25} color="#111111" anchorX="center" anchorY="top" position={[0, +0.02, 0]}>
-                                    GALLERY
-                                </Text>
-                            </group>}
-                        {label === 'THE STUDIO' && <group position={[0, 0, 0.01]}>
-                                <Text font="/fonts/CabinSketch-Bold.ttf" fontSize={0.25} color="#111111" anchorX="center" anchorY="bottom" position={[0, -0.02, 0]}>
-                                    THE
-                                </Text>
-                                <Text font="/fonts/CabinSketch-Bold.ttf" fontSize={0.25} color="#111111" anchorX="center" anchorY="top" position={[0, +0.03, 0]}>
-                                    STUDIO
-                                </Text>
-                            </group>}
-                        {label === 'THE ABOUT' && <Text font="/fonts/CabinSketch-Bold.ttf" fontSize={0.30} color="#111111" anchorX="center" anchorY="middle" position={[0, 0, 0.01]}>
-                                ABOUT
-                            </Text>}
-                        {label === "LET'S CONNECT" && <Text font="/fonts/CabinSketch-Bold.ttf" fontSize={0.25} color="#111111" anchorX="center" anchorY="middle" position={[0, 0, 0.01]}>
-                                CONTACT
-                            </Text>}
                     </group>
 
                     {}
