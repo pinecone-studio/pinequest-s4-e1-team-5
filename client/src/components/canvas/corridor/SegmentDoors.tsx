@@ -3,14 +3,8 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { useTexture, PositionalAudio } from '@react-three/drei';
 import * as THREE from 'three';
 import gsap from 'gsap';
-import { useAudio } from '../../../context/AudioManager';
-const SEGMENT_DOOR_AUDIO_SETTINGS = {
-  openVolume: 0.15,
-  closeVolume: 0.15,
-  distance: 4,
-  rolloff: 2,
-  closeDelay: 0.5
-};
+
+
 const SegmentDoors = ({
   position = [0, 0, 0],
   corridorHeight = 3.5,
@@ -21,16 +15,12 @@ const SegmentDoors = ({
   const leftHandleRef = useRef();
   const rightHandleRef = useRef();
   const isOpenRef = useRef(false);
-  const openAudioRef = useRef();
-  const closeAudioRef = useRef();
-  const closeAudioTimeoutRef = useRef(null);
+ 
+
   const {
     camera
   } = useThree();
-  const {
-    globalVolume,
-    isMuted
-  } = useAudio();
+ 
   const frameTexture = useTexture('/textures/corridor/doors/frame_sketch.webp');
   const doorLeftTexture = useTexture('/textures/corridor/doors/doorrleft.webp');
   const doorRightTexture = useTexture('/textures/corridor/doors/dorright.webp');
@@ -58,19 +48,15 @@ const SegmentDoors = ({
   const sideWallWidth = (corridorWidth - doorOpeningWidth) / 2;
   const openDistance = 12;
   const closeDistance = 18;
+
   useFrame(() => {
     if (!leftDoorRef.current || !rightDoorRef.current) return;
     const distanceZ = Math.abs(camera.position.z - position[2]);
     const distanceX = Math.abs(camera.position.x - position[0]);
     if (distanceZ < openDistance && distanceX < 0.8 && !isOpenRef.current) {
       isOpenRef.current = true;
-      if (closeAudioTimeoutRef.current) clearTimeout(closeAudioTimeoutRef.current);
-      if (openAudioRef.current) {
-        const vol = isMuted ? 0 : SEGMENT_DOOR_AUDIO_SETTINGS.openVolume * globalVolume;
-        openAudioRef.current.setVolume(vol);
-        if (openAudioRef.current.isPlaying) openAudioRef.current.stop();
-        openAudioRef.current.play();
-      }
+    
+      
       if (leftHandleRef.current) {
         gsap.to(leftHandleRef.current.rotation, {
           z: 0.4,
@@ -99,17 +85,7 @@ const SegmentDoors = ({
       });
     }
     if ((distanceZ > closeDistance || distanceX > 1.5) && isOpenRef.current) {
-      isOpenRef.current = false;
-      if (closeAudioRef.current) {
-        closeAudioTimeoutRef.current = setTimeout(() => {
-          const vol = isMuted ? 0 : SEGMENT_DOOR_AUDIO_SETTINGS.closeVolume * globalVolume;
-          if (closeAudioRef.current) {
-            closeAudioRef.current.setVolume(vol);
-            if (closeAudioRef.current.isPlaying) closeAudioRef.current.stop();
-            closeAudioRef.current.play();
-          }
-        }, SEGMENT_DOOR_AUDIO_SETTINGS.closeDelay * 1000);
-      }
+    
       gsap.to(leftDoorRef.current.rotation, {
         y: 0,
         duration: 0.7,
@@ -139,8 +115,7 @@ const SegmentDoors = ({
     }
   });
   const whileTrueTexture = useTexture('/textures/corridor/decorations/while_true_loop.webp');
-  const coffeeTexture = useTexture('/textures/corridor/decorations/coffee_debug.webp');
-  const ideaTexture = useTexture('/textures/corridor/decorations/idea_process.webp');
+
   return <group position={[position[0], 0, position[2]]}>
             {}
             <mesh position={[-(doorOpeningWidth / 2 + sideWallWidth / 2), wallCenterY, 0]}>
@@ -149,10 +124,6 @@ const SegmentDoors = ({
             </mesh>
             {}
             {}
-            <mesh position={[-(doorOpeningWidth / 2 + sideWallWidth / 2), wallCenterY, 0.07]} rotation={[0, 0, 0.05]}>
-                <planeGeometry args={[1.2, 1.2 / 0.402]} />
-                <meshBasicMaterial color="#e0e0e0" map={ideaTexture} transparent={true} roughness={0.9} alphaTest={0.1} />
-            </mesh>
 
             {}
             <mesh position={[doorOpeningWidth / 2 + sideWallWidth / 2, wallCenterY, 0]}>
@@ -161,10 +132,6 @@ const SegmentDoors = ({
             </mesh>
             {}
             {}
-            <mesh position={[doorOpeningWidth / 2 + sideWallWidth / 2, wallCenterY, 0.08]} rotation={[0, 0, -0.05]}>
-                <planeGeometry args={[2.2, 2.2 / 1.833]} />
-                <meshBasicMaterial color="#e0e0e0" map={coffeeTexture} transparent={true} roughness={0.9} alphaTest={0.1} />
-            </mesh>
 
             {}
             <mesh position={[0, topWallCenterY, 0]}>
@@ -261,6 +228,7 @@ const SegmentDoors = ({
     })()}
             {}
             {(() => {
+              
       const bbTex = baseboardTexSrc.clone();
       bbTex.wrapS = bbTex.wrapT = THREE.RepeatWrapping;
       bbTex.rotation = 0;
@@ -274,22 +242,9 @@ const SegmentDoors = ({
     })()}
 
             {}
-            {(() => {
-      const bbTex = baseboardTexSrc.clone();
-      bbTex.wrapS = bbTex.wrapT = THREE.RepeatWrapping;
-      bbTex.rotation = 0;
-      bbTex.offset.set(0, 0);
-      bbTex.needsUpdate = true;
-      bbTex.repeat.set(sideWallWidth / NATURAL_TILE_W, 1);
-      return <mesh position={[doorOpeningWidth / 2 + sideWallWidth / 2, floorY + 0.075, wallThickness / 2 + 0.01]}>
-                        <planeGeometry args={[sideWallWidth, 0.15]} />
-                        <meshBasicMaterial color="#e0e0e0" map={bbTex} roughness={0.8} side={THREE.DoubleSide} />
-                    </mesh>;
-    })()}
+            
 
             {}
-            <PositionalAudio ref={openAudioRef} url="/sounds/otwarciedrzwi.mp3" distanceModel="exponential" rolloffFactor={SEGMENT_DOOR_AUDIO_SETTINGS.rolloff} refDistance={SEGMENT_DOOR_AUDIO_SETTINGS.distance} loop={false} />
-            <PositionalAudio ref={closeAudioRef} url="/sounds/zamknieciedrzwi.mp3" distanceModel="exponential" rolloffFactor={SEGMENT_DOOR_AUDIO_SETTINGS.rolloff} refDistance={SEGMENT_DOOR_AUDIO_SETTINGS.distance} loop={false} />
         </group>;
 };
 export default SegmentDoors;

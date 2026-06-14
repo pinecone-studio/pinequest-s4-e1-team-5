@@ -7,7 +7,9 @@ import '../shaders/RevealMaterial';
 import { playBackgroundMusic } from '../../../utils/audioManager';
 import { useAchievements } from '../../../context/AchievementsContext';
 import { isTouchDevice } from '../../../utils/deviceDetect';
+
 const FONT_URL = 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hjp-Ek-_EeA.woff';
+
 const EntranceDoors = ({
   position = [0, 0, 22],
   onComplete,
@@ -28,8 +30,6 @@ const EntranceDoors = ({
   const [isOpen, setIsOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [isWindowHovered, setIsWindowHovered] = useState(false);
-  const windowAvatarRef = useRef();
   const {
     camera
   } = useThree();
@@ -47,7 +47,7 @@ const EntranceDoors = ({
   const doorLeftPaintedTexture = useTexture(isMobileDevice ? dummyTex : '/textures/doors/door_left_painted.webp'); 
   const handleLeftPaintedTexture = useTexture(isMobileDevice ? dummyTex : '/textures/doors/handle_left_painted.webp');
   const handleRightPaintedTexture = useTexture(isMobileDevice ? dummyTex : '/textures/doors/handle_right_painted.webp');
-  const doorBackTexture = useTexture(isMobileDevice ? '/textures/doors/door_back.webp' : '/textures/doors/door_back_left_sketch.webp');
+  const doorBackTexture = useTexture(isMobileDevice ? '/textures/doors/door_back.webp' : '/textures/doors/door_back_left_sketch.webp'); //urd tal ni hereggyu
   const edgeTexture = useTexture(isMobileDevice ? '/textures/doors/pien_sketch.webp' : '/textures/doors/pien.webp');
   const bricksTexture = useTexture('/textures/entrance/wall_bricks_2.webp');
   const stonePathTexture = useTexture('/textures/entrance/stone-path.webp');
@@ -58,98 +58,10 @@ const EntranceDoors = ({
   const potTexture = useTexture('/textures/entrance/duck_pot1.png'); 
 
   const handleHideDelayRef = useRef();
-  const bugFixedTextRef = useRef();
-  const bugClickPos = useRef({
-    x: 0,
-    y: 0
-  });
-  const [isDuckSpeaking, setIsDuckSpeaking] = useState(false);
-  const [duckQuote, setDuckQuote] = useState('');
-  const speechBubbleRef = useRef();
-  const duckQuotes = ["Have you tried console.log()?", "Did you clear the cache?", "It works on my machine! 🤷", "Have you turned it off and on again?", "Maybe it's a CSS issue?", "Check for missing semicolons!", "Did you read the error message?", "Have you tried Stack Overflow?", "Is it plugged in?", "Works in production! 🚀"];
-  const handleBugClick = e => {
-    e.stopPropagation();
-    if (isBugClicked) return;
-    if (bugRef.current) {
-      bugClickPos.current = {
-        x: bugRef.current.position.x,
-        y: bugRef.current.position.y
-      };
-    }
-    setIsBugClicked(true);
-    document.body.style.cursor = "auto";
-    if (inkSplashRef.current) {
-      inkSplashRef.current.position.x = bugClickPos.current.x;
-      inkSplashRef.current.position.y = bugClickPos.current.y;
-      inkSplashRef.current.scale.set(0, 0, 0);
-      inkSplashRef.current.material.opacity = 1;
-      gsap.to(inkSplashRef.current.scale, {
-        x: 0.8,
-        y: 0.8,
-        z: 1,
-        duration: 0.4,
-        ease: 'back.out(1.7)'
-      });
-    }
-    setTextVisible(true);
-    setClipProgress(0);
-    if (bugFixedTextRef.current) {
-      bugFixedTextRef.current.position.x = bugClickPos.current.x;
-      bugFixedTextRef.current.position.y = bugClickPos.current.y;
-    }
-    gsap.to({
-      progress: 0
-    }, {
-      progress: 1,
-      duration: 0.8,
-      ease: 'power1.inOut',
-      onUpdate: function () {
-        setClipProgress(this.targets()[0].progress);
-      },
-      onComplete: () => {
-        setTimeout(() => {
-          if (inkSplashRef.current) {
-            gsap.to(inkSplashRef.current.material, {
-              opacity: 0,
-              duration: 1,
-              ease: 'power2.out'
-            });
-          }
-        }, 1500);
-      }
-    });
-  };
-  const handleDuckClick = e => {
-    e.stopPropagation();
-    if (isDuckSpeaking) return;
-    const randomQuote = duckQuotes[Math.floor(Math.random() * duckQuotes.length)];
-    setDuckQuote(randomQuote);
-    setIsDuckSpeaking(true);
-    if (speechBubbleRef.current) {
-      speechBubbleRef.current.scale.set(0, 0, 0);
-      gsap.to(speechBubbleRef.current.scale, {
-        x: 1,
-        y: 1,
-        z: 1,
-        duration: 0.3,
-        ease: 'back.out(1.7)'
-      });
-    }
-    setTimeout(() => {
-      if (speechBubbleRef.current) {
-        gsap.to(speechBubbleRef.current.scale, {
-          x: 0,
-          y: 0,
-          z: 0,
-          duration: 0.2,
-          ease: 'power2.in',
-          onComplete: () => setIsDuckSpeaking(false)
-        });
-      } else {
-        setIsDuckSpeaking(false);
-      }
-    }, 3000);
-  };
+  
+    
+   
+  
   const doorWidth = 0.94;
   const doorHeight = 2.4;
   const doorOpeningWidth = doorWidth * 2;
@@ -163,13 +75,14 @@ const EntranceDoors = ({
   const topWallHeight = corridorHeight - doorHeight;
   const topWallCenterY = doorBottomY + doorHeight + topWallHeight / 2;
   const sideWallWidth = (corridorWidth - doorOpeningWidth) / 2;
+
+
   const handleClick = e => {
     e.stopPropagation();
     if (isOpen || isAnimating) return;
     document.body.style.cursor = "auto";
     setIsOpen(true);
     setIsAnimating(true);
-    playBackgroundMusic();
     unlockAchievement('corridor_enter');
     const tl = gsap.timeline({
       onComplete: () => {
@@ -207,6 +120,7 @@ const EntranceDoors = ({
       ease: 'power2.inOut'
     }, 0.3);
   };
+
   const handlePointerEnter = () => {
     if (isOpen || isAnimating || isMobile) return;
     setIsHovered(true);
@@ -239,6 +153,7 @@ const EntranceDoors = ({
         overwrite: true
       });
     }
+
     if (rightDoorMaterialRef.current) {
       gsap.to(rightDoorMaterialRef.current, {
         uProgress: 1.0,
@@ -344,20 +259,9 @@ const EntranceDoors = ({
       if (rightHandlePaintedRef.current) rightHandlePaintedRef.current.visible = false;
     });
   };
-  useFrame(state => {
-    if (!leftPupilRef.current || !rightPupilRef.current) return;
-    const {
-      x,
-      y
-    } = state.pointer;
-    const MAX_EYE_MOVEMENT = 0.015;
-    const targetX = x * MAX_EYE_MOVEMENT * 2;
-    const targetY = y * MAX_EYE_MOVEMENT * 2;
-    leftPupilRef.current.position.x = THREE.MathUtils.lerp(leftPupilRef.current.position.x, -0.075 + targetX, 0.1);
-    leftPupilRef.current.position.y = THREE.MathUtils.lerp(leftPupilRef.current.position.y, 0.28 + targetY, 0.1);
-    rightPupilRef.current.position.x = THREE.MathUtils.lerp(rightPupilRef.current.position.x, 0.043 + targetX, 0.1);
-    rightPupilRef.current.position.y = THREE.MathUtils.lerp(rightPupilRef.current.position.y, 0.28 + targetY, 0.1);
-  });
+
+
+
   const mousePivotRef = useRef();
   useFrame(({
     clock
@@ -365,53 +269,8 @@ const EntranceDoors = ({
     if (mousePivotRef.current) {
       mousePivotRef.current.rotation.x = Math.sin(clock.elapsedTime * 1.5) * 0.05;
     }
-    if (bugRef.current) {
-      const time = clock.elapsedTime;
-      const xOffset = Math.sin(time * 0.8) * 0.3 + Math.sin(time * 1.5) * 0.1;
-      const yOffset = Math.cos(time * 0.6) * 0.2 + Math.cos(time * 1.1) * 0.1;
-      bugRef.current.position.x = 3 + xOffset;
-      bugRef.current.position.y = floorY + 3.8 + yOffset;
-      bugRef.current.rotation.z = Math.sin(time * 5) * 0.1 + Math.atan2(yOffset, xOffset) * 0.2;
-    }
   });
-  const handleWindowEnter = e => {
-    e.stopPropagation();
-    setIsWindowHovered(true);
-    document.body.style.cursor = "pointer";
-    if (windowAvatarRef.current) {
-      gsap.to(windowAvatarRef.current.position, {
-        x: 2.5,
-        duration: 0.5,
-        ease: 'back.out(1.7)',
-        overwrite: true
-      });
-      gsap.to(windowAvatarRef.current.rotation, {
-        z: 0.1,
-        duration: 0.5,
-        ease: 'power2.out',
-        overwrite: true
-      });
-    }
-  };
-  const handleWindowLeave = e => {
-    e.stopPropagation();
-    setIsWindowHovered(false);
-    document.body.style.cursor = "auto";
-    if (windowAvatarRef.current) {
-      gsap.to(windowAvatarRef.current.position, {
-        x: 3.5,
-        duration: 0.4,
-        ease: 'power2.in',
-        overwrite: true
-      });
-      gsap.to(windowAvatarRef.current.rotation, {
-        z: 0,
-        duration: 0.4,
-        ease: 'power2.in',
-        overwrite: true
-      });
-    }
-  };
+
   const frameCenterY = doorBottomY + frameHeight / 2;
   const facadeYOffset = -1.65;
   const pathWidth = frameWidth + 0.4;
@@ -476,7 +335,7 @@ const EntranceDoors = ({
                 {}
                 <mesh position={[doorWidth / 2, 0, 0.09]}>
                     <planeGeometry args={[doorWidth, doorHeight]} />
-                    <revealMaterial color="#e0e0e0" ref={leftDoorMaterialRef} map={doorLeftTexture} transparent={true} alphaTest={0.5} roughness={0.8} depthWrite={false} uProgress={0.0} />
+                    <revealMaterial color="#e0e0e0" ref={leftDoorMaterialRef} map={doorLeftPaintedTexture} transparent={true} alphaTest={0.5} roughness={0.8} depthWrite={false} uProgress={0.0} />
                 </mesh>
 
                 {}
@@ -495,7 +354,7 @@ const EntranceDoors = ({
                     {}
                     <mesh position={[-0.357, 0.099, 0]}>
                         <planeGeometry args={[doorWidth, doorHeight]} />
-                        <revealMaterial color="#e0e0e0" ref={leftHandleMaterialRef} map={handleLeftTexture} transparent={true} alphaTest={0.5} depthWrite={false} uProgress={0.0} />
+                        <revealMaterial color="#e0e0e0" ref={leftHandleMaterialRef} map={handleLeftPaintedTexture} transparent={true} alphaTest={0.5} depthWrite={false} uProgress={0.0} />
                     </mesh>
                 </group>
             </group>
@@ -517,7 +376,7 @@ const EntranceDoors = ({
                 {}
                 <mesh position={[-doorWidth / 2, 0, 0.09]}>
                     <planeGeometry args={[doorWidth, doorHeight]} />
-                    <revealMaterial color="#e0e0e0" ref={rightDoorMaterialRef} map={doorRightTexture} transparent={true} alphaTest={0.5} roughness={0.8} depthWrite={false} uProgress={0.0} />
+                    <revealMaterial color="#e0e0e0" ref={rightDoorMaterialRef} map={doorRightPaintedTexture} transparent={true} alphaTest={0.5} roughness={0.8} depthWrite={false} uProgress={0.0} />
                 </mesh>
 
                 {}
@@ -536,7 +395,7 @@ const EntranceDoors = ({
                     {}
                     <mesh position={[0.357, 0.099, 0]}>
                         <planeGeometry args={[doorWidth, doorHeight]} />
-                        <revealMaterial color="#e0e0e0" ref={rightHandleMaterialRef} map={handleRightTexture} transparent={true} alphaTest={0.5} depthWrite={false} uProgress={0.0} />
+                        <revealMaterial color="#e0e0e0" ref={rightHandleMaterialRef} map={handleRightPaintedTexture} transparent={true} alphaTest={0.5} depthWrite={false} uProgress={0.0} />
                     </mesh>
                 </group>
             </group>
@@ -544,10 +403,6 @@ const EntranceDoors = ({
             {}
             {}
             {}
-            <mesh ref={windowAvatarRef} position={[3.5, 0, 0.04]} rotation={[0, 0, 0]}>
-                <planeGeometry args={[1.5, 1.5]} />
-                <meshBasicMaterial color="#e0e0e0" map={avatarWindowTexture} transparent={true} />
-            </mesh>
 
             {}
             <group position={[2.5, 0, 0.1]}>
@@ -556,67 +411,21 @@ const EntranceDoors = ({
                 
                 <mesh position={[0, 0, 0.2]}>
                     <planeGeometry args={[1.5, 1.5]} />
-                    <meshBasicMaterial color="#e0e0e0" map={windowSketchTexture} transparent={true} />
+                    <meshBasicMaterial color="#D2B48C" map={windowSketchTexture} transparent={true} />
                 </mesh>
             </group>
 
             {}
-            <group position={[2.5, floorY + 0.45, 0.4]}>
-                {}
-                <mesh>
-                    <planeGeometry args={[3, 1.8]} />
-                    <meshBasicMaterial color="#e0e0e0" map={potTexture} transparent={true} alphaTest={0.01} depthWrite={false} />
-                </mesh>
-
-                {}
-                <mesh position={[0.38, 0.1, 0.01]} onClick={handleDuckClick} onPointerEnter={() => {
-        document.body.style.cursor = "pointer";
-      }} onPointerLeave={() => {
-        document.body.style.cursor = "auto";
-      }}>
-                    <planeGeometry args={[0.6, 0.6]} />
-                    <meshBasicMaterial color="#e0e0e0" transparent opacity={0} />
-                </mesh>
-
-                {}
-                <group ref={speechBubbleRef} position={[0.9, 0.8, 0.1]} scale={[0, 0, 0]}>
-                    <mesh>
-                        <planeGeometry args={[1.8, 1.2]} />
-                        <meshBasicMaterial color="#e0e0e0" map={speechBubbleTexture} transparent={true} alphaTest={0.01} depthWrite={false} />
-                    </mesh>
-
-                    {}
-                    {}
-                    {}
-                    <Text position={[0, 0.1, 0.01]} fontSize={0.07} color="#1a1a1a" anchorX="center" anchorY="middle" font={FONT_URL} maxWidth={1.4} textAlign="center" visible={isDuckSpeaking}>
-                        {duckQuote || " "}
-                    </Text>
-                </group>
-            </group>
+    
 
             {}
-            {!isBugClicked && <mesh ref={bugRef} position={[2.5, floorY + 2.8, 0.16]} onClick={handleBugClick} onPointerEnter={() => {
-      document.body.style.cursor = "pointer";
-    }} onPointerLeave={() => {
-      document.body.style.cursor = "auto";
-    }}>
-                    <planeGeometry args={[0.4, 0.4]} />
-                    <meshBasicMaterial color="#e0e0e0" map={bugTexture} transparent={true} alphaTest={0.01} depthWrite={false} />
-                </mesh>}
+          
 
             {}
-            <mesh ref={inkSplashRef} position={[2.5, floorY + 2.8, 0.17]} scale={[0, 0, 0]}>
-                <planeGeometry args={[2, 2]} />
-                <meshBasicMaterial color="#e0e0e0" map={inkSplashTexture} transparent={true} alphaTest={0.01} depthWrite={false} />
-            </mesh>
+           
 
             {}
-            <Text ref={bugFixedTextRef} position={[2.5, floorY + 2.8, 0.35]} fontSize={0.25} color="#1a1a1a" anchorX="center" anchorY="middle" font="/fonts/CabinSketch-Bold.ttf" outlineWidth={0.015} outlineColor="#ffffff" clipRect={[-1, -0.5, -1 + clipProgress * 2.5, 0.5]}>
-                BUG FIXED!
-            </Text>
-
-
-
+            
 
 
             {}
@@ -642,27 +451,6 @@ const EntranceDoors = ({
             </group>
 
             {}
-            <group position={[-1.5, floorY + 0.6, 0.8]} ref={catGroupRef}>
-                {}
-                <mesh>
-                    <planeGeometry args={[1.5, 1.5]} />
-                    <meshBasicMaterial color="#e0e0e0" map={catFrontBodyTexture} transparent={true} alphaTest={0.01} depthWrite={false} />
-                </mesh>
-
-                {}
-                <mesh ref={leftPupilRef} position={[-0.063, 0.27, -0.02]}>
-                    <circleGeometry args={[0.020, 32]} />
-                    <meshBasicMaterial color="black" />
-                    {}
-                    <group scale={[0.8, 1.2, 1]} />
-                </mesh>
-
-                {}
-                <mesh ref={rightPupilRef} position={[0.0615, 0.27, -0.02]}>
-                    <circleGeometry args={[0.020, 32]} />
-                    <meshBasicMaterial color="black" />
-                </mesh>
-            </group>
 
              <group position={[2.4, floorY + 0.3, 0.4]}>
                 {}
