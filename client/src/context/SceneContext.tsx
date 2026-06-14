@@ -55,6 +55,11 @@ export const SceneProvider = ({
     setTeleportPhase('closing');
     setOverlayContent(null);
   }, [isTeleporting, currentRoom]);
+  const requestDoorOpen = useCallback(roomId => {
+    if (isTeleporting || roomId === currentRoom) return;
+    setOverlayContent(null);
+    setPendingDoorClick(roomId);
+  }, [isTeleporting, currentRoom]);
   const startTeleportTransition = useCallback(() => {
     setTeleportPhase('teleporting');
   }, []);
@@ -100,13 +105,14 @@ export const SceneProvider = ({
     pendingDoorClick,
     isFastTeleport,
     teleportTo,
+    requestDoorOpen,
     startTeleportTransition,
     openTeleportTransition,
     completeTeleport,
     signalRoomReady,
     finishPaperOpen,
     cancelTeleport
-  }), [currentRoom, hasEntered, exitRequested, overlayContent, enterRoom, exitRoom, requestExit, clearExitRequest, markEntered, openOverlay, closeOverlay, teleportTarget, isTeleporting, teleportPhase, pendingDoorClick, isFastTeleport, teleportTo, startTeleportTransition, openTeleportTransition, completeTeleport, signalRoomReady, finishPaperOpen, cancelTeleport]);
+  }), [currentRoom, hasEntered, exitRequested, overlayContent, enterRoom, exitRoom, requestExit, clearExitRequest, markEntered, openOverlay, closeOverlay, teleportTarget, isTeleporting, teleportPhase, pendingDoorClick, isFastTeleport, teleportTo, requestDoorOpen, startTeleportTransition, openTeleportTransition, completeTeleport, signalRoomReady, finishPaperOpen, cancelTeleport]);
   return <SceneContext.Provider value={value}>
             {children}
         </SceneContext.Provider>;
