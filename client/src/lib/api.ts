@@ -111,3 +111,39 @@ export function searchStudioContent(query: string) {
 export function getStudioTitles() {
   return apiFetch<{ data: StudioTitleItem[] }>("/api/studio/titles");
 }
+
+export type FormulaRow = {
+  id: string;
+  subject: string;
+  topic: string;
+  pod_title: string;
+  pod_content: string;
+  wolfram_query: string;
+  is_seeded: boolean;
+  created_at: string;
+};
+
+export type QuizQuestion = {
+  question: string;
+  options: [string, string, string, string];
+  correctIndex: number;
+  explanation: string;
+};
+
+export type QuizResult = {
+  gradeRange: string;
+  subject: string;
+  topic: string;
+  questions: QuizQuestion[];
+};
+
+export function getMathFormulas() {
+  return apiFetch<{ data: FormulaRow[] }>("/api/formulas?subject=math");
+}
+
+export function generateMathQuiz(topic: string, gradeRange = "6-9", count = 3) {
+  return apiFetch<QuizResult>("/api/quiz", {
+    method: "POST",
+    body: JSON.stringify({ gradeRange, subject: "math", topic, count }),
+  });
+}

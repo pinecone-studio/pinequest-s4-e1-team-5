@@ -10,6 +10,8 @@ import { useAchievements } from '../../../../context/AchievementsContext';
 import PaperMaterial from './PaperMaterial';
 import { useAudio } from '../../../../context/AudioManager';
 import { usePaintMaterial } from './usePaintMaterial';
+import { getMathFormulas, generateMathQuiz } from '../../../../lib/api';
+import type { FormulaRow, QuizQuestion } from '../../../../lib/api';
 const _tempScale = new THREE.Vector3();
 
 const MATH_FORMULAS = [
@@ -21,6 +23,52 @@ const MATH_FORMULAS = [
   'logₐb = lnb/lna', 'x̄ = Σxᵢ/n',
 ];
 
+type GalleryProject = {
+  id: string;
+  title: string;
+  mainFormula: string;
+  description: string;
+  relatedFormulas: string[];
+  topic: string;
+};
+
+const FRONT_TEXTURES = [
+  '/textures/gallery/tylkartki.webp',
+  '/textures/gallery/tylkartki.webp',
+  '/textures/gallery/tylkartki.webp',
+  '/textures/gallery/tylkartki.webp',
+];
+const PAINTED_TEXTURES = [
+  '/textures/gallery/tylkartki_painted.webp',
+  '/textures/gallery/tylkartki_painted.webp',
+  '/textures/gallery/tylkartki_painted.webp',
+  '/textures/gallery/tylkartki_painted.webp',
+];
+
+function buildProjects(rows: FormulaRow[]): GalleryProject[] {
+  const topicMap = new Map<string, FormulaRow[]>();
+  for (const row of rows) {
+    if (!topicMap.has(row.topic)) topicMap.set(row.topic, []);
+    topicMap.get(row.topic)!.push(row);
+  }
+  return Array.from(topicMap.entries()).map(([topic, pods]) => {
+    const mainPod = pods.find(p =>
+      /formula|result|equation|definition/i.test(p.pod_title)
+    ) ?? pods[0];
+    const mainFormula = mainPod?.pod_content?.split('\n')[0]?.trim() ?? topic;
+    const description = pods.slice(0, 2).map(p => p.pod_content.split('\n')[0].trim()).join(' | ');
+    const relatedFormulas = pods.slice(0, 4).map(p => p.pod_content.split('\n')[0].trim());
+    return {
+      id: topic.toLowerCase().replace(/[\s\W]+/g, '_'),
+      title: topic,
+      mainFormula,
+      description,
+      relatedFormulas,
+      topic,
+    };
+  });
+}
+
 export const AUDIO_SETTINGS = {
   volume: 0.6,
   distance: 2,
@@ -31,59 +79,6 @@ export const GALLERY_INTERACTION_AUDIO_SETTINGS = {
   distance: 2,
   rolloff: 2
 };
-const UNIQUE_PROJECTS = [{
-  id: 'pythagorean',
-  title: 'a² + b² = c²',
-  front: '/textures/gallery/monetuneprzod.webp',
-  painted: '/textures/gallery/monetuneprzod_painted.webp',
-  url: 'https://en.wikipedia.org/wiki/Pythagorean_theorem',
-  description: 'In a right triangle the square of the hypotenuse c equals the sum of squares of legs a and b. A cornerstone of Euclidean geometry known since antiquity.',
-  techStack: ['c = √(a²+b²)', 'sin θ = a/c', 'cos θ = b/c', 'tan θ = a/b'],
-  quiz: [
-    { q: 'Legs are 3 and 4. What is c?', opts: ['5', '6', '7'], ans: 0 },
-    { q: 'The theorem applies to which triangle?', opts: ['Equilateral', 'Isosceles', 'Right'], ans: 2 },
-    { q: 'Which gives side c?', opts: ['a + b', '√(a²+b²)', 'a · b'], ans: 1 },
-  ]
-}, {
-  id: 'pi',
-  title: 'π ≈ 3.14159',
-  front: '/textures/gallery/timberkittyprzod.webp',
-  painted: '/textures/gallery/timberkittyprzod_painted.webp',
-  url: 'https://en.wikipedia.org/wiki/Pi',
-  description: 'Pi is the ratio of any circle\'s circumference to its diameter. It is irrational and transcendental, appearing across geometry, physics and probability.',
-  techStack: ['C = 2πr', 'A = πr²', 'V = 4/3πr³', 'e^(iπ)+1 = 0'],
-  quiz: [
-    { q: 'π equals circumference divided by:', opts: ['Area', 'Radius', 'Diameter'], ans: 2 },
-    { q: 'π is what kind of number?', opts: ['Rational', 'Irrational', 'Integer'], ans: 1 },
-    { q: 'Circle area formula:', opts: ['πr²', '2πr', 'πd'], ans: 0 },
-  ]
-}, {
-  id: 'einstein',
-  title: 'E = mc²',
-  front: '/textures/gallery/youngmultiprzod.webp',
-  painted: '/textures/gallery/youngmultiprzod_painted.webp',
-  url: 'https://en.wikipedia.org/wiki/Mass%E2%80%93energy_equivalence',
-  description: 'Einstein\'s mass-energy equivalence: energy E equals mass m times the speed of light c squared. Even tiny masses hold enormous energy.',
-  techStack: ['p = mv', 'KE = ½mv²', 'F = ma', 'W = Fd'],
-  quiz: [
-    { q: "What does 'c' represent?", opts: ['Charge', 'Speed of light', 'Mass'], ans: 1 },
-    { q: 'Who derived E = mc²?', opts: ['Newton', 'Tesla', 'Einstein'], ans: 2 },
-    { q: 'The equation shows mass and energy are:', opts: ['Opposite', 'Unrelated', 'Equivalent'], ans: 2 },
-  ]
-}, {
-  id: 'circle',
-  title: 'A = πr²',
-  front: '/textures/gallery/bioprzod.webp',
-  painted: '/textures/gallery/bioprzod_painted.webp',
-  url: 'https://en.wikipedia.org/wiki/Area_of_a_circle',
-  description: 'Area of a circle: pi times the radius squared. This elegant formula links the one-dimensional radius to the two-dimensional surface through the constant π.',
-  techStack: ['V = πr²h', 'C = 2πr', 'S = 4πr²', 'r = √(A/π)'],
-  quiz: [
-    { q: 'If r = 3, the area is:', opts: ['6π', '9π', '3π'], ans: 1 },
-    { q: "What is 'r' in A = πr²?", opts: ['Diameter', 'Ratio', 'Radius'], ans: 2 },
-    { q: 'Area of a semicircle:', opts: ['πr²', 'πr²/2', '2πr'], ans: 1 },
-  ]
-}];
 const PROJECT_COUNT = 10;
 const GAP = 2.5;
 const GalleryRoom = ({
@@ -200,32 +195,28 @@ const GalleryRoom = ({
     mq.addEventListener('change', handleHoverChange);
     return () => mq.removeEventListener('change', handleHoverChange);
   }, []);
-  const textureUrls = UNIQUE_PROJECTS.map(p => p.front);
-  const projectTextures = useTexture(textureUrls);
-  const paintedUrls = UNIQUE_PROJECTS.map(p => canHover && p.painted ? p.painted : p.front);
-  const paintedTextures = useTexture(paintedUrls);
+  const [dbProjects, setDbProjects] = useState<GalleryProject[]>([]);
+  useEffect(() => {
+    getMathFormulas().then(res => {
+      setDbProjects(buildProjects(res.data));
+    }).catch(console.error);
+  }, []);
+  const projectTextures = useTexture(FRONT_TEXTURES);
+  const paintedTextures = useTexture(canHover ? PAINTED_TEXTURES : FRONT_TEXTURES);
   const backTextureRaw = useTexture(canHover ? '/textures/gallery/tylkartki_painted.webp' : '/textures/gallery/tylkartki.webp');
   const overlayTextureRaw = useTexture(canHover ? '/textures/gallery/przyciskdotylukartki_painted.webp' : '/textures/gallery/przyciskdotylukartki.webp');
   const projects = useMemo(() => {
-    return Array.from({
-      length: PROJECT_COUNT
-    }).map((_, i) => {
-      const projectIndex = i % UNIQUE_PROJECTS.length;
-      const projectData = UNIQUE_PROJECTS[projectIndex];
-      const frontTex = projectTextures[projectIndex];
-      const paintedTex = paintedTextures[projectIndex];
-      if (frontTex) {
-        frontTex.colorSpace = THREE.SRGBColorSpace;
-      }
-      if (paintedTex) {
-        paintedTex.colorSpace = THREE.SRGBColorSpace;
-      }
-      if (backTextureRaw) {
-        backTextureRaw.colorSpace = THREE.SRGBColorSpace;
-      }
-      if (overlayTextureRaw) {
-        overlayTextureRaw.colorSpace = THREE.SRGBColorSpace;
-      }
+    if (!dbProjects.length) return [];
+    const count = Math.min(dbProjects.length, PROJECT_COUNT);
+    return Array.from({ length: count }).map((_, i) => {
+      const projectData = dbProjects[i % dbProjects.length];
+      const texIdx = i % 4;
+      const frontTex = projectTextures[texIdx];
+      const paintedTex = paintedTextures[texIdx];
+      if (frontTex) frontTex.colorSpace = THREE.SRGBColorSpace;
+      if (paintedTex) paintedTex.colorSpace = THREE.SRGBColorSpace;
+      if (backTextureRaw) backTextureRaw.colorSpace = THREE.SRGBColorSpace;
+      if (overlayTextureRaw) overlayTextureRaw.colorSpace = THREE.SRGBColorSpace;
       return {
         ...projectData,
         index: i,
@@ -235,7 +226,7 @@ const GalleryRoom = ({
         buttonTexture: overlayTextureRaw,
       };
     });
-  }, [projectTextures, backTextureRaw, overlayTextureRaw]);
+  }, [dbProjects, projectTextures, paintedTextures, backTextureRaw, overlayTextureRaw, canHover]);
   const scrollToIndex = (index, onComplete) => {
     const totalWidth = PROJECT_COUNT * GAP;
     const targetScrollValue = index * GAP;
@@ -440,6 +431,8 @@ const ProjectCard = memo(forwardRef(({
   const [quizScore, setQuizScore] = useState(0);
   const [quizAnswered, setQuizAnswered] = useState<number | null>(null);
   const [quizDone, setQuizDone] = useState(false);
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
+  const [quizLoading, setQuizLoading] = useState(false);
   const swaySpeed = useRef(Math.random() * 0.2 + 0.3);
   const swayOffset = useRef(Math.random() * 100);
   const paperAudioRef = useRef();
@@ -463,6 +456,8 @@ const ProjectCard = memo(forwardRef(({
         setQuizScore(0);
         setQuizAnswered(null);
         setQuizDone(false);
+        setQuizQuestions([]);
+        setQuizLoading(false);
         setIsAnimating(true);
         playPaperSound();
         const timeline = gsap.timeline({
@@ -644,13 +639,31 @@ const ProjectCard = memo(forwardRef(({
     e.stopPropagation();
     if (onClick) onClick(index);
   };
+  const handleStartQuiz = async () => {
+    if (!isSelected || isTransitioning) return;
+    setQuizActive(true);
+    setQuizLoading(true);
+    setQuizIdx(0);
+    setQuizScore(0);
+    setQuizAnswered(null);
+    setQuizDone(false);
+    setQuizQuestions([]);
+    try {
+      const result = await generateMathQuiz(project.topic, '6-9', 3);
+      setQuizQuestions(result.questions);
+    } catch {
+      setQuizQuestions([]);
+    } finally {
+      setQuizLoading(false);
+    }
+  };
   const handleQuizAnswer = (ansIdx: number) => {
-    if (quizAnswered !== null || !isSelected) return;
-    const correct = ansIdx === project.quiz[quizIdx].ans;
+    if (quizAnswered !== null || !isSelected || quizLoading || !quizQuestions.length) return;
+    const correct = ansIdx === quizQuestions[quizIdx].correctIndex;
     setQuizAnswered(ansIdx);
     if (correct) setQuizScore(s => s + 1);
     setTimeout(() => {
-      if (quizIdx + 1 >= project.quiz.length) {
+      if (quizIdx + 1 >= quizQuestions.length) {
         setQuizDone(true);
       } else {
         setQuizIdx(qi => qi + 1);
@@ -790,145 +803,159 @@ const ProjectCard = memo(forwardRef(({
                 <meshBasicMaterial color="#ffffff" map={clothespinTexture} transparent={true} alphaTest={0.1} side={THREE.DoubleSide} />
             </mesh>
 
-            {}
+            {/* paper group */}
             <group ref={paperRef} position={[0, -1.1, 0]}>
                 <mesh>
                     <planeGeometry args={[1.5, 2, 16, 16]} />
                     <PaperMaterial ref={materialRef} color="#ffffff" map={project.frontTexture} mapBack={project.backTexture} mapPainted={project.paintedTexture} side={THREE.DoubleSide} roughness={0.6} paintProgress={paintProgress} roomOrigin={roomOrigin} />
                 </mesh>
 
-                {}
-                <group ref={buttonGroupRef} position={[0, 0.75, 0]} rotation={[Math.PI, 0, 0]}>
+                {/* FRONT: formula title */}
+                <Text ref={textRef} position={[0, 0.69, 0.01]} fontSize={0.10} color="#1a1a1a" font="/fonts/CabinSketch-Bold.ttf" anchorX="center" anchorY="middle" maxWidth={1.3} textAlign="center" fillOpacity={0}>
+                    {project.mainFormula || project.title}
+                </Text>
+
+                {/* FRONT: interactive visualization */}
+                <group position={[0, -0.15, 0.01]} scale={[0.82, 0.82, 0.82]}>
+                    <FormulaVisualizer id={project.id} title={project.title} />
+                </group>
+
+                {/* BACK: explanation (top) */}
+                <group ref={techStackGroupRef} position={[0, 0.48, 0]} rotation={[Math.PI, 0, 0]}>
+                    <Text ref={techTextRef} position={[0, 0.25, 0.01]} fontSize={0.08} color="#1a1a1a" font="/fonts/CabinSketch-Bold.ttf" anchorX="center" anchorY="middle" fillOpacity={0}>
+                        {project.title}
+                    </Text>
+                    <Text ref={detailsTextRef2} position={[0, 0.06, 0.01]} fontSize={0.052} color="#444444" font="/fonts/CabinSketch-Bold.ttf" anchorX="center" anchorY="top" maxWidth={1.3} lineHeight={1.35} textAlign="center" fillOpacity={0}>
+                        {project.description}
+                    </Text>
+                    <Text ref={detailsTextRef1} position={[0, -0.24, 0.01]} fontSize={0.050} color="#666666" font="/fonts/CabinSketch-Bold.ttf" anchorX="center" anchorY="middle" maxWidth={1.3} textAlign="center" fillOpacity={0}>
+                        {project.relatedFormulas?.slice(0, 3).join('  ·  ')}
+                    </Text>
+                </group>
+
+                {/* BACK: interactive viz (middle) */}
+                <group ref={detailsGroupRef} position={[0, -0.14, 0]} rotation={[Math.PI, 0, 0]}>
+                    <group scale={[0.62, 0.62, 0.62]}>
+                        <FormulaVisualizer id={project.id} title={project.title} />
+                    </group>
+                </group>
+
+                {/* BACK: AI QUIZ button (bottom) */}
+                <group ref={buttonGroupRef} position={[0, -0.72, 0]} rotation={[Math.PI, 0, 0]}>
                     <mesh position={[0, 0, -0.001]}>
-                        <planeGeometry args={[1.22, 0.21]} />
-                        <meshBasicMaterial color="#d8d8d0" />
+                        <planeGeometry args={[1.22, 0.205]} />
+                        <meshBasicMaterial color={btnHovered ? "#d8d8d0" : "#e2e1da"} transparent opacity={0.65} />
                     </mesh>
-                    <mesh>
-                        <planeGeometry args={[1.18, 0.18]} />
-                        <meshBasicMaterial color={btnHovered ? "#e8e8df" : "#f2f2ea"} />
-                    </mesh>
-                    <Text ref={openTextRef} position={[0, 0, 0.01]} fontSize={0.095} color={btnHovered ? "#222222" : "#444444"} font="/fonts/CabinSketch-Bold.ttf" anchorX="center" anchorY="middle" fillOpacity={0}>
+                    <Text ref={openTextRef} position={[0, 0, 0.01]} fontSize={0.095} color={btnHovered ? "#111111" : "#333333"} font="/fonts/CabinSketch-Bold.ttf" anchorX="center" anchorY="middle" fillOpacity={0}>
                         AI QUIZ
                     </Text>
                     <mesh position={[0, 0, 0.02]} onClick={e => {
-          if (isSelected && !isTransitioning && !quizActive) {
-            e.stopPropagation();
-            setQuizActive(true);
-            setQuizIdx(0);
-            setQuizScore(0);
-            setQuizAnswered(null);
-            setQuizDone(false);
-          }
-        }} onPointerEnter={e => {
-          if (isSelected && !isTransitioning) { e.stopPropagation(); setBtnHovered(true); }
-        }} onPointerLeave={e => {
-          setBtnHovered(false);
-        }}>
+                        if (isSelected && !isTransitioning && !quizActive) {
+                          e.stopPropagation();
+                          handleStartQuiz();
+                        }
+                      }} onPointerEnter={e => {
+                        if (isSelected && !isTransitioning) { e.stopPropagation(); setBtnHovered(true); }
+                      }} onPointerLeave={() => { setBtnHovered(false); }}>
                         <planeGeometry args={[1.18, 0.18]} />
                         <meshBasicMaterial transparent opacity={0} />
                     </mesh>
                 </group>
 
-                {}
-                <group ref={detailsGroupRef} position={[0, -0.38, 0]} rotation={[Math.PI, 0, 0]}>
-                    <FormulaVisualizer id={project.id} />
-                </group>
-
-                {}
-                <group ref={techStackGroupRef} position={[0, 0.26, 0]} rotation={[Math.PI, 0, 0]}>
-                    <Text ref={techTextRef} position={[0, 0.2, 0.01]} fontSize={0.075} color="#333333" font="/fonts/CabinSketch-Bold.ttf" anchorX="center" anchorY="middle" fillOpacity={0}>
-                        ABOUT:
-                    </Text>
-                    <Text ref={detailsTextRef2} position={[0, 0.1, 0.01]} fontSize={0.055} color="#555555" font="/fonts/CabinSketch-Bold.ttf" anchorX="center" anchorY="top" maxWidth={1.2} lineHeight={1.38} textAlign="center" fillOpacity={0}>
-                        {project.description}
-                    </Text>
-                    <Text ref={detailsTextRef1} position={[0, -0.23, 0.01]} fontSize={0.06} color="#777777" font="/fonts/CabinSketch-Bold.ttf" anchorX="center" anchorY="middle" fillOpacity={0}>
-                        {project.techStack?.join('  ·  ')}
-                    </Text>
-                </group>
-
-                {}
+                {/* BACK: quiz overlay */}
                 {quizActive && (
                   <group rotation={[Math.PI, 0, 0]}>
-                    <mesh position={[0, 0, 0.06]}>
-                      <planeGeometry args={[1.46, 1.95]} />
-                      <meshBasicMaterial color="#f7f6f0" />
-                    </mesh>
-                    {!quizDone ? (
+                    {quizLoading ? (
+                      <Text position={[0, 0.1, 0.01]} fontSize={0.085} color="#555555" font="/fonts/CabinSketch-Bold.ttf" anchorX="center" anchorY="middle">
+                        Ачаалж байна...
+                      </Text>
+                    ) : quizQuestions.length === 0 ? (
                       <>
-                        <Text position={[0, 0.78, 0.08]} fontSize={0.065} color="#999999" font="/fonts/CabinSketch-Bold.ttf" anchorX="center">
-                          {`Q${quizIdx + 1} / ${project.quiz.length}`}
+                        <Text position={[0, 0.15, 0.01]} fontSize={0.075} color="#666666" font="/fonts/CabinSketch-Bold.ttf" anchorX="center" anchorY="middle" maxWidth={1.2} textAlign="center">
+                          Алдаа гарлаа. Дахин оролдоно уу.
                         </Text>
-                        <Text position={[0, 0.58, 0.08]} fontSize={0.078} color="#222222" font="/fonts/CabinSketch-Bold.ttf" anchorX="center" anchorY="middle" maxWidth={1.2} textAlign="center" lineHeight={1.35}>
-                          {project.quiz[quizIdx].q}
+                        <group position={[0, -0.2, 0.01]}>
+                          <mesh onClick={e => { e.stopPropagation(); handleStartQuiz(); }}
+                            onPointerEnter={e => { e.stopPropagation(); document.body.style.cursor = 'pointer'; }}
+                            onPointerLeave={() => { document.body.style.cursor = 'auto'; }}>
+                            <planeGeometry args={[0.66, 0.15]} />
+                            <meshBasicMaterial color="#ccccb8" transparent opacity={0.7} />
+                          </mesh>
+                          <Text position={[0, 0, 0.005]} fontSize={0.07} color="#333333" font="/fonts/CabinSketch-Bold.ttf" anchorX="center" anchorY="middle">ДАХИН</Text>
+                        </group>
+                        <group position={[0.58, 0.82, 0.01]}>
+                          <mesh onClick={e => { e.stopPropagation(); setQuizActive(false); }}
+                            onPointerEnter={e => { e.stopPropagation(); document.body.style.cursor = 'pointer'; }}
+                            onPointerLeave={() => { document.body.style.cursor = 'auto'; }}>
+                            <planeGeometry args={[0.15, 0.1]} />
+                            <meshBasicMaterial color="#ccccb8" transparent opacity={0.6} />
+                          </mesh>
+                          <Text position={[0, 0, 0.005]} fontSize={0.062} color="#555555" font="/fonts/CabinSketch-Bold.ttf" anchorX="center" anchorY="middle">X</Text>
+                        </group>
+                      </>
+                    ) : !quizDone ? (
+                      <>
+                        <Text position={[0, 0.78, 0.01]} fontSize={0.065} color="#888888" font="/fonts/CabinSketch-Bold.ttf" anchorX="center">
+                          {`Q${quizIdx + 1} / ${quizQuestions.length}`}
                         </Text>
-                        {project.quiz[quizIdx].opts.map((opt, i) => {
-                          const y = 0.15 - i * 0.22;
-                          const isCorrect = i === project.quiz[quizIdx].ans;
+                        <Text position={[0, 0.58, 0.01]} fontSize={0.072} color="#1a1a1a" font="/fonts/CabinSketch-Bold.ttf" anchorX="center" anchorY="middle" maxWidth={1.25} textAlign="center" lineHeight={1.3}>
+                          {quizQuestions[quizIdx].question}
+                        </Text>
+                        {quizQuestions[quizIdx].options.map((opt, i) => {
+                          const y = 0.1 - i * 0.22;
+                          const isCorrect = i === quizQuestions[quizIdx].correctIndex;
                           const isChosen = quizAnswered === i;
                           const bg = quizAnswered !== null
-                            ? isCorrect ? '#c8e6c9' : isChosen ? '#ffcdd2' : '#eeeeea'
-                            : '#eeeeea';
-                          const borderCol = quizAnswered !== null
-                            ? isCorrect ? '#81c784' : isChosen ? '#e57373' : '#cccccc'
-                            : '#cccccc';
+                            ? isCorrect ? '#b8ddb8' : isChosen ? '#e8b8b8' : '#d8d8cc'
+                            : '#d8d8cc';
                           return (
-                            <group key={i} position={[0, y, 0.07]}>
-                              <mesh position={[0, 0, -0.002]}>
-                                <planeGeometry args={[1.2, 0.175]} />
-                                <meshBasicMaterial color={borderCol} />
-                              </mesh>
+                            <group key={i} position={[0, y, 0.01]}>
                               <mesh onClick={e => { e.stopPropagation(); handleQuizAnswer(i); }}
                                 onPointerEnter={e => { if (!quizAnswered) { e.stopPropagation(); document.body.style.cursor = 'pointer'; }}}
                                 onPointerLeave={() => { document.body.style.cursor = 'auto'; }}>
                                 <planeGeometry args={[1.16, 0.155]} />
-                                <meshBasicMaterial color={bg} />
+                                <meshBasicMaterial color={bg} transparent opacity={0.75} />
                               </mesh>
-                              <Text position={[0, 0, 0.01]} fontSize={0.066} color="#333333" font="/fonts/CabinSketch-Bold.ttf" anchorX="center" anchorY="middle">
+                              <Text position={[0, 0, 0.005]} fontSize={0.055} color="#222222" font="/fonts/CabinSketch-Bold.ttf" anchorX="center" anchorY="middle" maxWidth={1.1} textAlign="center">
                                 {opt}
                               </Text>
                             </group>
                           );
                         })}
-                        <Text position={[0, -0.65, 0.08]} fontSize={0.065} color="#aaaaaa" font="/fonts/CabinSketch-Bold.ttf" anchorX="center">
-                          {`Score: ${quizScore} / ${quizIdx + (quizAnswered !== null ? 1 : 0)}`}
+                        <Text position={[0, -0.78, 0.01]} fontSize={0.065} color="#888888" font="/fonts/CabinSketch-Bold.ttf" anchorX="center">
+                          {`Оноо: ${quizScore} / ${quizIdx + (quizAnswered !== null ? 1 : 0)}`}
                         </Text>
-                        <group position={[0.58, 0.82, 0.09]}>
-                          <mesh onClick={e => { e.stopPropagation(); setQuizActive(false); }}>
+                        <group position={[0.58, 0.82, 0.01]}>
+                          <mesh onClick={e => { e.stopPropagation(); setQuizActive(false); }}
+                            onPointerEnter={e => { e.stopPropagation(); document.body.style.cursor = 'pointer'; }}
+                            onPointerLeave={() => { document.body.style.cursor = 'auto'; }}>
                             <planeGeometry args={[0.15, 0.1]} />
-                            <meshBasicMaterial color="#e0e0da" />
+                            <meshBasicMaterial color="#ccccb8" transparent opacity={0.6} />
                           </mesh>
-                          <Text position={[0, 0, 0.01]} fontSize={0.062} color="#888888" font="/fonts/CabinSketch-Bold.ttf" anchorX="center" anchorY="middle">X</Text>
+                          <Text position={[0, 0, 0.005]} fontSize={0.062} color="#555555" font="/fonts/CabinSketch-Bold.ttf" anchorX="center" anchorY="middle">X</Text>
                         </group>
                       </>
                     ) : (
                       <>
-                        <Text position={[0, 0.45, 0.08]} fontSize={0.13} color="#333333" font="/fonts/CabinSketch-Bold.ttf" anchorX="center" anchorY="middle">
-                          {quizScore === project.quiz.length ? 'PERFECT!' : quizScore >= 2 ? 'WELL DONE!' : 'KEEP GOING!'}
+                        <Text position={[0, 0.45, 0.01]} fontSize={0.12} color="#222222" font="/fonts/CabinSketch-Bold.ttf" anchorX="center" anchorY="middle">
+                          {quizScore === quizQuestions.length ? 'ТӨГС!' : quizScore >= Math.ceil(quizQuestions.length * 0.6) ? 'САЙН!' : 'ҮРГЭЛЖЛҮҮЛ!'}
                         </Text>
-                        <Text position={[0, 0.18, 0.08]} fontSize={0.11} color="#666666" font="/fonts/CabinSketch-Bold.ttf" anchorX="center" anchorY="middle">
-                          {`${quizScore} / ${project.quiz.length}`}
+                        <Text position={[0, 0.2, 0.01]} fontSize={0.11} color="#555555" font="/fonts/CabinSketch-Bold.ttf" anchorX="center" anchorY="middle">
+                          {`${quizScore} / ${quizQuestions.length}`}
                         </Text>
-                        <group position={[0, -0.15, 0.08]}>
-                          <mesh position={[0, 0, -0.001]}>
-                            <planeGeometry args={[0.82, 0.165]} />
-                            <meshBasicMaterial color="#bbbbbb" />
-                          </mesh>
-                          <mesh onClick={e => { e.stopPropagation(); setQuizIdx(0); setQuizScore(0); setQuizAnswered(null); setQuizDone(false); }}>
+                        <group position={[0, -0.1, 0.01]}>
+                          <mesh onClick={e => { e.stopPropagation(); setQuizIdx(0); setQuizScore(0); setQuizAnswered(null); setQuizDone(false); setQuizQuestions([]); handleStartQuiz(); }}
+                            onPointerEnter={e => { e.stopPropagation(); document.body.style.cursor = 'pointer'; }}
+                            onPointerLeave={() => { document.body.style.cursor = 'auto'; }}>
                             <planeGeometry args={[0.78, 0.15]} />
-                            <meshBasicMaterial color="#e8e8e0" />
+                            <meshBasicMaterial color="#ccccb8" transparent opacity={0.7} />
                           </mesh>
-                          <Text position={[0, 0, 0.01]} fontSize={0.072} color="#444444" font="/fonts/CabinSketch-Bold.ttf" anchorX="center" anchorY="middle">TRY AGAIN</Text>
+                          <Text position={[0, 0, 0.005]} fontSize={0.068} color="#333333" font="/fonts/CabinSketch-Bold.ttf" anchorX="center" anchorY="middle">ДАХИН ОРОЛД</Text>
                         </group>
                       </>
                     )}
                   </group>
                 )}
-
-                {}
-                <Text ref={textRef} position={[0, 0.7, 0]} fontSize={0.20} color="#1c1c1c" font="/fonts/CabinSketch-Bold.ttf" anchorX="center" anchorY="middle" fillOpacity={0}>
-                    {project.title}
-                </Text>
 
                 <PositionalAudio ref={paperAudioRef} url="/sounds/papersound.mp3" distanceModel="exponential" rolloffFactor={GALLERY_INTERACTION_AUDIO_SETTINGS.rolloff} refDistance={GALLERY_INTERACTION_AUDIO_SETTINGS.distance} loop={false} />
             </group>
@@ -1038,13 +1065,58 @@ const CircleAreaVis = () => {
   );
 };
 
-const FormulaVisualizer = ({ id }: { id: string }) => {
+const GenericMathVis = ({ title }: { title: string }) => {
+  const orbitRef = useRef<THREE.Group>(null);
+  const dotRefs = [useRef<THREE.Mesh>(null), useRef<THREE.Mesh>(null), useRef<THREE.Mesh>(null)];
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime();
+    if (orbitRef.current) orbitRef.current.rotation.z = t * 0.4;
+    dotRefs.forEach((r, i) => {
+      if (r.current) {
+        const ph = t * 0.8 + (i * Math.PI * 2) / 3;
+        (r.current.material as THREE.MeshBasicMaterial).opacity = 0.4 + Math.sin(ph) * 0.35;
+      }
+    });
+  });
+  const shortLabel = title.length > 18 ? title.slice(0, 16) + '…' : title;
+  return (
+    <group>
+      <group ref={orbitRef}>
+        {dotRefs.map((r, i) => {
+          const a = (i / 3) * Math.PI * 2;
+          return (
+            <mesh key={i} ref={r} position={[Math.cos(a) * 0.28, Math.sin(a) * 0.28, 0]}>
+              <sphereGeometry args={[0.03, 8, 8]} />
+              <meshBasicMaterial color="#666666" transparent opacity={0.5} />
+            </mesh>
+          );
+        })}
+        <mesh>
+          <torusGeometry args={[0.28, 0.008, 8, 48]} />
+          <meshBasicMaterial color="#aaaaaa" transparent opacity={0.35} />
+        </mesh>
+      </group>
+      <Text position={[0, 0, 0.01]} fontSize={0.075} color="#888888" font="/fonts/CabinSketch-Bold.ttf" anchorX="center" anchorY="middle">
+        {shortLabel}
+      </Text>
+    </group>
+  );
+};
+
+const FormulaVisualizer = ({ id, title }: { id: string; title?: string }) => {
+  const combined = (id + ' ' + (title ?? '')).toLowerCase();
+  let type = 'generic';
+  if (combined.includes('pythagor') || combined.includes('right_tri')) type = 'pythagorean';
+  else if (/\bpi\b|circle_area|a_=_πr|a_=_pi/.test(combined)) type = 'circle';
+  else if (combined.includes('circle') && !combined.includes('area')) type = 'pi';
+  else if (combined.includes('einstein') || combined.includes('e_=_mc') || combined.includes('mass')) type = 'einstein';
   return (
     <group scale={[0.92, 0.92, 0.92]}>
-      {id === 'pythagorean' && <PythagoreanVis />}
-      {id === 'pi' && <PiVis />}
-      {id === 'einstein' && <EinsteinVis />}
-      {id === 'circle' && <CircleAreaVis />}
+      {type === 'pythagorean' && <PythagoreanVis />}
+      {type === 'pi' && <PiVis />}
+      {type === 'einstein' && <EinsteinVis />}
+      {type === 'circle' && <CircleAreaVis />}
+      {type === 'generic' && <GenericMathVis title={title ?? id} />}
     </group>
   );
 };
