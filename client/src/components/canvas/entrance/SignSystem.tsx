@@ -2,14 +2,11 @@ import { useRef, useMemo } from 'react';
 import { useTexture } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-
-
 const SignSystem = props => {
   const groupRef = useRef();
-  const signTexture = useTexture('/textures/entrance/sign4.png');
+  const signTexture = useTexture('/textures/entrance/sign.webp');
   const mountTexture = useTexture('/textures/entrance/belka.webp');
   const timeOffset = useMemo(() => Math.random() * 100, []);
-
   useFrame(state => {
     if (groupRef.current) {
       const time = state.clock.elapsedTime + timeOffset;
@@ -32,7 +29,7 @@ const SignSystem = props => {
             <group ref={groupRef} position={[0, 1.9, 0.60]}>
                 {}
                 {}
-                <mesh position={[0, -0.4, 0]}>
+                <mesh position={[0, -0.5, 0]}>
                     {}
                     <planeGeometry args={[2, 1]} />
                     <meshBasicMaterial color="#D2B48C" map={signTexture} transparent={true} side={THREE.DoubleSide} depthWrite={false} />

@@ -2,9 +2,6 @@ import { useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useTexture } from '@react-three/drei';
-
-
-
 const WALL_X_OUTER = 3.5;
 const WALL_X_INNER = 1.7;
 const DoorWallSegment = ({

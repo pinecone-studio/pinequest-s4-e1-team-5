@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { Text, useTexture, PositionalAudio } from '@react-three/drei';
+import { useTexture, PositionalAudio } from '@react-three/drei';
 import * as THREE from 'three';
 import gsap from 'gsap';
 import RoomInterior from './RoomInterior';
@@ -21,7 +21,18 @@ const DOOR_AUDIO_SETTINGS = {
   rolloff: 2,
   closeDelay: 0.5
 };
-
+const DOOR_TEXTURES = {
+  'THE GALLERY': '/textures/corridor/doors/drzwiabout_painted.webp',
+  'THE STUDIO': '/textures/corridor/doors/drzwiabout_painted.webp',
+  'THE ABOUT': '/textures/corridor/doors/drzwiabout_painted.webp',
+  "LET'S CONNECT": '/textures/corridor/doors/drzwiabout_painted.webp'
+};
+const DOOR_PAINTED_TEXTURES = {
+  'THE GALLERY': '/textures/corridor/doors/drzwiabout_painted.webp',
+  'THE STUDIO': '/textures/corridor/doors/drzwiabout_painted.webp',
+  'THE ABOUT': '/textures/corridor/doors/drzwiabout_painted.webp',
+  "LET'S CONNECT": '/textures/corridor/doors/drzwiabout_painted.webp'
+};
 const WALL_DX = WALL_X_OUTER - WALL_X_INNER;
 const WALL_DZ = DOOR_Z_SPAN;
 const WALL_LENGTH = Math.sqrt(WALL_DX * WALL_DX + WALL_DZ * WALL_DZ);
@@ -96,7 +107,6 @@ const DoorSection = ({
   const hoverAudioRef = useRef();
   const openAudioRef = useRef();
   const closeAudioRef = useRef();
- 
   const doorId = useMemo(() => {
     if (roomId) return roomId;
     if (label === 'MATHS') return 'math';
@@ -360,7 +370,12 @@ const DoorSection = ({
     if (!doorRef.current) return;
     setIsOpen(true);
     const openAngle = side === 'left' ? Math.PI * 0.6 : -Math.PI * 0.6;
-    
+    if (!fastMode && openAudioRef.current) {
+      const vol = isMuted ? 0 : DOOR_AUDIO_SETTINGS.openVolume * globalVolume;
+      openAudioRef.current.setVolume(vol);
+      if (openAudioRef.current.isPlaying) openAudioRef.current.stop();
+      openAudioRef.current.play();
+    }
     const handleDuration = fastMode ? 0.01 : 0.15;
     const doorDuration = fastMode ? 0.01 : 0.7;
     const flyDuration = fastMode ? 0.01 : 1.5;
@@ -504,7 +519,16 @@ const DoorSection = ({
     if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
     if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
     setIsAnimating(true);
-    
+    if (closeAudioRef.current) {
+      setTimeout(() => {
+        const vol = isMuted ? 0 : DOOR_AUDIO_SETTINGS.closeVolume * globalVolume;
+        if (closeAudioRef.current) {
+          closeAudioRef.current.setVolume(vol);
+          if (closeAudioRef.current.isPlaying) closeAudioRef.current.stop();
+          closeAudioRef.current.play();
+        }
+      }, DOOR_AUDIO_SETTINGS.closeDelay * 1000);
+    }
     if (handleRef.current) {
       gsap.to(handleRef.current.rotation, {
         z: 0,
@@ -548,7 +572,14 @@ const DoorSection = ({
     if (isOpen || isAnimating) return;
     setIsHovered(true);
     document.body.style.cursor = "pointer";
-   
+    if (hoverAudioRef.current && !isHovered) {
+      const vol = isMuted ? 0 : DOOR_AUDIO_SETTINGS.hoverVolume * globalVolume;
+      hoverAudioRef.current.setVolume(vol);
+      if (hoverAudioRef.current.isPlaying) hoverAudioRef.current.stop();
+      if (hoverAudioRef.current.context.state === 'running') {
+        hoverAudioRef.current.play();
+      }
+    }
     if (doorRef.current) {
       gsap.to(doorRef.current.rotation, {
         y: side === 'left' ? 0.15 : -0.15,
@@ -628,7 +659,13 @@ const DoorSection = ({
   const doorPivotX = side === 'left' ? -doorWidth / 2 : doorWidth / 2;
   const doorMeshX = side === 'left' ? doorWidth / 2 : -doorWidth / 2;
   const handlePivotX = side === 'left' ? doorWidth * 0.25 : -doorWidth * 0.25;
-  const signTextureUrl = '/textures/corridor/pustatabliczka.webp';
+  const SIGN_TEXTURES_MAP = {
+    'THE GALLERY': '/textures/corridor/backups/thegallerysign.webp',
+    'THE STUDIO': '/textures/corridor/backups/thestudiosign.webp',
+    'THE ABOUT': '/textures/corridor/backups/aboutsign.webp',
+    "LET'S CONNECT": '/textures/corridor/backups/contactsign.webp',
+  };
+  const signTextureUrl = SIGN_TEXTURES_MAP[label] || '/textures/corridor/pustatabliczka.webp';
   const signLegacyRatio = 1.792;
   const signHeight = 0.55;
   const signWidth = signHeight * signLegacyRatio;
@@ -689,7 +726,7 @@ const DoorSection = ({
                     {}
                     <group position={[0, doorHeight / 2 + 0.45, 0.08]}>
                         {}
-                        <mesh >
+                        <mesh>
                             {}
                             <planeGeometry args={[1.3, 0.65]} />
                             <meshBasicMaterial color="#C19A6B" map={signTexture} transparent={false} alphaTest={0.1} depthWrite={false}  />
@@ -737,13 +774,13 @@ const DoorSection = ({
                         </mesh>
 
                         {}
-                        <mesh ref={doorPaintedRef} position={[doorMeshX, -0.2, -0.001]} scale={[side === 'right' && label !== 'ХИМИ' ? -1 : 1, 1, 1]}>
+                        <mesh ref={doorPaintedRef} position={[doorMeshX, -0.2, -0.001]} scale={[side === 'right' && label !== 'THE STUDIO' ? -1 : 1, 1, 1]}>
                             <planeGeometry args={[doorWidth, doorHeight]} />
                             <meshBasicMaterial color="#e0e0e0" map={doorPaintedTexture} transparent={true} alphaTest={0.5} roughness={0.8} />
                         </mesh>
 
                         {}
-                        <mesh position={[doorMeshX, -0.2, 0]} scale={[side === 'right' && label !== 'ХИМИ' ? -1 : 1, 1, 1]}>
+                        <mesh position={[doorMeshX, -0.2, 0]} scale={[side === 'right' && label !== 'THE STUDIO' ? -1 : 1, 1, 1]}>
                             <planeGeometry args={[doorWidth, doorHeight]} />
                             <revealMaterial color="#e0e0e0" ref={doorMaterialRef} map={doorTexture} transparent={true} alphaTest={0.1} roughness={0.8} uProgress={0.0} />
                         </mesh>
@@ -771,9 +808,9 @@ const DoorSection = ({
                 </group>
 
                 {}
-                {/* <PositionalAudio ref={hoverAudioRef} url="/sounds/uchyleniedrzwi.mp3" distanceModel="exponential" rolloffFactor={DOOR_AUDIO_SETTINGS.rolloff} refDistance={DOOR_AUDIO_SETTINGS.distance} loop={false} />
+                <PositionalAudio ref={hoverAudioRef} url="/sounds/uchyleniedrzwi.mp3" distanceModel="exponential" rolloffFactor={DOOR_AUDIO_SETTINGS.rolloff} refDistance={DOOR_AUDIO_SETTINGS.distance} loop={false} />
                 <PositionalAudio ref={openAudioRef} url="/sounds/otwarciedrzwi.mp3" distanceModel="exponential" rolloffFactor={DOOR_AUDIO_SETTINGS.rolloff} refDistance={DOOR_AUDIO_SETTINGS.distance} loop={false} />
-                <PositionalAudio ref={closeAudioRef} url="/sounds/zamknieciedrzwi.mp3" distanceModel="exponential" rolloffFactor={DOOR_AUDIO_SETTINGS.rolloff} refDistance={DOOR_AUDIO_SETTINGS.distance} loop={false} /> */}
+                <PositionalAudio ref={closeAudioRef} url="/sounds/zamknieciedrzwi.mp3" distanceModel="exponential" rolloffFactor={DOOR_AUDIO_SETTINGS.rolloff} refDistance={DOOR_AUDIO_SETTINGS.distance} loop={false} />
             </group>
         </group>;
 };

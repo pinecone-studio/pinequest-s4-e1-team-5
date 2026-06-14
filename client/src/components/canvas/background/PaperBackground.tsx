@@ -1,8 +1,6 @@
 import { useMemo } from 'react';
 import { useTexture } from '@react-three/drei';
 import * as THREE from 'three';
-
-
 const PaperBackground = () => {
   const paperTexture = useTexture('/textures/paper-texture.webp');
   useMemo(() => {

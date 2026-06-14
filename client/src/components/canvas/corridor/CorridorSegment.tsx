@@ -5,6 +5,7 @@ import CorridorWalls from './CorridorWalls';
 import DoorSection from './DoorSection';
 import SegmentDoors from './SegmentDoors';
 import Avatar from './Avatar';
+import AvatarRoomSelector from './AvatarRoomSelector';
 import HeroText from './HeroText';
 import Doodles from './Doodles';
 import CorridorDecorations from './CorridorDecorations';
@@ -23,16 +24,16 @@ const CorridorSegment = ({
   const zOffset = 10 - segmentIndex * SEGMENT_LENGTH;
   const doors = useMemo(() => {
     const doorDefs = [{
-      id: `math-${segmentIndex}`,
-      roomId: 'math',
+      id: `gallery-${segmentIndex}`,
+      roomId: 'gallery',
       relativeZ: -18,
       side: 'left',
       label: 'MATHS',
       icon: '◈',
       color: '#f5efe6'
     }, {
-      id: `chemistry-${segmentIndex}`,
-      roomId: 'chemistry',
+      id: `studio-${segmentIndex}`,
+      roomId: 'studio',
       relativeZ: -32,
       side: 'right',
       label: 'CHEMISTRY',
@@ -48,8 +49,8 @@ const CorridorSegment = ({
       color: '#efe6f5',
       enterDistance: 25
     }, {
-      id: `geometry-${segmentIndex}`,
-      roomId: 'geometry',
+      id: `connect-${segmentIndex}`,
+      roomId: 'contact',
       relativeZ: -62,
       side: 'right',
       label: "GEOMETRY",
@@ -80,6 +81,10 @@ const CorridorSegment = ({
 
                 {}
                 <Avatar position={[0, -0.61, -0.3]} />
+
+                {segmentIndex === 0 ? (
+                    <AvatarRoomSelector setCameraOverride={setCameraOverride} />
+                ) : null}
 
 
                 {}
