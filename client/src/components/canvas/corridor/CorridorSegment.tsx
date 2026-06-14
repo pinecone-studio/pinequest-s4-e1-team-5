@@ -5,6 +5,7 @@ import CorridorWalls from './CorridorWalls';
 import DoorSection from './DoorSection';
 import SegmentDoors from './SegmentDoors';
 import Avatar from './Avatar';
+import AvatarRoomSelector from './AvatarRoomSelector';
 import HeroText from './HeroText';
 import Doodles from './Doodles';
 import CorridorDecorations from './CorridorDecorations';
@@ -80,6 +81,10 @@ const CorridorSegment = ({
 
                 {}
                 <Avatar position={[0, -0.61, -0.3]} />
+
+                {segmentIndex === 0 ? (
+                    <AvatarRoomSelector setCameraOverride={setCameraOverride} />
+                ) : null}
 
 
                 {}
