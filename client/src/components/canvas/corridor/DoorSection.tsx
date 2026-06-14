@@ -21,24 +21,24 @@ const DOOR_AUDIO_SETTINGS = {
   rolloff: 2,
   closeDelay: 0.5
 };
+const DOOR_TEXTURES = {
+  'THE GALLERY': '/textures/corridor/doors/drzwiabout_painted.webp',
+  'THE STUDIO': '/textures/corridor/doors/drzwiabout_painted.webp',
+  'THE ABOUT': '/textures/corridor/doors/drzwiabout_painted.webp',
+  "LET'S CONNECT": '/textures/corridor/doors/drzwiabout_painted.webp'
+};
+const DOOR_PAINTED_TEXTURES = {
+  'THE GALLERY': '/textures/corridor/doors/drzwiabout_painted.webp',
+  'THE STUDIO': '/textures/corridor/doors/drzwiabout_painted.webp',
+  'THE ABOUT': '/textures/corridor/doors/drzwiabout_painted.webp',
+  "LET'S CONNECT": '/textures/corridor/doors/drzwiabout_painted.webp'
+};
 const WALL_DX = WALL_X_OUTER - WALL_X_INNER;
 const WALL_DZ = DOOR_Z_SPAN;
 const WALL_LENGTH = Math.sqrt(WALL_DX * WALL_DX + WALL_DZ * WALL_DZ);
 const BASE_WALL_ANGLE = Math.atan2(WALL_DX, WALL_DZ);
 const DOOR_LOOK_ANGLE = Math.PI * 0.334;
 const DOOR_ALIGN_X = 1.2;
-const DOOR_TEXTURES = {
-  'THE GALLERY': '/textures/corridor/doors/drzwiprojekty.webp',
-  'THE STUDIO': '/textures/corridor/doors/drzwisocial.webp',
-  'THE ABOUT': '/textures/corridor/doors/drzwiabout.webp',
-  "LET'S CONNECT": '/textures/corridor/doors/drzwikontakt.webp'
-};
-const DOOR_PAINTED_TEXTURES = {
-  'THE GALLERY': '/textures/corridor/doors/drzwiprojekty_painted.webp',
-  'THE STUDIO': '/textures/corridor/doors/drzwisocial_painted.webp',
-  'THE ABOUT': '/textures/corridor/doors/drzwiabout_painted.webp',
-  "LET'S CONNECT": '/textures/corridor/doors/drzwikontakt_painted.webp'
-};
 const DoorSection = ({
   position,
   side = 'left',
@@ -716,7 +716,7 @@ const DoorSection = ({
                         <mesh>
                             {}
                             <planeGeometry args={[1.3, 0.65]} />
-                            <meshBasicMaterial color="#e0e0e0" map={signTexture} transparent={true} alphaTest={0.1} roughness={0.8} />
+                            <meshBasicMaterial color="#ffffff" map={signTexture} />
                         </mesh>
 
                     </group>
