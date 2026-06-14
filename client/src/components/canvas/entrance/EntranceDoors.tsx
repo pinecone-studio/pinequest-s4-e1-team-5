@@ -42,36 +42,21 @@ const EntranceDoors = ({
   }, []);
   const isMobileDevice = typeof window !== 'undefined' && (isTouchDevice() || window.innerWidth < 1000);
   const dummyTex = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-  const frameTexture = useTexture('/textures/doors/frame_sketch.webp');
-  const doorLeftTexture = useTexture('/textures/doors/door_left_sketch.webp');
-  const doorRightTexture = useTexture('/textures/doors/door_right_sketch.webp');
-  const doorRightPaintedTexture = useTexture(isMobileDevice ? dummyTex : '/textures/doors/door_right_painted.webp');
-  const doorLeftPaintedTexture = useTexture(isMobileDevice ? dummyTex : '/textures/doors/door_left_painted.webp');
-  const handleLeftTexture = useTexture('/textures/doors/handle_left_sketch.webp');
+  const frameTexture = useTexture('/textures/doors/frame_sketch.webp'); 
+  const doorRightPaintedTexture = useTexture(isMobileDevice ? dummyTex : '/textures/doors/door_right_painted.webp'); 
+  const doorLeftPaintedTexture = useTexture(isMobileDevice ? dummyTex : '/textures/doors/door_left_painted.webp'); 
   const handleLeftPaintedTexture = useTexture(isMobileDevice ? dummyTex : '/textures/doors/handle_left_painted.webp');
-  const handleRightTexture = useTexture('/textures/doors/handle_right_sketch.webp');
   const handleRightPaintedTexture = useTexture(isMobileDevice ? dummyTex : '/textures/doors/handle_right_painted.webp');
   const doorBackTexture = useTexture(isMobileDevice ? '/textures/doors/door_back.webp' : '/textures/doors/door_back_left_sketch.webp');
   const edgeTexture = useTexture(isMobileDevice ? '/textures/doors/pien_sketch.webp' : '/textures/doors/pien.webp');
   const bricksTexture = useTexture('/textures/entrance/wall_bricks_2.webp');
   const stonePathTexture = useTexture('/textures/entrance/stone-path.webp');
-  const catFrontBodyTexture = useTexture('/textures/entrance/cat_front_body.webp');
+  const catFrontBodyTexture = useTexture('/textures/entrance/cat2.png'); 
   const windowSketchTexture = useTexture('/textures/entrance/window_sketch.webp');
-  const avatarWindowTexture = useTexture('/textures/entrance/avatar_window.webp');
-  const treeTexture = useTexture('/textures/entrance/tree_sketch.webp');
-  const mouseTexture = useTexture('/textures/entrance/mouse_hanging.webp');
-  const potTexture = useTexture('/textures/entrance/pot_with_duck.webp');
-  const bugTexture = useTexture('/textures/entrance/bug_sketch.webp');
-  const inkSplashTexture = useTexture('/images/ink-splash.webp');
-  const speechBubbleTexture = useTexture('/textures/entrance/speech_bubble.webp');
-  const leftPupilRef = useRef();
-  const rightPupilRef = useRef();
-  const catGroupRef = useRef();
-  const bugRef = useRef();
-  const [isBugClicked, setIsBugClicked] = useState(false);
-  const [textVisible, setTextVisible] = useState(false);
-  const [clipProgress, setClipProgress] = useState(0);
-  const inkSplashRef = useRef();
+  const treeTexture = useTexture('/textures/entrance/tree22.png'); 
+  const mouseTexture = useTexture('/textures/entrance/mouse24.png'); 
+  const potTexture = useTexture('/textures/entrance/duck_pot1.png'); 
+
   const handleHideDelayRef = useRef();
   const bugFixedTextRef = useRef();
   const bugClickPos = useRef({
@@ -430,14 +415,15 @@ const EntranceDoors = ({
   const frameCenterY = doorBottomY + frameHeight / 2;
   const facadeYOffset = -1.65;
   const pathWidth = frameWidth + 0.4;
-  const pathLength = 5.62;
+  const pathLength = 6.5;
+
   return <group ref={groupRef} position={[position[0], 0, position[2]]}>
 
             {}
             {}
-            <mesh position={[0, floorY + 0.02, pathLength / 2]} rotation={[-Math.PI / 2, 0, 0]}>
+            <mesh position={[0, floorY + 0.02, pathLength / 1.9]} rotation={[-Math.PI / 2, 0, 0]}>
                 <planeGeometry args={[pathWidth, pathLength]} />
-                <meshBasicMaterial color="#e0e0e0" map={stonePathTexture} transparent={true} />
+                 <meshBasicMaterial color="#B1A69B" map={stonePathTexture} transparent={true} alphaTest={0.5} />
             </mesh>
 
 
@@ -450,7 +436,7 @@ const EntranceDoors = ({
             {}
             <mesh position={[doorOpeningWidth / 2 + sideWallWidth / 2, wallCenterY, 0]}>
                 <boxGeometry args={[sideWallWidth, corridorHeight, wallThickness]} />
-                <meshBasicMaterial color="#e0e0e0" roughness={0.95} />
+                <meshBasicMaterial color="#e0e0e0" roughness={0.95}  />
             </mesh>
 
             {}
@@ -464,13 +450,13 @@ const EntranceDoors = ({
             <mesh position={[0, wallCenterY + facadeYOffset + 1.65, 0.15]}>
                 {}
                 <planeGeometry args={[16., 8]} />
-                <meshBasicMaterial color="#e0e0e0" map={bricksTexture} transparent={true} alphaTest={0.01} roughness={0.9} />
+                <meshBasicMaterial color="#fdf4f0" map={bricksTexture} transparent={true} alphaTest={0.01} roughness={1.0} />
             </mesh>
 
             {}
             <mesh position={[0, frameCenterY, 0.12]}>
                 <planeGeometry args={[frameWidth, frameHeight]} />
-                <meshBasicMaterial color="#e0e0e0" map={frameTexture} transparent={true} alphaTest={0.1} roughness={0.9} depthWrite={false} />
+                <meshBasicMaterial color="#D2B48C" map={frameTexture} transparent={true} alphaTest={0.1} roughness={0.9} depthWrite={false} />
             </mesh>
 
             {}
@@ -564,8 +550,10 @@ const EntranceDoors = ({
             </mesh>
 
             {}
-            <group position={[2.5, 0, 0.1]} onPointerEnter={handleWindowEnter} onPointerLeave={handleWindowLeave}>
+            <group position={[2.5, 0, 0.1]}>
+                  
                 {}
+                
                 <mesh position={[0, 0, 0.2]}>
                     <planeGeometry args={[1.5, 1.5]} />
                     <meshBasicMaterial color="#e0e0e0" map={windowSketchTexture} transparent={true} />
@@ -646,9 +634,9 @@ const EntranceDoors = ({
                 {}
                 <group ref={mousePivotRef} position={[0.341, 0.02 - 0.456, 0]}>
                     {}
-                    <mesh position={[-0.351, 0.456, 0]}>
-                        <planeGeometry args={[6, 8]} />
-                        <meshBasicMaterial color="#e0e0e0" map={mouseTexture} transparent={true} alphaTest={0.01} depthWrite={false} />
+                    <mesh position={[0.7, -0.8, 1]}>
+                        <planeGeometry args={[1, 1, 1]} />
+                        <meshBasicMaterial color="#A9A9A9" map={mouseTexture} transparent={true} alphaTest={0.01} depthWrite={false} />
                     </mesh>
                 </group>
             </group>
@@ -674,6 +662,33 @@ const EntranceDoors = ({
                     <circleGeometry args={[0.020, 32]} />
                     <meshBasicMaterial color="black" />
                 </mesh>
+            </group>
+
+             <group position={[2.4, floorY + 0.3, 0.4]}>
+                {}
+                <mesh>
+                    <planeGeometry args={[2.7, 2]} />
+                    <meshBasicMaterial color="#e0e0e0" map={potTexture} transparent={true} alphaTest={0.01} depthWrite={false} />
+                </mesh>
+
+                {}
+                
+
+                {}
+              
+            </group>
+
+              <group position={[-1.5, floorY + 0.6, 0.8]}>
+                {}
+                <mesh>
+                    <planeGeometry args={[2.2, 1.8]} />
+                    <meshBasicMaterial color="#e0e0e0" map={catFrontBodyTexture} transparent={true} alphaTest={0.01} depthWrite={false} />
+                </mesh>
+
+                {}
+               
+                {}
+              
             </group>
 
         </group>;

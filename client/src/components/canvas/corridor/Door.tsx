@@ -140,7 +140,7 @@ const Door = ({
                 {}
                 <mesh position={[0, 0, -0.01]}>
                     <planeGeometry args={[label.length * 0.08 + 0.3, 0.25]} />
-                    <meshBasicMaterial color="#e0e0e0" />
+                    <meshBasicMaterial color="#F5F5DC" />
                 </mesh>
 
                 {}

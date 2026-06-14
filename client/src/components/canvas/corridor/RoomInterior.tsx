@@ -73,7 +73,7 @@ const RoomInterior = memo(({
         side: THREE.DoubleSide
       }),
       corridorWallL: new THREE.MeshBasicMaterial({
-        color: '#e0e0e0',
+        color: '#F5F5DC',
         map: wallTexL,
         side: THREE.DoubleSide
       }),
@@ -135,9 +135,10 @@ const RoomInterior = memo(({
     roomSideWall: new THREE.PlaneGeometry(roomDepth, roomHeight),
     roomBackWall: new THREE.PlaneGeometry(roomWidth, roomHeight)
   }), []);
-  const isGallery = label === 'THE GALLERY';
+
+  const isMath = label === 'MATHS';
   useEffect(() => {
-    if (showRoom && !['THE GALLERY', 'THE STUDIO', 'THE ABOUT', "LET'S CONNECT"].includes(label)) {
+    if (showRoom && !['MATHS', 'CHEMISTRY', 'PHYSICS', "GEOMETRY"].includes(label)) {
       onReady?.();
     }
   }, [showRoom, label, onReady]);
@@ -170,15 +171,15 @@ const RoomInterior = memo(({
                             <Suspense fallback={null}>
                                 <GalleryRoom showRoom={showRoom} onReady={onReady} isExiting={isExiting} />
                             </Suspense>
-                        </group> : label === 'THE STUDIO' ? <group position={[0, -0.5, -corridorDepth]}>
+                        </group> : label === 'CHEMISTRY' ? <group position={[0, -0.5, -corridorDepth]}>
                             <Suspense fallback={null}>
                                 <StudioRoom showRoom={showRoom} onReady={onReady} isExiting={isExiting} />
                             </Suspense>
-                        </group> : label === 'THE ABOUT' ? <group position={[0, -0.5, -corridorDepth]}>
+                        </group> : label === 'PHYSICS' ? <group position={[0, -0.5, -corridorDepth]}>
                             <Suspense fallback={null}>
                                 <AboutRoom showRoom={showRoom} onReady={onReady} isExiting={isExiting} />
                             </Suspense>
-                        </group> : label === "LET'S CONNECT" ? <group position={[0, -0.5, -corridorDepth]}>
+                        </group> : label === "GEOMETRY" ? <group position={[0, -0.5, -corridorDepth]}>
                             <Suspense fallback={null}>
                                 <ContactRoom showRoom={showRoom} onReady={onReady} isExiting={isExiting} />
                             </Suspense>

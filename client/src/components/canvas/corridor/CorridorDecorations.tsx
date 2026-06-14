@@ -181,7 +181,7 @@ const InspectableFrame = ({
             {}
             <mesh position={[0, 0, 0]}>
                 <planeGeometry args={[frame.width, frame.height]} />
-                <revealMaterial color="#e0e0e0" ref={frameMaterialRef} map={frameTexture} transparent={true} alphaTest={0.1} side={THREE.DoubleSide} roughness={0.9} uProgress={0.0} />
+                <revealMaterial color="#e0e0e0" ref={frameMaterialRef} map={framePaintedTexture} transparent={true} alphaTest={0.1} side={THREE.DoubleSide} roughness={0.9} uProgress={0.0} />
             </mesh>
 
             {}
@@ -206,10 +206,10 @@ const CorridorDecorations = ({
   const ceilingY = corridorHeight / 2;
   const frameTexture = useTexture('/textures/corridor/ramkanazdjecieduza.webp');
   const framePaintedTexture = useTexture('/textures/corridor/ramkanazdjecieduza_painted.webp');
-  const standingFrameTexture = useTexture('/textures/corridor/ramkanazdjeciemala.webp');
-  const treeTexture = useTexture('/textures/corridor/drzewkowdoniczce.webp');
+  const standingFrameTexture = useTexture('/textures/corridor/standing1.png');
+  const treeTexture = useTexture('/textures/corridor/corridor_trees.png');
   const grateTexture = useTexture('/textures/corridor/kratkawentylacyjna.webp');
-  const flowerTexture = useTexture('/textures/corridor/kwiatekwdoniczce.webp');
+  const flowerTexture = useTexture('/textures/corridor/chemi1.png');
   const lampGrilleTexture = useTexture('/textures/corridor/kratanalampy.webp');
   const lampSideTexture = useTexture('/textures/corridor/bokilampy.webp');
   lampSideTexture.wrapS = lampSideTexture.wrapT = THREE.RepeatWrapping;
@@ -234,9 +234,9 @@ const CorridorDecorations = ({
     height: 2.5 / 1.785,
     y: 0.3,
     id: 'frame-1',
-    image: '/textures/corridor/rysuneknaobraz1.webp',
+    image: '/textures/corridor/science_pic1.png', 
     imageWidth: 1.1,
-    imageHeight: 1.1,
+    imageHeight: 0.8,
     offsetFromWall: 0.1
   }, {
     z: zOffset - 25,
@@ -245,9 +245,9 @@ const CorridorDecorations = ({
     height: 2.5 / 1.785,
     y: 0.2,
     id: 'frame-2',
-    image: '/textures/corridor/rysuneknaobrazek3.webp',
+    image: '/textures/corridor/science_pic2.png',
     imageWidth: 1.7,
-    imageHeight: 1,
+    imageHeight: 0.8,
     offsetFromWall: 0.1
   }, {
     z: zOffset - 40,
@@ -256,7 +256,7 @@ const CorridorDecorations = ({
     height: 2.5 / 1.785,
     y: 0.25,
     id: 'frame-3',
-    signature: "Empty canvas!\nWant your art here?\nContact me!",
+    signature: "Artificial Intelligence!\nWant your lab here?\nCreate your own!",
     signatureX: 0,
     signatureY: 0,
     signatureSize: 0.12,
@@ -268,7 +268,7 @@ const CorridorDecorations = ({
     height: 2.5 / 1.785,
     y: 0.35,
     id: 'frame-4',
-    signature: "Empty canvas!\nWant your art here?\nContact me!",
+    signature: "The important thing is to\n never stop questoning.\n-Albert Einstein",
     signatureX: 0,
     signatureY: 0,
     signatureSize: 0.12,
@@ -335,24 +335,24 @@ const CorridorDecorations = ({
                 {}
                 {[[-tableConfig.width / 2 + 0.1, -tableConfig.depth / 2 + 0.1], [tableConfig.width / 2 - 0.1, -tableConfig.depth / 2 + 0.1], [-tableConfig.width / 2 + 0.1, tableConfig.depth / 2 - 0.1], [tableConfig.width / 2 - 0.1, tableConfig.depth / 2 - 0.1]].map((pos, i) => <mesh key={`leg-${i}`} position={[pos[0], tableConfig.height / 2, pos[1]]}>
                         <boxGeometry args={[tableConfig.legRadius * 2, tableConfig.height, tableConfig.legRadius * 2]} />
-                        <meshBasicMaterial color="#e0e0e0" map={legTexture} roughness={0.8} />
+                        <meshBasicMaterial color="#C19A6B" map={legTexture} roughness={0.8} />
                     </mesh>)}
 
                 {}
                 <mesh position={[0, tableConfig.height + tableConfig.topThickness / 2, 0]}>
                     <boxGeometry args={[tableConfig.width, tableConfig.topThickness, tableConfig.depth]} />
-                    <meshBasicMaterial color="#e0e0e0" attach="material-0" map={woodTexture} /> {}
-                    <meshBasicMaterial color="#e0e0e0" attach="material-1" map={woodTexture} /> {}
-                    <meshBasicMaterial color="#e0e0e0" attach="material-2" map={tableTopTexture} roughness={0.5} /> {}
+                    <meshBasicMaterial color="#C19A6B" attach="material-0" map={woodTexture} /> {}
+                    <meshBasicMaterial color="#C19A6B" attach="material-1" map={woodTexture} /> {}
+                    <meshBasicMaterial color="#C19A6B" attach="material-2" map={tableTopTexture} roughness={0.5} /> {}
                     <meshBasicMaterial attach="material-3" color="#e0e0e0" />   {}
-                    <meshBasicMaterial color="#e0e0e0" attach="material-4" map={woodTexture} /> {}
-                    <meshBasicMaterial color="#e0e0e0" attach="material-5" map={woodTexture} /> {}
+                    <meshBasicMaterial color="#C19A6B" attach="material-4" map={woodTexture} /> {}
+                    <meshBasicMaterial color="#C19A6B" attach="material-5" map={woodTexture} /> {}
                 </mesh>
 
                 {}
-                <mesh position={[0, tableConfig.height + tableConfig.topThickness + 0.2, 0]} rotation={[0, -Math.PI / 4, 0]}>
-                    <planeGeometry args={[0.3, 0.3 / 0.758]} />
-                    <meshBasicMaterial color="#e0e0e0" map={flowerTexture} transparent={true} alphaTest={0.1} side={THREE.DoubleSide} roughness={0.8} />
+                <mesh position={[-0.1, tableConfig.height + tableConfig.topThickness + 0.33, 0]} rotation={[0, -Math.PI / 4, 0]}>
+                    <planeGeometry args={[0.8, 0.8 / 0.758]} />
+                    <meshBasicMaterial color="#e0e0e0" map={flowerTexture} transparent={true} alphaTest={0.1} side={THREE.DoubleSide} roughness={1} />
                 </mesh>
             </group>
 
@@ -365,19 +365,19 @@ const CorridorDecorations = ({
                 {}
                 <boxGeometry args={[0.5, 1.0, 1.0 * 0.8]} />
                 {}
-                <meshBasicMaterial color="#e0e0e0" attach="material-0" map={cabinetRestTexture} />
-                <meshBasicMaterial color="#e0e0e0" attach="material-1" map={cabinetFrontTexture} />
-                <meshBasicMaterial color="#e0e0e0" attach="material-2" map={cabinetRestTexture} />
-                <meshBasicMaterial color="#e0e0e0" attach="material-3" map={cabinetRestTexture} />
-                <meshBasicMaterial color="#e0e0e0" attach="material-4" map={cabinetRestTexture} />
-                <meshBasicMaterial color="#e0e0e0" attach="material-5" map={cabinetRestTexture} />
+                <meshBasicMaterial color="#C19A6B" attach="material-0" map={cabinetRestTexture} />
+                <meshBasicMaterial color="#C19A6B" attach="material-1" map={cabinetFrontTexture} />
+                <meshBasicMaterial color="#C19A6B" attach="material-2" map={cabinetRestTexture} />
+                <meshBasicMaterial color="#C19A6B" attach="material-3" map={cabinetRestTexture} />
+                <meshBasicMaterial color="#C19A6B" attach="material-4" map={cabinetRestTexture} />
+                <meshBasicMaterial color="#C19A6B" attach="material-5" map={cabinetRestTexture} />
             </mesh>
 
             {}
             {}
-            <mesh position={[wallX - 0.26, floorY + 1.0 + 0.2, zOffset - 51]} rotation={[0, -Math.PI / 2 + 0.2, 0]}>
-                <planeGeometry args={[0.3, 0.3 / 0.777]} />
-                <meshBasicMaterial color="#e0e0e0" map={standingFrameTexture} transparent={true} alphaTest={0.1} side={THREE.DoubleSide} roughness={0.8} />
+            <mesh position={[wallX - 0.26, floorY + 1.1 + 0.2, zOffset - 51]} rotation={[0, -Math.PI / 2 + 0.2, 0]}>
+                <planeGeometry args={[0.7, 0.7 / 0.777]} />
+                <meshBasicMaterial color="#e0e0e0" map={standingFrameTexture} transparent={true} alphaTest={0.1} side={THREE.DoubleSide} roughness={1} />
             </mesh>
 
 

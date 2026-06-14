@@ -28,7 +28,7 @@ const CorridorSegment = ({
       roomId: 'gallery',
       relativeZ: -18,
       side: 'left',
-      label: 'THE GALLERY',
+      label: 'MATHS',
       icon: '◈',
       color: '#f5efe6'
     }, {
@@ -36,15 +36,15 @@ const CorridorSegment = ({
       roomId: 'studio',
       relativeZ: -32,
       side: 'right',
-      label: 'THE STUDIO',
+      label: 'CHEMISTRY',
       icon: '▶',
       color: '#e6f5ef'
     }, {
-      id: `about-${segmentIndex}`,
-      roomId: 'about',
+      id: `physics-${segmentIndex}`,
+      roomId: 'physics',
       relativeZ: -48,
       side: 'left',
-      label: 'THE ABOUT',
+      label: 'PHYSICS',
       icon: '★',
       color: '#efe6f5',
       enterDistance: 25
@@ -53,7 +53,7 @@ const CorridorSegment = ({
       roomId: 'contact',
       relativeZ: -62,
       side: 'right',
-      label: "LET'S CONNECT",
+      label: "GEOMETRY",
       icon: '✉',
       color: '#f5e6e6'
     }];

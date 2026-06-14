@@ -44,7 +44,7 @@ const DoorWallSegment = ({
   }, [wallTexture, width, corridorHeight]);
   return <mesh ref={meshRef} position={position}>
             <planeGeometry args={[width, corridorHeight]} />
-            <meshBasicMaterial color="#e0e0e0" map={segTexture} roughness={1} metalness={0} />
+            <meshBasicMaterial color="#F5F5DC" map={segTexture} roughness={1} metalness={0} />
         </mesh>;
 };
 const CorridorWalls = ({
@@ -59,7 +59,7 @@ const CorridorWalls = ({
   const baseboardTexture = useTexture('/textures/corridor/texturadoprogow.webp');
   baseboardTexture.wrapS = baseboardTexture.wrapT = THREE.RepeatWrapping;
   baseboardTexture.colorSpace = THREE.SRGBColorSpace;
-  const wallTexture = useTexture('/textures/corridor/wall_texture.webp');
+  const wallTexture = useTexture('/textures/corridor/wall_texture4.png');
   wallTexture.wrapS = wallTexture.wrapT = THREE.RepeatWrapping;
   const ceilingTexture = useTexture('/textures/corridor/ceiling_texture.webp');
   ceilingTexture.wrapS = ceilingTexture.wrapT = THREE.RepeatWrapping;
@@ -162,15 +162,15 @@ const CorridorWalls = ({
         const isMirrored = Math.abs(globalTileIndex) % 2 === 1;
         tiles.push(<mesh key={`floor-center-${tileZ.toFixed(1)}`} position={[0, floorY, tileZ]} rotation={[-Math.PI / 2, 0, Math.PI / 2 + (isMirrored ? Math.PI : 0)]} scale={[isMirrored ? -1 : 1, 1, 1]}>
                             <planeGeometry args={[TILE_LENGTH, CENTER_WIDTH]} />
-                            <meshBasicMaterial color="#e0e0e0" map={floorTexture} side={THREE.DoubleSide} roughness={1} metalness={0} />
+                            <meshBasicMaterial color="#DEB887" map={floorTexture} side={THREE.DoubleSide} roughness={1} metalness={0} />
                         </mesh>);
         tiles.push(<mesh key={`floor-left-${tileZ.toFixed(1)}`} position={[-(CENTER_WIDTH / 2 + SIDE_WIDTH / 2), floorY, tileZ]} rotation={[-Math.PI / 2, 0, Math.PI / 2 + (isMirrored ? Math.PI : 0)]} scale={[isMirrored ? -1 : 1, 1, 1]}>
                             <planeGeometry args={[TILE_LENGTH, SIDE_WIDTH]} />
-                            <meshBasicMaterial color="#e0e0e0" map={leftSideTexture} side={THREE.DoubleSide} roughness={1} metalness={0} />
+                            <meshBasicMaterial color="#DEB887" map={leftSideTexture} side={THREE.DoubleSide} roughness={1} metalness={0} />
                         </mesh>);
         tiles.push(<mesh key={`floor-right-${tileZ.toFixed(1)}`} position={[CENTER_WIDTH / 2 + SIDE_WIDTH / 2, floorY, tileZ]} rotation={[-Math.PI / 2, 0, Math.PI / 2 + (isMirrored ? Math.PI : 0)]} scale={[isMirrored ? -1 : 1, 1, 1]}>
                             <planeGeometry args={[TILE_LENGTH, SIDE_WIDTH]} />
-                            <meshBasicMaterial color="#e0e0e0" map={rightSideTexture} side={THREE.DoubleSide} roughness={1} metalness={0} />
+                            <meshBasicMaterial color="#DEB887" map={rightSideTexture} side={THREE.DoubleSide} roughness={1} metalness={0} />
                         </mesh>);
         tileZ -= TILE_LENGTH;
       }
@@ -193,7 +193,7 @@ const CorridorWalls = ({
         const isMirrored = Math.abs(globalTileIndex) % 2 === 1;
         tiles.push(<mesh key={`ceiling-tile-${tileZ.toFixed(1)}`} position={[0, ceilingY, tileZ]} rotation={[Math.PI / 2, 0, isMirrored ? Math.PI : 0]} scale={[isMirrored ? -1 : 1, 1, 1]}>
                             <planeGeometry args={[tileWidth, tileLength]} />
-                            <meshBasicMaterial color="#e0e0e0" map={ceilingTexture} map-repeat={[tileWidth / 2, tileLength / 2]} side={THREE.DoubleSide} roughness={1} metalness={0} />
+                            <meshBasicMaterial color="#FFF8DC" map={ceilingTexture} map-repeat={[tileWidth / 2, tileLength / 2]} side={THREE.DoubleSide} roughness={1} metalness={0} />
                         </mesh>);
         tileZ -= tileLength;
       }
@@ -226,13 +226,13 @@ const CorridorWalls = ({
                             {}
                             <mesh>
                                 <planeGeometry args={[seg.width, corridorHeight]} />
-                                <meshBasicMaterial color="#e0e0e0" map={segTexture} roughness={1} metalness={0} />
+                                <meshBasicMaterial color="#F5F5DC" map={segTexture} roughness={1} metalness={0} />
                             </mesh>
 
                             {}
                             <mesh position={[bbOffsetX, -corridorHeight / 2 + 0.075, 0.01]}>
                                 <planeGeometry args={[bbWidth, 0.15]} />
-                                <meshBasicMaterial color="#e0e0e0" map={bbTexture} roughness={0.8} side={THREE.DoubleSide} />
+                                <meshBasicMaterial color="#F5F5DC" map={bbTexture} roughness={0.8} side={THREE.DoubleSide} />
                             </mesh>
                         </group>;
     })}
