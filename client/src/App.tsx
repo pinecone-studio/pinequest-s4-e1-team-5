@@ -13,6 +13,8 @@ import GlobalOverlay from './components/ui/GlobalOverlay';
 import ScreenReaderOverlay from './components/ui/ScreenReaderOverlay';
 import CircuitCanvas from './components/ui/CircuitCanvas';
 import SchoolAssistant from './components/ui/SchoolAssistant';
+import MathRoomAssistant from './components/ui/MathRoomAssistant';
+import MathFormulaPanel from './components/ui/MathFormulaPanel';
 import posthog from 'posthog-js';
 posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
   api_host: import.meta.env.VITE_POSTHOG_HOST,
@@ -170,6 +172,8 @@ function AppContent() {
               <NavigationUI />
               <GlobalOverlay />
               <SchoolAssistant />
+              <MathRoomAssistant />
+              <MathFormulaPanel />
               <PaperTransition />
               <ScreenReaderOverlay />
               <PhysicsCircuitOverlay />
