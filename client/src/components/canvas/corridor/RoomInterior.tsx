@@ -1,12 +1,11 @@
-import { useMemo, memo, Suspense, useEffect } from 'react';
-import { Text } from '@react-three/drei';
-import { useTexture } from '@react-three/drei';
-import * as THREE from 'three';
-import MathRoom from '../rooms/Mathematic/MathRoom';
-import ChemistryRoom from '../rooms/Chemistry/ChemistryRoom';
-import PhysicRoom from '../rooms/Physics/PhysicRoom';
-import GeometryRoom from '../rooms/Geometry/GeometryRoom';
-
+import { useMemo, memo, Suspense, useEffect } from "react";
+import { Text } from "@react-three/drei";
+import { useTexture } from "@react-three/drei";
+import * as THREE from "three";
+import MathRoom from "../rooms/Mathematic/MathRoom";
+import ChemistryRoom from "../rooms/Chemistry/ChemistryRoom";
+import PhysicRoom from "../rooms/Physics/PhysicRoom";
+import GeometryRoom from "../rooms/Geometry/GeometryRoom";
 
 const ROOM_CONFIG = {
   corridorWidth: 2.2,
@@ -14,30 +13,25 @@ const ROOM_CONFIG = {
   corridorDepth: 2,
   roomWidth: 30,
   roomHeight: 20,
-  roomDepth: 25
+  roomDepth: 25,
 };
 
-const NATURAL_TILE_W = 1582 / 94 * 0.15;
-const RoomInterior = memo(({
-  label,
-  showRoom,
-  onReady,
-  isExiting
-}) => {
+const NATURAL_TILE_W = (1582 / 94) * 0.15;
+const RoomInterior = memo(({ label, showRoom, onReady, isExiting }) => {
   const {
     corridorWidth,
     corridorHeight,
     corridorDepth,
     roomWidth,
     roomHeight,
-    roomDepth
+    roomDepth,
   } = ROOM_CONFIG;
   const halfDepth = corridorDepth / 2;
   const roomZ = -corridorDepth - roomDepth / 2;
-  const floorTexSrc = useTexture('/textures/corridor/kawalekpodlogi.webp');
-  const wallTexSrc = useTexture('/textures/corridor/wall_texture.webp');
-  const ceilingTexSrc = useTexture('/textures/corridor/ceiling_texture.webp');
-  const bbTexSrc = useTexture('/textures/corridor/texturadoprogow.webp');
+  const floorTexSrc = useTexture("/textures/corridor/kawalekpodlogi.webp");
+  const wallTexSrc = useTexture("/textures/corridor/wall_texture.webp");
+  const ceilingTexSrc = useTexture("/textures/corridor/ceiling_texture.webp");
+  const bbTexSrc = useTexture("/textures/corridor/texturadoprogow.webp");
 
   const materials = useMemo(() => {
     const floorTex = floorTexSrc.clone();
@@ -64,40 +58,40 @@ const RoomInterior = memo(({
     bbRight.needsUpdate = true;
     bbRight.wrapS = bbRight.wrapT = THREE.RepeatWrapping;
     bbRight.repeat.set(corridorDepth / NATURAL_TILE_W, 1);
-    
+
     return {
       corridorFloor: new THREE.MeshBasicMaterial({
-        color: '#e0e0e0',
+        color: "#e0e0e0",
         map: floorTex,
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
       }),
       corridorWallL: new THREE.MeshBasicMaterial({
-        color: '#F5F5DC',
+        color: "#F5F5DC",
         map: wallTexL,
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
       }),
       corridorWallR: new THREE.MeshBasicMaterial({
-        color: '#e0e0e0',
+        color: "#e0e0e0",
         map: wallTexR,
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
       }),
       corridorCeiling: new THREE.MeshBasicMaterial({
-        color: '#e0e0e0',
+        color: "#e0e0e0",
         map: ceilTex,
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
       }),
       bbLeft: new THREE.MeshBasicMaterial({
-        color: '#e0e0e0',
+        color: "#e0e0e0",
         map: bbLeft,
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
       }),
       bbRight: new THREE.MeshBasicMaterial({
-        color: '#e0e0e0',
+        color: "#e0e0e0",
         map: bbRight,
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
       }),
       threshold: new THREE.MeshBasicMaterial({
-        color: '#e0e0e0',
+        color: "#e0e0e0",
         map: (() => {
           const t = bbTexSrc.clone();
           t.needsUpdate = true;
@@ -105,118 +99,238 @@ const RoomInterior = memo(({
           t.repeat.set(corridorWidth / NATURAL_TILE_W, 1);
           return t;
         })(),
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
       }),
       roomFloor: new THREE.MeshBasicMaterial({
-        color: '#e5e5e5',
-        side: THREE.DoubleSide
+        color: "#e5e5e5",
+        side: THREE.DoubleSide,
       }),
       roomCeiling: new THREE.MeshBasicMaterial({
-        color: '#fafafa',
-        side: THREE.DoubleSide
+        color: "#fafafa",
+        side: THREE.DoubleSide,
       }),
       roomWall: new THREE.MeshBasicMaterial({
-        color: '#f0f0f0',
-        side: THREE.DoubleSide
+        color: "#f0f0f0",
+        side: THREE.DoubleSide,
       }),
       roomBackWall: new THREE.MeshBasicMaterial({
-        color: '#f5f5f5',
-        side: THREE.DoubleSide
-      })
+        color: "#f5f5f5",
+        side: THREE.DoubleSide,
+      }),
     };
   }, [floorTexSrc, wallTexSrc, ceilingTexSrc, bbTexSrc]);
 
+  const geometries = useMemo(
+    () => ({
+      corridorSideWall: new THREE.PlaneGeometry(corridorDepth, corridorHeight),
+      corridorFloorCeiling: new THREE.PlaneGeometry(
+        corridorWidth,
+        corridorDepth,
+      ),
+      corridorBaseboard: new THREE.PlaneGeometry(corridorDepth, 0.15),
+      threshold: new THREE.PlaneGeometry(corridorWidth, 0.15),
+      roomFloorCeiling: new THREE.PlaneGeometry(roomWidth, roomDepth),
+      roomSideWall: new THREE.PlaneGeometry(roomDepth, roomHeight),
+      roomBackWall: new THREE.PlaneGeometry(roomWidth, roomHeight),
+    }),
+    [],
+  );
 
-  const geometries = useMemo(() => ({
-    corridorSideWall: new THREE.PlaneGeometry(corridorDepth, corridorHeight),
-    corridorFloorCeiling: new THREE.PlaneGeometry(corridorWidth, corridorDepth),
-    corridorBaseboard: new THREE.PlaneGeometry(corridorDepth, 0.15),
-    threshold: new THREE.PlaneGeometry(corridorWidth, 0.15),
-    roomFloorCeiling: new THREE.PlaneGeometry(roomWidth, roomDepth),
-    roomSideWall: new THREE.PlaneGeometry(roomDepth, roomHeight),
-    roomBackWall: new THREE.PlaneGeometry(roomWidth, roomHeight)
-  }), []);
-
-  const isMath = label === 'MATHS';
+  const isMath = label === "MATHEMATIC";
   useEffect(() => {
-    if (showRoom && !['MATHS', 'CHEMISTRY', 'PHYSICS', "GEOMETRY"].includes(label)) {
+    if (
+      showRoom &&
+      !["MATHEMATIC", "CHEMISTRY", "PHYSICS", "GEOMETRY"].includes(label)
+    ) {
       onReady?.();
     }
   }, [showRoom, label, onReady]);
-  return <group position={[0, -0.149, 0]}>
-            {}
-            {}
-            <mesh position={[-corridorWidth / 2, 0, -halfDepth]} rotation={[0, Math.PI / 2, 0]} geometry={geometries.corridorSideWall} material={materials.corridorWallL} />
+  return (
+    <group position={[0, -0.149, 0]}>
+      {}
+      {}
+      <mesh
+        position={[-corridorWidth / 2, 0, -halfDepth]}
+        rotation={[0, Math.PI / 2, 0]}
+        geometry={geometries.corridorSideWall}
+        material={materials.corridorWallL}
+      />
 
-            {}
-            <mesh position={[corridorWidth / 2, 0, -halfDepth]} rotation={[0, -Math.PI / 2, 0]} geometry={geometries.corridorSideWall} material={materials.corridorWallR} />
+      {}
+      <mesh
+        position={[corridorWidth / 2, 0, -halfDepth]}
+        rotation={[0, -Math.PI / 2, 0]}
+        geometry={geometries.corridorSideWall}
+        material={materials.corridorWallR}
+      />
 
-            {}
-            <mesh position={[0, -corridorHeight / 2, -halfDepth]} rotation={[-Math.PI / 2, 0, 0]} geometry={geometries.corridorFloorCeiling} material={materials.corridorFloor} />
+      {}
+      <mesh
+        position={[0, -corridorHeight / 2, -halfDepth]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        geometry={geometries.corridorFloorCeiling}
+        material={materials.corridorFloor}
+      />
 
-            {}
-            <mesh position={[0, corridorHeight / 2, -halfDepth]} rotation={[Math.PI / 2, 0, 0]} geometry={geometries.corridorFloorCeiling} material={materials.corridorCeiling} />
+      {}
+      <mesh
+        position={[0, corridorHeight / 2, -halfDepth]}
+        rotation={[Math.PI / 2, 0, 0]}
+        geometry={geometries.corridorFloorCeiling}
+        material={materials.corridorCeiling}
+      />
 
-            {}
-            <mesh position={[-corridorWidth / 2 + 0.01, -corridorHeight / 2 + 0.075, -halfDepth]} rotation={[0, Math.PI / 2, 0]} geometry={geometries.corridorBaseboard} material={materials.bbLeft} />
+      {}
+      <mesh
+        position={[
+          -corridorWidth / 2 + 0.01,
+          -corridorHeight / 2 + 0.075,
+          -halfDepth,
+        ]}
+        rotation={[0, Math.PI / 2, 0]}
+        geometry={geometries.corridorBaseboard}
+        material={materials.bbLeft}
+      />
 
-            {}
-            <mesh position={[corridorWidth / 2 - 0.01, -corridorHeight / 2 + 0.075, -halfDepth]} rotation={[0, -Math.PI / 2, 0]} geometry={geometries.corridorBaseboard} material={materials.bbRight} />
+      {}
+      <mesh
+        position={[
+          corridorWidth / 2 - 0.01,
+          -corridorHeight / 2 + 0.075,
+          -halfDepth,
+        ]}
+        rotation={[0, -Math.PI / 2, 0]}
+        geometry={geometries.corridorBaseboard}
+        material={materials.bbRight}
+      />
 
-            {}
-            <mesh position={[0, -corridorHeight / 2 + 0.005, -corridorDepth]} rotation={[-Math.PI / 2, 0, 0]} geometry={geometries.threshold} material={materials.threshold} />
+      {}
+      <mesh
+        position={[0, -corridorHeight / 2 + 0.005, -corridorDepth]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        geometry={geometries.threshold}
+        material={materials.threshold}
+      />
 
-            {}
-            {showRoom && <group>
-                    {isMath ? <group position={[0, -0.5, -corridorDepth]}>
-                            <Suspense fallback={null}>
-                                <MathRoom showRoom={showRoom} onReady={onReady} isExiting={isExiting} />
-                            </Suspense>
-                        </group> : label === 'CHEMISTRY' ? <group position={[0, -0.5, -corridorDepth]}>
-                            <Suspense fallback={null}>
-                                <ChemistryRoom showRoom={showRoom} onReady={onReady} isExiting={isExiting} />
-                            </Suspense>
-                        </group> : label === 'PHYSICS' ? <group position={[0, -0.5, -corridorDepth]}>
-                            <Suspense fallback={null}>
-                                <PhysicRoom showRoom={showRoom} onReady={onReady} isExiting={isExiting} />
-                            </Suspense>
-                        </group> : label === "GEOMETRY" ? <group position={[0, -0.5, -corridorDepth]}>
-                            <Suspense fallback={null}>
-                                <GeometryRoom showRoom={showRoom} onReady={onReady} isExiting={isExiting} />
-                            </Suspense>
-                        </group> : <group position={[0, roomHeight / 2 - corridorHeight / 2, roomZ]}>
-                            {}
-                            <mesh position={[0, -roomHeight / 2, 0]} rotation={[-Math.PI / 2, 0, 0]} geometry={geometries.roomFloorCeiling} material={materials.roomFloor} />
+      {}
+      {showRoom && (
+        <group>
+          {isMath ? (
+            <group position={[0, -0.5, -corridorDepth]}>
+              <Suspense fallback={null}>
+                <MathRoom
+                  showRoom={showRoom}
+                  onReady={onReady}
+                  isExiting={isExiting}
+                />
+              </Suspense>
+            </group>
+          ) : label === "CHEMISTRY" ? (
+            <group position={[0, -0.5, -corridorDepth]}>
+              <Suspense fallback={null}>
+                <ChemistryRoom
+                  showRoom={showRoom}
+                  onReady={onReady}
+                  isExiting={isExiting}
+                />
+              </Suspense>
+            </group>
+          ) : label === "PHYSICS" ? (
+            <group position={[0, -0.5, -corridorDepth]}>
+              <Suspense fallback={null}>
+                <PhysicRoom
+                  showRoom={showRoom}
+                  onReady={onReady}
+                  isExiting={isExiting}
+                />
+              </Suspense>
+            </group>
+          ) : label === "GEOMETRY" ? (
+            <group position={[0, -0.5, -corridorDepth]}>
+              <Suspense fallback={null}>
+                <GeometryRoom
+                  showRoom={showRoom}
+                  onReady={onReady}
+                  isExiting={isExiting}
+                />
+              </Suspense>
+            </group>
+          ) : (
+            <group position={[0, roomHeight / 2 - corridorHeight / 2, roomZ]}>
+              {}
+              <mesh
+                position={[0, -roomHeight / 2, 0]}
+                rotation={[-Math.PI / 2, 0, 0]}
+                geometry={geometries.roomFloorCeiling}
+                material={materials.roomFloor}
+              />
 
-                            {}
-                            <gridHelper args={[Math.min(roomWidth, roomDepth), 20, '#cccccc', '#dddddd']} position={[0, -roomHeight / 2 + 0.01, 0]} />
+              {}
+              <gridHelper
+                args={[
+                  Math.min(roomWidth, roomDepth),
+                  20,
+                  "#cccccc",
+                  "#dddddd",
+                ]}
+                position={[0, -roomHeight / 2 + 0.01, 0]}
+              />
 
-                            {}
-                            <mesh position={[0, roomHeight / 2, 0]} rotation={[Math.PI / 2, 0, 0]} geometry={geometries.roomFloorCeiling} material={materials.roomCeiling} />
+              {}
+              <mesh
+                position={[0, roomHeight / 2, 0]}
+                rotation={[Math.PI / 2, 0, 0]}
+                geometry={geometries.roomFloorCeiling}
+                material={materials.roomCeiling}
+              />
 
-                            {}
-                            <mesh position={[0, 0, -roomDepth / 2]} geometry={geometries.roomBackWall} material={materials.roomBackWall} />
+              {}
+              <mesh
+                position={[0, 0, -roomDepth / 2]}
+                geometry={geometries.roomBackWall}
+                material={materials.roomBackWall}
+              />
 
-                            {}
-                            <mesh position={[-roomWidth / 2, 0, 0]} rotation={[0, Math.PI / 2, 0]} geometry={geometries.roomSideWall} material={materials.roomWall} />
+              {}
+              <mesh
+                position={[-roomWidth / 2, 0, 0]}
+                rotation={[0, Math.PI / 2, 0]}
+                geometry={geometries.roomSideWall}
+                material={materials.roomWall}
+              />
 
-                            {}
-                            <mesh position={[roomWidth / 2, 0, 0]} rotation={[0, -Math.PI / 2, 0]} geometry={geometries.roomSideWall} material={materials.roomWall} />
+              {}
+              <mesh
+                position={[roomWidth / 2, 0, 0]}
+                rotation={[0, -Math.PI / 2, 0]}
+                geometry={geometries.roomSideWall}
+                material={materials.roomWall}
+              />
 
-                            {}
-                            <Text position={[0, 2, -roomDepth / 2 + 2]} fontSize={4} color="#1a1a1a" anchorX="center" anchorY="middle" maxWidth={roomWidth * 0.8} textAlign="center">
-                                {label}
-                            </Text>
+              {}
+              <Text
+                position={[0, 2, -roomDepth / 2 + 2]}
+                fontSize={4}
+                color="#1a1a1a"
+                anchorX="center"
+                anchorY="middle"
+                maxWidth={roomWidth * 0.8}
+                textAlign="center"
+              >
+                {label}
+              </Text>
 
-                            {}
-                           
+              {}
 
-                            {}
-                            {}
-                            {}
-                        </group>}
-                </group>}
-        </group>;
+              {}
+              {}
+              {}
+            </group>
+          )}
+        </group>
+      )}
+    </group>
+  );
 });
-RoomInterior.displayName = 'RoomInterior';
+RoomInterior.displayName = "RoomInterior";
 export default RoomInterior;

@@ -1,14 +1,14 @@
-import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
-import { useTexture, PositionalAudio, Text } from '@react-three/drei';
-import * as THREE from 'three';
-import gsap from 'gsap';
-import RoomInterior from './RoomInterior';
-import '../shaders/RevealMaterial';
-import { useScene } from '../../../context/SceneContext';
-import { useAchievements } from '../../../context/AchievementsContext';
-import { useAudio } from '../../../context/AudioManager';
-import { isTouchDevice } from '../../../utils/deviceDetect';
+import { useRef, useState, useCallback, useEffect, useMemo } from "react";
+import { useFrame, useThree } from "@react-three/fiber";
+import { useTexture, PositionalAudio, Text } from "@react-three/drei";
+import * as THREE from "three";
+import gsap from "gsap";
+import RoomInterior from "./RoomInterior";
+import "../shaders/RevealMaterial";
+import { useScene } from "../../../context/SceneContext";
+import { useAchievements } from "../../../context/AchievementsContext";
+import { useAudio } from "../../../context/AudioManager";
+import { isTouchDevice } from "../../../utils/deviceDetect";
 const WALL_X_OUTER = 3.5;
 const WALL_X_INNER = 1.7;
 const DOOR_Z_SPAN = 4;
@@ -19,7 +19,7 @@ const DOOR_AUDIO_SETTINGS = {
   closeVolume: 0.2,
   distance: 3,
   rolloff: 2,
-  closeDelay: 0.5
+  closeDelay: 0.5,
 };
 const WALL_DX = WALL_X_OUTER - WALL_X_INNER;
 const WALL_DZ = DOOR_Z_SPAN;
@@ -29,20 +29,20 @@ const DOOR_LOOK_ANGLE = Math.PI * 0.334;
 const DOOR_ALIGN_X = 1.2;
 
 const DOOR_TEXTURES = {
-  'MATHS': '/textures/corridor/doors/math_door.png',
-  'CHEMISTRY': '/textures/corridor/doors/chemistry_door.png',
-  'PHYSICS': '/textures/corridor/doors/physics_door.png',
-  "GEOMETRY": '/textures/corridor/doors/Geometry_door.png'
+  MATHEMATIC: "/textures/corridor/doors/math_door.png",
+  CHEMISTRY: "/textures/corridor/doors/chemistry_door.png",
+  PHYSICS: "/textures/corridor/doors/physics_door.png",
+  GEOMETRY: "/textures/corridor/doors/Geometry_door.png",
 };
 const DOOR_PAINTED_TEXTURES = {
-  'MATHS': '/textures/corridor/doors/math_door.png',
-  'CHEMISTRY': '/textures/corridor/doors/chemistry_door.png',
-  'PHYSICS': '/textures/corridor/doors/physics_door.png',
-  "GEOMETRY": '/textures/corridor/doors/Geometry_door.png'
+  MATHEMATIC: "/textures/corridor/doors/math_door.png",
+  CHEMISTRY: "/textures/corridor/doors/chemistry_door.png",
+  PHYSICS: "/textures/corridor/doors/physics_door.png",
+  GEOMETRY: "/textures/corridor/doors/Geometry_door.png",
 };
 const DoorSection = ({
   position,
-  side = 'left',
+  side = "left",
   label,
   roomId,
   icon,
@@ -50,7 +50,7 @@ const DoorSection = ({
   autoCloseDelay = 3000,
   enterDistance = 8,
   setCameraOverride,
-  segmentIndex
+  segmentIndex,
 }) => {
   const groupRef = useRef();
   const doorRef = useRef();
@@ -68,9 +68,7 @@ const DoorSection = ({
   const [isTiltLocked, setIsTiltLocked] = useState(false);
   const [shouldRenderRoom, setShouldRenderRoom] = useState(false);
   const [roomReady, setRoomReady] = useState(false);
-  const {
-    camera
-  } = useThree();
+  const { camera } = useThree();
   const closeTimerRef = useRef(null);
   const loadTimeoutRef = useRef(null);
   const {
@@ -86,25 +84,20 @@ const DoorSection = ({
     isTeleporting,
     isFastTeleport,
     signalRoomReady,
-    teleportPhase
+    teleportPhase,
   } = useScene();
-  const {
-    unlockAchievement
-  } = useAchievements();
-  const {
-    globalVolume,
-    isMuted
-  } = useAudio();
+  const { unlockAchievement } = useAchievements();
+  const { globalVolume, isMuted } = useAudio();
   const hoverAudioRef = useRef();
   const openAudioRef = useRef();
   const closeAudioRef = useRef();
   const pendingSchoolApprovalRef = useRef(false);
   const doorId = useMemo(() => {
     if (roomId) return roomId;
-    if (label === 'MATHS') return 'math';
-    if (label === 'CHEMISTRY') return 'chemistry';
-    if (label === 'PHYSICS') return 'physics';
-    if (label === "GEOMETRY") return 'geometry';
+    if (label === "MATHEMATIC") return "math";
+    if (label === "CHEMISTRY") return "chemistry";
+    if (label === "PHYSICS") return "physics";
+    if (label === "GEOMETRY") return "geometry";
     return null;
   }, [label, roomId]);
   const doorApprovalId = useMemo(() => {
@@ -112,7 +105,12 @@ const DoorSection = ({
     return `${segmentIndex}:${doorId}`;
   }, [doorId, segmentIndex]);
   useEffect(() => {
-    if (isTeleporting && teleportPhase === 'teleporting' && isInsideRoom && currentRoom === doorId) {
+    if (
+      isTeleporting &&
+      teleportPhase === "teleporting" &&
+      isInsideRoom &&
+      currentRoom === doorId
+    ) {
       setIsOpen(false);
       setIsInsideRoom(false);
       setIsAnimating(false);
@@ -124,29 +122,39 @@ const DoorSection = ({
       if (handleRef.current) handleRef.current.rotation.z = 0;
       if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
     }
-  }, [isTeleporting, teleportPhase, isInsideRoom, currentRoom, doorId, label, setCameraOverride]);
+  }, [
+    isTeleporting,
+    teleportPhase,
+    isInsideRoom,
+    currentRoom,
+    doorId,
+    label,
+    setCameraOverride,
+  ]);
   const savedCameraState = useRef({
     x: 0,
     y: 0,
     z: 0,
     rotationX: 0,
     rotationY: 0,
-    rotationZ: 0
+    rotationZ: 0,
   });
   const doorAlignedState = useRef({
     x: 0,
     y: 0,
     z: 0,
-    rotationY: 0
+    rotationY: 0,
   });
   const roomEntryState = useRef({
     x: 0,
     y: 0,
     z: 0,
-    rotationY: 0
+    rotationY: 0,
   });
   const currentTilt = useRef(0);
-  const originalWallTexture = useTexture('/textures/corridor/wall_texture.webp');
+  const originalWallTexture = useTexture(
+    "/textures/corridor/wall_texture.webp",
+  );
   const wallTexture = useMemo(() => {
     const tex = originalWallTexture.clone();
     tex.needsUpdate = true;
@@ -155,22 +163,36 @@ const DoorSection = ({
     tex.offset.set(0.5, 0.5);
     return tex;
   }, [originalWallTexture]);
-  const doorTexturePath = DOOR_TEXTURES[label] || DOOR_TEXTURES['MATHS'];
+  const doorTexturePath = DOOR_TEXTURES[label] || DOOR_TEXTURES["MATHEMATIC"];
   const doorTexture = useTexture(doorTexturePath);
   const isTouch = isTouchDevice();
-  const dummyTex = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-  const doorPaintedTexturePath = DOOR_PAINTED_TEXTURES[label] || DOOR_PAINTED_TEXTURES['MATHS'];
-  const doorPaintedTexture = useTexture(isTouch ? dummyTex : doorPaintedTexturePath);
-  const frameTexture = useTexture('/textures/corridor/doors/ramkasingledoors.webp');
-  const handleTexture = useTexture('/textures/corridor/doors/klamkadodrzwi.webp');
-  const handlePaintedTexture = useTexture(isTouch ? dummyTex : '/textures/corridor/doors/klamkadodrzwi_painted.webp');
-  const doorBackTexture = useTexture('/textures/corridor/doors/backsingledoors.webp');
-  const arrowTexture = useTexture('/textures/corridor/strzalka.webp');
-  const baseboardTexture = useTexture('/textures/corridor/texturadoprogow.webp');
+  const dummyTex =
+    "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+  const doorPaintedTexturePath =
+    DOOR_PAINTED_TEXTURES[label] || DOOR_PAINTED_TEXTURES["MATHEMATIC"];
+  const doorPaintedTexture = useTexture(
+    isTouch ? dummyTex : doorPaintedTexturePath,
+  );
+  const frameTexture = useTexture(
+    "/textures/corridor/doors/ramkasingledoors.webp",
+  );
+  const handleTexture = useTexture(
+    "/textures/corridor/doors/klamkadodrzwi.webp",
+  );
+  const handlePaintedTexture = useTexture(
+    isTouch ? dummyTex : "/textures/corridor/doors/klamkadodrzwi_painted.webp",
+  );
+  const doorBackTexture = useTexture(
+    "/textures/corridor/doors/backsingledoors.webp",
+  );
+  const arrowTexture = useTexture("/textures/corridor/strzalka.webp");
+  const baseboardTexture = useTexture(
+    "/textures/corridor/texturadoprogow.webp",
+  );
   baseboardTexture.wrapS = baseboardTexture.wrapT = THREE.RepeatWrapping;
   baseboardTexture.colorSpace = THREE.SRGBColorSpace;
   const doorBoardWidth = (WALL_LENGTH - 1.1) / 2;
-  const NATURAL_TILE_W = 1582 / 94 * 0.15;
+  const NATURAL_TILE_W = (1582 / 94) * 0.15;
   const doorBbTexLeft = useMemo(() => {
     const tex = baseboardTexture.clone();
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
@@ -189,7 +211,7 @@ const DoorSection = ({
     tex.repeat.set(doorBoardWidth / NATURAL_TILE_W, 1);
     return tex;
   }, [baseboardTexture]);
-  const doorRatio = label === 'CHEMISTRY' ? 0.388 : 0.376;
+  const doorRatio = label === "CHEMISTRY" ? 0.388 : 0.376;
   const doorHeight = 2.5;
   const doorWidth = doorHeight * doorRatio * 1.12;
   const frameHeight = 2.5;
@@ -224,8 +246,8 @@ const DoorSection = ({
   const MAX_TILT = BASE_WALL_ANGLE + 0.1;
   const TILT_START = 15;
   const TILT_PEAK = 3;
-  const pivotX = side === 'left' ? -WALL_X_OUTER : WALL_X_OUTER;
-  const wallOffsetX = side === 'left' ? WALL_LENGTH / 2 : -WALL_LENGTH / 2;
+  const pivotX = side === "left" ? -WALL_X_OUTER : WALL_X_OUTER;
+  const wallOffsetX = side === "left" ? WALL_LENGTH / 2 : -WALL_LENGTH / 2;
   const compileFramesRef = useRef(0);
   useFrame(() => {
     if (compileFramesRef.current < 2) {
@@ -233,7 +255,8 @@ const DoorSection = ({
       if (compileFramesRef.current === 2) {
         if (!isHovered && !isOpen) {
           if (doorPaintedRef.current) doorPaintedRef.current.visible = false;
-          if (handlePaintedRef.current) handlePaintedRef.current.visible = false;
+          if (handlePaintedRef.current)
+            handlePaintedRef.current.visible = false;
         }
       }
     }
@@ -252,10 +275,15 @@ const DoorSection = ({
         targetTilt = MAX_TILT;
       }
     }
-    currentTilt.current = THREE.MathUtils.lerp(currentTilt.current, targetTilt, 0.06);
-    const baseDir = side === 'left' ? 1 : -1;
-    const tiltDir = side === 'left' ? -1 : 1;
-    const currentRotation = BASE_ROTATION * baseDir + currentTilt.current * tiltDir;
+    currentTilt.current = THREE.MathUtils.lerp(
+      currentTilt.current,
+      targetTilt,
+      0.06,
+    );
+    const baseDir = side === "left" ? 1 : -1;
+    const tiltDir = side === "left" ? -1 : 1;
+    const currentRotation =
+      BASE_ROTATION * baseDir + currentTilt.current * tiltDir;
     groupRef.current.rotation.y = currentRotation;
     const absSinAngle = Math.abs(Math.sin(currentRotation));
     let exactScale = 1.0;
@@ -271,188 +299,231 @@ const DoorSection = ({
       if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
     };
   }, []);
-  const openRoomDoor = useCallback(e => {
-    e?.stopPropagation?.();
-    const isTeleport = e?.isTeleport || false;
-    if (isAnimating) return;
-    if (isOpen) {
-      closeDoor();
-      return;
-    }
-    document.body.style.cursor = "auto";
-    setIsAnimating(true);
-    setCameraOverride?.(true);
-    setIsTiltLocked(true);
-    savedCameraState.current = {
-      x: camera.position.x,
-      y: camera.position.y,
-      z: camera.position.z,
-      rotationX: camera.rotation.x,
-      rotationY: camera.rotation.y,
-      rotationZ: camera.rotation.z
-    };
-    if (e && e.isTeleport) {
-      const corridorGlanceY = side === 'left' ? 0.15 : -0.15;
-      savedCameraState.current = {
-        x: 0,
-        y: 0.2,
-        z: position[2] + 4,
-        rotationX: 0,
-        rotationY: corridorGlanceY,
-        rotationZ: 0
-      };
-    }
-    const needsSchoolApproval = e?.needsSchoolApproval || false;
-    pendingSchoolApprovalRef.current = needsSchoolApproval;
-    const useFastMode = isTeleport && isFastTeleport;
-    const alignDuration = useFastMode ? 0.01 : 1.0;
-    const doorWorldPos = new THREE.Vector3();
-    groupRef.current.getWorldPosition(doorWorldPos);
-    const cameraTargetZ = doorWorldPos.z;
-    const cameraTargetX = side === 'left' ? DOOR_ALIGN_X : -DOOR_ALIGN_X;
-    let parentRotationY = 0;
-    if (camera.parent) {
-      const parentWorldQuat = new THREE.Quaternion();
-      camera.parent.getWorldQuaternion(parentWorldQuat);
-      const parentEuler = new THREE.Euler().setFromQuaternion(parentWorldQuat, 'YXZ');
-      parentRotationY = parentEuler.y;
-    }
-    const worldTargetRotationY = side === 'left' ? DOOR_LOOK_ANGLE : -DOOR_LOOK_ANGLE;
-    const targetRotationY = worldTargetRotationY - parentRotationY;
-    const startRotationY = camera.rotation.y;
-    const rotationProxy = {
-      y: startRotationY
-    };
-    gsap.to(camera.position, {
-      x: cameraTargetX,
-      z: cameraTargetZ,
-      duration: alignDuration,
-      ease: useFastMode ? 'none' : 'power2.inOut'
-    });
-    gsap.to(rotationProxy, {
-      y: targetRotationY,
-      duration: alignDuration,
-      ease: useFastMode ? 'none' : 'power2.inOut',
-      onUpdate: () => {
-        camera.rotation.y = rotationProxy.y;
-      },
-      onComplete: () => {
-        doorAlignedState.current = {
-          x: camera.position.x,
-          y: camera.position.y,
-          z: camera.position.z,
-          rotationY: camera.rotation.y
-        };
-        setShouldRenderRoom(true);
-        loadTimeoutRef.current = setTimeout(() => {
-          if (!roomReadyRef.current) {
-            console.warn(`[DoorSection ${label}] Room load timeout - forcing open`);
-            roomReadyRef.current = true;
-            setRoomReady(true);
-            openDoor(useFastMode, pendingSchoolApprovalRef.current);
-          }
-        }, 8000);
+  const openRoomDoor = useCallback(
+    (e) => {
+      e?.stopPropagation?.();
+      const isTeleport = e?.isTeleport || false;
+      if (isAnimating) return;
+      if (isOpen) {
+        closeDoor();
+        return;
       }
-    });
-  }, [camera, side, isOpen, isAnimating, setCameraOverride, isFastTeleport]);
-  const handleClick = useCallback(e => {
-    e?.stopPropagation?.();
-    if (isAnimating) return;
-    if (isOpen) {
-      openRoomDoor(e);
-      return;
-    }
-    openRoomDoor({
-      stopPropagation: () => {},
-      needsSchoolApproval: true
-    });
-  }, [isAnimating, isOpen, openRoomDoor]);
-  useEffect(() => {
-    const isSegment0 = segmentIndex === 0;
-    if (pendingDoorClick && pendingDoorClick === doorId && isSegment0 && !isOpen && !isAnimating) {
+      document.body.style.cursor = "auto";
+      setIsAnimating(true);
+      setCameraOverride?.(true);
+      setIsTiltLocked(true);
+      savedCameraState.current = {
+        x: camera.position.x,
+        y: camera.position.y,
+        z: camera.position.z,
+        rotationX: camera.rotation.x,
+        rotationY: camera.rotation.y,
+        rotationZ: camera.rotation.z,
+      };
+      if (e && e.isTeleport) {
+        const corridorGlanceY = side === "left" ? 0.15 : -0.15;
+        savedCameraState.current = {
+          x: 0,
+          y: 0.2,
+          z: position[2] + 4,
+          rotationX: 0,
+          rotationY: corridorGlanceY,
+          rotationZ: 0,
+        };
+      }
+      const needsSchoolApproval = e?.needsSchoolApproval || false;
+      pendingSchoolApprovalRef.current = needsSchoolApproval;
+      const useFastMode = isTeleport && isFastTeleport;
+      const alignDuration = useFastMode ? 0.01 : 1.0;
+      const doorWorldPos = new THREE.Vector3();
+      groupRef.current.getWorldPosition(doorWorldPos);
+      const cameraTargetZ = doorWorldPos.z;
+      const cameraTargetX = side === "left" ? DOOR_ALIGN_X : -DOOR_ALIGN_X;
+      let parentRotationY = 0;
+      if (camera.parent) {
+        const parentWorldQuat = new THREE.Quaternion();
+        camera.parent.getWorldQuaternion(parentWorldQuat);
+        const parentEuler = new THREE.Euler().setFromQuaternion(
+          parentWorldQuat,
+          "YXZ",
+        );
+        parentRotationY = parentEuler.y;
+      }
+      const worldTargetRotationY =
+        side === "left" ? DOOR_LOOK_ANGLE : -DOOR_LOOK_ANGLE;
+      const targetRotationY = worldTargetRotationY - parentRotationY;
+      const startRotationY = camera.rotation.y;
+      const rotationProxy = {
+        y: startRotationY,
+      };
+      gsap.to(camera.position, {
+        x: cameraTargetX,
+        z: cameraTargetZ,
+        duration: alignDuration,
+        ease: useFastMode ? "none" : "power2.inOut",
+      });
+      gsap.to(rotationProxy, {
+        y: targetRotationY,
+        duration: alignDuration,
+        ease: useFastMode ? "none" : "power2.inOut",
+        onUpdate: () => {
+          camera.rotation.y = rotationProxy.y;
+        },
+        onComplete: () => {
+          doorAlignedState.current = {
+            x: camera.position.x,
+            y: camera.position.y,
+            z: camera.position.z,
+            rotationY: camera.rotation.y,
+          };
+          setShouldRenderRoom(true);
+          loadTimeoutRef.current = setTimeout(() => {
+            if (!roomReadyRef.current) {
+              console.warn(
+                `[DoorSection ${label}] Room load timeout - forcing open`,
+              );
+              roomReadyRef.current = true;
+              setRoomReady(true);
+              openDoor(useFastMode, pendingSchoolApprovalRef.current);
+            }
+          }, 8000);
+        },
+      });
+    },
+    [camera, side, isOpen, isAnimating, setCameraOverride, isFastTeleport],
+  );
+  const handleClick = useCallback(
+    (e) => {
+      e?.stopPropagation?.();
+      if (isAnimating) return;
+      if (isOpen) {
+        openRoomDoor(e);
+        return;
+      }
       openRoomDoor({
         stopPropagation: () => {},
-        isTeleport: true
+        needsSchoolApproval: true,
+      });
+    },
+    [isAnimating, isOpen, openRoomDoor],
+  );
+  useEffect(() => {
+    const isSegment0 = segmentIndex === 0;
+    if (
+      pendingDoorClick &&
+      pendingDoorClick === doorId &&
+      isSegment0 &&
+      !isOpen &&
+      !isAnimating
+    ) {
+      openRoomDoor({
+        stopPropagation: () => {},
+        isTeleport: true,
       });
     }
-  }, [pendingDoorClick, doorId, segmentIndex, isOpen, isAnimating, openRoomDoor]);
-  const continueIntoRoom = useCallback((fastMode = false) => {
-    setIsAnimating(true);
-    const flyDuration = fastMode ? 0.01 : 1.5;
-    const direction = new THREE.Vector3();
-    camera.getWorldDirection(direction);
-    const flyDistance = enterDistance;
-    const targetX = camera.position.x + direction.x * flyDistance;
-    const targetZ = camera.position.z + direction.z * flyDistance;
-    gsap.to(camera.position, {
-      x: targetX,
-      z: targetZ,
-      duration: flyDuration,
-      ease: fastMode ? 'none' : 'power2.inOut',
-      onComplete: () => {
-        roomEntryState.current = {
-          x: camera.position.x,
-          y: camera.position.y,
-          z: camera.position.z,
-          rotationY: camera.rotation.y
-        };
-        setIsAnimating(false);
-        setIsInsideRoom(true);
-        setTimeout(() => {
-          enterRoom(doorId);
-          onEnter?.();
-          if (fastMode) {
-            signalRoomReady();
-          }
-        }, 250);
-      }
-    });
-  }, [camera, enterDistance, enterRoom, doorId, onEnter, signalRoomReady]);
+  }, [
+    pendingDoorClick,
+    doorId,
+    segmentIndex,
+    isOpen,
+    isAnimating,
+    openRoomDoor,
+  ]);
+  const continueIntoRoom = useCallback(
+    (fastMode = false) => {
+      setIsAnimating(true);
+      const flyDuration = fastMode ? 0.01 : 1.5;
+      const direction = new THREE.Vector3();
+      camera.getWorldDirection(direction);
+      const flyDistance = enterDistance;
+      const targetX = camera.position.x + direction.x * flyDistance;
+      const targetZ = camera.position.z + direction.z * flyDistance;
+      gsap.to(camera.position, {
+        x: targetX,
+        z: targetZ,
+        duration: flyDuration,
+        ease: fastMode ? "none" : "power2.inOut",
+        onComplete: () => {
+          roomEntryState.current = {
+            x: camera.position.x,
+            y: camera.position.y,
+            z: camera.position.z,
+            rotationY: camera.rotation.y,
+          };
+          setIsAnimating(false);
+          setIsInsideRoom(true);
+          setTimeout(() => {
+            enterRoom(doorId);
+            onEnter?.();
+            if (fastMode) {
+              signalRoomReady();
+            }
+          }, 250);
+        },
+      });
+    },
+    [camera, enterDistance, enterRoom, doorId, onEnter, signalRoomReady],
+  );
   useEffect(() => {
-    if (approvedSchoolDoorClick && approvedSchoolDoorClick === doorApprovalId && isOpen && !isAnimating) {
+    if (
+      approvedSchoolDoorClick &&
+      approvedSchoolDoorClick === doorApprovalId &&
+      isOpen &&
+      !isAnimating
+    ) {
       clearSchoolDoorApproval();
       continueIntoRoom(false);
     }
-  }, [approvedSchoolDoorClick, doorApprovalId, isOpen, isAnimating, clearSchoolDoorApproval, continueIntoRoom]);
-  const openDoor = useCallback((fastMode = false, needsSchoolApproval = false) => {
-    if (!doorRef.current) return;
-    setIsOpen(true);
-    const openAngle = side === 'left' ? Math.PI * 0.6 : -Math.PI * 0.6;
-    if (!fastMode && openAudioRef.current) {
-      const vol = isMuted ? 0 : DOOR_AUDIO_SETTINGS.openVolume * globalVolume;
-      openAudioRef.current.setVolume(vol);
-      if (openAudioRef.current.isPlaying) openAudioRef.current.stop();
-      openAudioRef.current.play();
-    }
-    const handleDuration = fastMode ? 0.01 : 0.15;
-    const doorDuration = fastMode ? 0.01 : 0.7;
-    if (handleRef.current) {
-      gsap.to(handleRef.current.rotation, {
-        z: side === 'left' ? 0.4 : -0.4,
-        duration: handleDuration,
-        ease: fastMode ? 'none' : 'power2.out'
-      });
-    }
-    gsap.to(doorRef.current.rotation, {
-      y: openAngle,
-      duration: doorDuration,
-      ease: fastMode ? 'none' : 'power2.out',
-      onComplete: () => {
-        if (needsSchoolApproval) {
-          pendingSchoolApprovalRef.current = false;
-          setIsAnimating(false);
-          requestSchoolLevel({
-            doorId: doorApprovalId,
-            side,
-            label
-          });
-          return;
-        }
-
-        continueIntoRoom(fastMode);
+  }, [
+    approvedSchoolDoorClick,
+    doorApprovalId,
+    isOpen,
+    isAnimating,
+    clearSchoolDoorApproval,
+    continueIntoRoom,
+  ]);
+  const openDoor = useCallback(
+    (fastMode = false, needsSchoolApproval = false) => {
+      if (!doorRef.current) return;
+      setIsOpen(true);
+      const openAngle = side === "left" ? Math.PI * 0.6 : -Math.PI * 0.6;
+      if (!fastMode && openAudioRef.current) {
+        const vol = isMuted ? 0 : DOOR_AUDIO_SETTINGS.openVolume * globalVolume;
+        openAudioRef.current.setVolume(vol);
+        if (openAudioRef.current.isPlaying) openAudioRef.current.stop();
+        openAudioRef.current.play();
       }
-    });
-  }, [side, requestSchoolLevel, doorApprovalId, label, continueIntoRoom]);
+      const handleDuration = fastMode ? 0.01 : 0.15;
+      const doorDuration = fastMode ? 0.01 : 0.7;
+      if (handleRef.current) {
+        gsap.to(handleRef.current.rotation, {
+          z: side === "left" ? 0.4 : -0.4,
+          duration: handleDuration,
+          ease: fastMode ? "none" : "power2.out",
+        });
+      }
+      gsap.to(doorRef.current.rotation, {
+        y: openAngle,
+        duration: doorDuration,
+        ease: fastMode ? "none" : "power2.out",
+        onComplete: () => {
+          if (needsSchoolApproval) {
+            pendingSchoolApprovalRef.current = false;
+            setIsAnimating(false);
+            requestSchoolLevel({
+              doorId: doorApprovalId,
+              side,
+              label,
+            });
+            return;
+          }
+
+          continueIntoRoom(fastMode);
+        },
+      });
+    },
+    [side, requestSchoolLevel, doorApprovalId, label, continueIntoRoom],
+  );
   const roomReadyRef = useRef(false);
   const handleRoomReady = useCallback(() => {
     if (roomReadyRef.current) return;
@@ -469,26 +540,30 @@ const DoorSection = ({
     const startRotation = {
       x: camera.rotation.x,
       y: camera.rotation.y,
-      z: camera.rotation.z
+      z: camera.rotation.z,
     };
     const step1RotationProxy = {
-      ...startRotation
+      ...startRotation,
     };
     gsap.to(camera.position, {
       x: aligned.x,
       y: aligned.y,
       z: aligned.z,
       duration: 1.5,
-      ease: 'power2.inOut'
+      ease: "power2.inOut",
     });
     gsap.to(step1RotationProxy, {
       x: 0,
       y: aligned.rotationY,
       z: 0,
       duration: 1.5,
-      ease: 'power2.inOut',
+      ease: "power2.inOut",
       onUpdate: () => {
-        camera.rotation.set(step1RotationProxy.x, step1RotationProxy.y, step1RotationProxy.z);
+        camera.rotation.set(
+          step1RotationProxy.x,
+          step1RotationProxy.y,
+          step1RotationProxy.z,
+        );
       },
       onComplete: () => {
         gsap.to(camera.position, {
@@ -496,24 +571,32 @@ const DoorSection = ({
           y: saved.y,
           z: saved.z,
           duration: 1.0,
-          ease: 'power2.inOut'
+          ease: "power2.inOut",
         });
         const step2RotationProxy = {
           x: camera.rotation.x,
           y: camera.rotation.y,
-          z: camera.rotation.z
+          z: camera.rotation.z,
         };
         gsap.to(step2RotationProxy, {
           x: saved.rotationX,
           y: saved.rotationY,
           z: saved.rotationZ,
           duration: 1.0,
-          ease: 'power2.inOut',
+          ease: "power2.inOut",
           onUpdate: () => {
-            camera.rotation.set(step2RotationProxy.x, step2RotationProxy.y, step2RotationProxy.z);
+            camera.rotation.set(
+              step2RotationProxy.x,
+              step2RotationProxy.y,
+              step2RotationProxy.z,
+            );
           },
           onComplete: () => {
-            camera.rotation.set(saved.rotationX, saved.rotationY, saved.rotationZ);
+            camera.rotation.set(
+              saved.rotationX,
+              saved.rotationY,
+              saved.rotationZ,
+            );
             requestAnimationFrame(() => {
               closeDoor(() => {
                 setIsInsideRoom(false);
@@ -526,79 +609,84 @@ const DoorSection = ({
                 setCameraOverride?.(false);
               });
             });
-          }
+          },
         });
-      }
+      },
     });
   }, [isInsideRoom, isAnimating, camera, setCameraOverride, contextExitRoom]);
   useEffect(() => {
-    const handleKeyDown = e => {
-      if (e.key === 'Escape' && isInsideRoom && !isAnimating) {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape" && isInsideRoom && !isAnimating) {
         exitRoom();
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isInsideRoom, isAnimating, exitRoom]);
   useEffect(() => {
     if (exitRequested && isInsideRoom && !isAnimating) {
       exitRoom();
     }
   }, [exitRequested, isInsideRoom, isAnimating, exitRoom]);
-  const closeDoor = useCallback(onDoorClosed => {
-    if (!doorRef.current || !isOpen) return;
-    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
-    if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
-    setIsAnimating(true);
-    if (closeAudioRef.current) {
-      setTimeout(() => {
-        const vol = isMuted ? 0 : DOOR_AUDIO_SETTINGS.closeVolume * globalVolume;
-        if (closeAudioRef.current) {
-          closeAudioRef.current.setVolume(vol);
-          if (closeAudioRef.current.isPlaying) closeAudioRef.current.stop();
-          closeAudioRef.current.play();
-        }
-      }, DOOR_AUDIO_SETTINGS.closeDelay * 1000);
-    }
-    if (handleRef.current) {
-      gsap.to(handleRef.current.rotation, {
-        z: 0,
-        duration: 0.2,
-        ease: 'power2.out'
-      });
-    }
-    if (doorMaterialRef.current) {
-      gsap.to(doorMaterialRef.current, {
-        uProgress: 0.0,
-        duration: 0.6,
-        ease: 'power2.out',
-        overwrite: true
-      });
-    }
-    if (handleMaterialRef.current) {
-      gsap.to(handleMaterialRef.current, {
-        uProgress: 0.0,
-        duration: 0.6,
-        ease: 'power2.out',
-        overwrite: true
-      });
-    }
-    if (handleHideDelayRef.current) handleHideDelayRef.current.kill();
-    handleHideDelayRef.current = gsap.delayedCall(0.65, () => {
-      if (handlePaintedRef.current) handlePaintedRef.current.visible = false;
-      if (doorPaintedRef.current) doorPaintedRef.current.visible = false;
-    });
-    gsap.to(doorRef.current.rotation, {
-      y: 0,
-      duration: 0.6,
-      ease: 'power2.in',
-      onComplete: () => {
-        setIsOpen(false);
-        setIsAnimating(false);
-        onDoorClosed?.();
+  const closeDoor = useCallback(
+    (onDoorClosed) => {
+      if (!doorRef.current || !isOpen) return;
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+      if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
+      setIsAnimating(true);
+      if (closeAudioRef.current) {
+        setTimeout(() => {
+          const vol = isMuted
+            ? 0
+            : DOOR_AUDIO_SETTINGS.closeVolume * globalVolume;
+          if (closeAudioRef.current) {
+            closeAudioRef.current.setVolume(vol);
+            if (closeAudioRef.current.isPlaying) closeAudioRef.current.stop();
+            closeAudioRef.current.play();
+          }
+        }, DOOR_AUDIO_SETTINGS.closeDelay * 1000);
       }
-    });
-  }, [isOpen]);
+      if (handleRef.current) {
+        gsap.to(handleRef.current.rotation, {
+          z: 0,
+          duration: 0.2,
+          ease: "power2.out",
+        });
+      }
+      if (doorMaterialRef.current) {
+        gsap.to(doorMaterialRef.current, {
+          uProgress: 0.0,
+          duration: 0.6,
+          ease: "power2.out",
+          overwrite: true,
+        });
+      }
+      if (handleMaterialRef.current) {
+        gsap.to(handleMaterialRef.current, {
+          uProgress: 0.0,
+          duration: 0.6,
+          ease: "power2.out",
+          overwrite: true,
+        });
+      }
+      if (handleHideDelayRef.current) handleHideDelayRef.current.kill();
+      handleHideDelayRef.current = gsap.delayedCall(0.65, () => {
+        if (handlePaintedRef.current) handlePaintedRef.current.visible = false;
+        if (doorPaintedRef.current) doorPaintedRef.current.visible = false;
+      });
+      gsap.to(doorRef.current.rotation, {
+        y: 0,
+        duration: 0.6,
+        ease: "power2.in",
+        onComplete: () => {
+          setIsOpen(false);
+          setIsAnimating(false);
+          onDoorClosed?.();
+        },
+      });
+    },
+    [isOpen],
+  );
   const handlePointerEnter = () => {
     if (isOpen || isAnimating) return;
     setIsHovered(true);
@@ -607,38 +695,38 @@ const DoorSection = ({
       const vol = isMuted ? 0 : DOOR_AUDIO_SETTINGS.hoverVolume * globalVolume;
       hoverAudioRef.current.setVolume(vol);
       if (hoverAudioRef.current.isPlaying) hoverAudioRef.current.stop();
-      if (hoverAudioRef.current.context.state === 'running') {
+      if (hoverAudioRef.current.context.state === "running") {
         hoverAudioRef.current.play();
       }
     }
     if (doorRef.current) {
       gsap.to(doorRef.current.rotation, {
-        y: side === 'left' ? 0.15 : -0.15,
+        y: side === "left" ? 0.15 : -0.15,
         duration: 0.3,
-        ease: 'power2.out'
+        ease: "power2.out",
       });
     }
     if (handleRef.current) {
       gsap.to(handleRef.current.rotation, {
-        z: side === 'left' ? 0.1 : -0.1,
+        z: side === "left" ? 0.1 : -0.1,
         duration: 0.2,
-        ease: 'power2.out'
+        ease: "power2.out",
       });
     }
     if (doorMaterialRef.current) {
       gsap.to(doorMaterialRef.current, {
         uProgress: 1.0,
         duration: 0.8,
-        ease: 'power2.out',
-        overwrite: true
+        ease: "power2.out",
+        overwrite: true,
       });
     }
     if (handleMaterialRef.current) {
       gsap.to(handleMaterialRef.current, {
         uProgress: 1.0,
         duration: 0.8,
-        ease: 'power2.out',
-        overwrite: true
+        ease: "power2.out",
+        overwrite: true,
       });
     }
     if (handleHideDelayRef.current) handleHideDelayRef.current.kill();
@@ -656,30 +744,30 @@ const DoorSection = ({
       gsap.to(doorRef.current.rotation, {
         y: 0,
         duration: 0.3,
-        ease: 'power2.out'
+        ease: "power2.out",
       });
     }
     if (handleRef.current) {
       gsap.to(handleRef.current.rotation, {
         z: 0,
         duration: 0.2,
-        ease: 'power2.out'
+        ease: "power2.out",
       });
     }
     if (doorMaterialRef.current) {
       gsap.to(doorMaterialRef.current, {
         uProgress: 0.0,
         duration: 0.5,
-        ease: 'power2.out',
-        overwrite: true
+        ease: "power2.out",
+        overwrite: true,
       });
     }
     if (handleMaterialRef.current) {
       gsap.to(handleMaterialRef.current, {
         uProgress: 0.0,
         duration: 0.5,
-        ease: 'power2.out',
-        overwrite: true
+        ease: "power2.out",
+        overwrite: true,
       });
     }
     handleHideDelayRef.current = gsap.delayedCall(0.55, () => {
@@ -687,162 +775,371 @@ const DoorSection = ({
       if (doorPaintedRef.current) doorPaintedRef.current.visible = false;
     });
   };
-  const doorPivotX = side === 'left' ? -doorWidth / 2 : doorWidth / 2;
-  const doorMeshX = side === 'left' ? doorWidth / 2 : -doorWidth / 2;
-  const handlePivotX = side === 'left' ? doorWidth * 0.25 : -doorWidth * 0.25;
+  const doorPivotX = side === "left" ? -doorWidth / 2 : doorWidth / 2;
+  const doorMeshX = side === "left" ? doorWidth / 2 : -doorWidth / 2;
+  const handlePivotX = side === "left" ? doorWidth * 0.25 : -doorWidth * 0.25;
   const SIGN_TEXTURES_MAP = {
-    'THE GALLERY': '/textures/corridor/backups/thegallerysign.webp',
-    'THE STUDIO': '/textures/corridor/backups/thestudiosign.webp',
-    'THE ABOUT': '/textures/corridor/backups/aboutsign.webp',
-    "LET'S CONNECT": '/textures/corridor/backups/contactsign.webp',
+    "THE GALLERY": "/textures/corridor/backups/thegallerysign.webp",
+    "THE STUDIO": "/textures/corridor/backups/thestudiosign.webp",
+    "THE ABOUT": "/textures/corridor/backups/aboutsign.webp",
+    "LET'S CONNECT": "/textures/corridor/backups/contactsign.webp",
   };
-  const signTextureUrl = SIGN_TEXTURES_MAP[label] || '/textures/corridor/pustatabliczka.webp';
+  const signTextureUrl =
+    SIGN_TEXTURES_MAP[label] || "/textures/corridor/pustatabliczka.webp";
   const signLegacyRatio = 1.792;
   const signHeight = 0.55;
   const signWidth = signHeight * signLegacyRatio;
   const signTexture = useTexture(signTextureUrl);
-  return <group position={[pivotX, position[1], position[2]]}>
+  return (
+    <group position={[pivotX, position[1], position[2]]}>
+      {}
+      <group ref={groupRef}>
+        {}
+        <mesh position={[wallOffsetX, 0, 0]} geometry={wallWithHoleGeometry}>
+          <meshBasicMaterial
+            color="#F5F5DC"
+            map={wallTexture}
+            roughness={1}
+            metalness={0}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+
+        {}
+        {}
+        {}
+        <mesh
+          position={[wallOffsetX - 1.1, 0, 0.02]}
+          rotation={[0, 0, 0]}
+          scale={[0.5, 0.5, 1]}
+        >
+          <planeGeometry args={[1, 0.5]} />
+          <meshBasicMaterial
+            color="#e0e0e0"
+            map={arrowTexture}
+            transparent={true}
+            alphaTest={0.1}
+            side={THREE.DoubleSide}
+            roughness={0.8}
+          />
+        </mesh>
+
+        {}
+        {}
+        <mesh
+          position={[wallOffsetX + 1.1, -0.3, 0.02]}
+          rotation={[0, 0, 0]}
+          scale={[-0.5, 0.5, 1]}
+        >
+          <planeGeometry args={[1, 0.5]} />
+          <meshBasicMaterial
+            color="#e0e0e0"
+            map={arrowTexture}
+            transparent={true}
+            alphaTest={0.1}
+            side={THREE.DoubleSide}
+            roughness={0.8}
+          />
+        </mesh>
+
+        {}
+        <mesh
+          position={[wallOffsetX - 1.4, -CORRIDOR_HEIGHT / 2 + 0.075, 0.02]}
+        >
+          <planeGeometry args={[doorBoardWidth, 0.15]} />
+          <meshBasicMaterial
+            color="#e0e0e0"
+            map={doorBbTexLeft}
+            roughness={0.8}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+
+        {}
+        <mesh
+          position={[wallOffsetX + 1.4, -CORRIDOR_HEIGHT / 2 + 0.075, 0.02]}
+        >
+          <planeGeometry args={[doorBoardWidth, 0.15]} />
+          <meshBasicMaterial
+            color="#e0e0e0"
+            map={doorBbTexRight}
+            roughness={0.8}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+
+        {}
+        {(() => {
+          const THRESH_W = 1.1;
+          const THRESH_D = 0.15;
+          const threshTex = baseboardTexture.clone();
+          threshTex.needsUpdate = true;
+          threshTex.wrapS = threshTex.wrapT = THREE.RepeatWrapping;
+          threshTex.rotation = 0;
+          threshTex.offset.set(0, 0);
+          threshTex.repeat.set(THRESH_W / NATURAL_TILE_W, 1);
+          return (
+            <mesh
+              position={[wallOffsetX, -CORRIDOR_HEIGHT / 2 + 0.005, 0.02]}
+              rotation={[-Math.PI / 2, 0, 0]}
+            >
+              <planeGeometry args={[THRESH_W, THRESH_D]} />
+              <meshBasicMaterial
+                color="#C19A6B"
+                map={threshTex}
+                roughness={0.9}
+                metalness={0}
+                side={THREE.DoubleSide}
+              />
+            </mesh>
+          );
+        })()}
+
+        {}
+        <group position={[wallOffsetX, -0.4, 0]}>
+          {}
+          <group position={[0, doorHeight / 2 + 0.45, 0.08]}>
             {}
-            <group ref={groupRef}>
-                {}
-                <mesh position={[wallOffsetX, 0, 0]} geometry={wallWithHoleGeometry}>
-                    <meshBasicMaterial color="#F5F5DC" map={wallTexture} roughness={1} metalness={0} side={THREE.DoubleSide} />
-                </mesh>
+            <mesh>
+              {}
+              <planeGeometry args={[1.3, 0.65]} />
+              <meshBasicMaterial
+                color="#C19A6B"
+                map={signTexture}
+                transparent={false}
+                alphaTest={0.1}
+                depthWrite={false}
+              />
+            </mesh>
 
-                {}
-                {}
-                {}
-                <mesh position={[wallOffsetX - 1.1, 0, 0.02]} rotation={[0, 0, 0]} scale={[0.5, 0.5, 1]}>
-                    <planeGeometry args={[1, 0.5]} />
-                    <meshBasicMaterial color="#e0e0e0" map={arrowTexture} transparent={true} alphaTest={0.1} side={THREE.DoubleSide} roughness={0.8} />
-                </mesh>
+            {}
+            {label === "MATHEMATIC" && (
+              <group position={[0, 0, 0.05]}>
+                <Text
+                  font="/fonts/CabinSketch-Bold.ttf"
+                  fontSize={0.2}
+                  color="#111111"
+                  anchorX="center"
+                  anchorY="middle"
+                  position={[0, +0.02, 0.0]}
+                >
+                  MATHEMATIC
+                </Text>
+              </group>
+            )}
+            {label === "CHEMISTRY" && (
+              <group position={[0, 0, 0.01]}>
+                <Text
+                  font="/fonts/CabinSketch-Bold.ttf"
+                  fontSize={0.25}
+                  color="#111111"
+                  anchorX="center"
+                  anchorY="middle"
+                  position={[0, +0.03, 0]}
+                >
+                  CHEMISTRY
+                </Text>
+              </group>
+            )}
+            {label === "PHYSICS" && (
+              <Text
+                font="/fonts/CabinSketch-Bold.ttf"
+                fontSize={0.3}
+                color="#111111"
+                anchorX="center"
+                anchorY="middle"
+                position={[0, 0, 0.01]}
+              >
+                PHYSICS
+              </Text>
+            )}
+            {label === "GEOMETRY" && (
+              <Text
+                font="/fonts/CabinSketch-Bold.ttf"
+                fontSize={0.25}
+                color="#111111"
+                anchorX="center"
+                anchorY="middle"
+                position={[0, 0, 0.01]}
+              >
+                GEOMETRY
+              </Text>
+            )}
+          </group>
 
-                {}
-                {}
-                <mesh position={[wallOffsetX + 1.1, -0.3, 0.02]} rotation={[0, 0, 0]} scale={[-0.5, 0.5, 1]}>
-                    <planeGeometry args={[1, 0.5]} />
-                    <meshBasicMaterial color="#e0e0e0" map={arrowTexture} transparent={true} alphaTest={0.1} side={THREE.DoubleSide} roughness={0.8} />
-                </mesh>
+          {}
+          {}
+          <mesh
+            position={[0, -0.1, 0.04]}
+            scale={[side === "right" ? -1 : 1, 1, 1]}
+          >
+            <planeGeometry args={[frameWidth, frameHeight]} />
+            <meshBasicMaterial
+              color="#C19A6B"
+              map={frameTexture}
+              transparent={true}
+              alphaTest={0.1}
+              roughness={0.9}
+            />
+          </mesh>
 
-                {}
-                <mesh position={[wallOffsetX - 1.4, -CORRIDOR_HEIGHT / 2 + 0.075, 0.02]}>
-                    <planeGeometry args={[doorBoardWidth, 0.15]} />
-                    <meshBasicMaterial color="#e0e0e0" map={doorBbTexLeft} roughness={0.8} side={THREE.DoubleSide} />
-                </mesh>
+          {}
+          {}
+          <RoomInterior
+            label={label}
+            showRoom={shouldRenderRoom}
+            onReady={handleRoomReady}
+            isExiting={isInsideRoom && isAnimating}
+          />
 
-                {}
-                <mesh position={[wallOffsetX + 1.4, -CORRIDOR_HEIGHT / 2 + 0.075, 0.02]}>
-                    <planeGeometry args={[doorBoardWidth, 0.15]} />
-                    <meshBasicMaterial color="#e0e0e0" map={doorBbTexRight} roughness={0.8} side={THREE.DoubleSide} />
-                </mesh>
+          {}
+          {}
+          <group ref={doorRef} position={[doorPivotX, 0, 0.01]}>
+            {}
+            <mesh
+              position={[doorMeshX, -0.2, 0.005]}
+              onClick={handleClick}
+              onPointerEnter={handlePointerEnter}
+              onPointerLeave={handlePointerLeave}
+            >
+              <planeGeometry args={[doorWidth, doorHeight]} />
+              <meshBasicMaterial
+                color="#e0e0e0"
+                transparent={true}
+                opacity={0}
+                depthWrite={false}
+              />
+            </mesh>
 
-                {}
-                {(() => {
-        const THRESH_W = 1.1;
-        const THRESH_D = 0.15;
-        const threshTex = baseboardTexture.clone();
-        threshTex.needsUpdate = true;
-        threshTex.wrapS = threshTex.wrapT = THREE.RepeatWrapping;
-        threshTex.rotation = 0;
-        threshTex.offset.set(0, 0);
-        threshTex.repeat.set(THRESH_W / NATURAL_TILE_W, 1);
-        return <mesh position={[wallOffsetX, -CORRIDOR_HEIGHT / 2 + 0.005, 0.02]} rotation={[-Math.PI / 2, 0, 0]}>
-                            <planeGeometry args={[THRESH_W, THRESH_D]} />
-                            <meshBasicMaterial color="#C19A6B" map={threshTex} roughness={0.9} metalness={0} side={THREE.DoubleSide} />
-                        </mesh>;
-      })()}
+            {}
+            <mesh
+              ref={doorPaintedRef}
+              position={[doorMeshX, -0.2, -0.001]}
+              scale={[
+                side === "right" && label !== "THE STUDIO" ? -1 : 1,
+                1,
+                1,
+              ]}
+            >
+              <planeGeometry args={[doorWidth, doorHeight]} />
+              <meshBasicMaterial
+                color="#e0e0e0"
+                map={doorPaintedTexture}
+                transparent={true}
+                alphaTest={0.5}
+                roughness={0.8}
+              />
+            </mesh>
 
-                {}
-                <group position={[wallOffsetX, -0.4, 0]}>
-                    {}
-                    <group position={[0, doorHeight / 2 + 0.45, 0.08]}>
-                        {}
-                        <mesh>
-                            {}
-                            <planeGeometry args={[1.3, 0.65]} />
-                            <meshBasicMaterial color="#C19A6B" map={signTexture} transparent={false} alphaTest={0.1} depthWrite={false}  />
-                        </mesh>
+            {}
+            <mesh
+              position={[doorMeshX, -0.2, 0]}
+              scale={[
+                side === "right" && label !== "THE STUDIO" ? -1 : 1,
+                1,
+                1,
+              ]}
+            >
+              <planeGeometry args={[doorWidth, doorHeight]} />
+              <revealMaterial
+                color="#e0e0e0"
+                ref={doorMaterialRef}
+                map={doorTexture}
+                transparent={true}
+                alphaTest={0.1}
+                roughness={0.8}
+                uProgress={0.0}
+              />
+            </mesh>
 
-                        {}
-                        {label === 'MATHS' && <group position={[0, 0, 0.05]}>
-                               
-                                <Text  font="/fonts/CabinSketch-Bold.ttf" fontSize={0.2} color="#111111" anchorX="center" anchorY="middle" position={[0, +0.02,  0.0]}>
-                                    MATHS
-                                </Text>
-                            </group>}
-                        {label === 'CHEMISTRY' && <group position={[0, 0, 0.01]}>
-                                
-                                <Text font="/fonts/CabinSketch-Bold.ttf" fontSize={0.25} color="#111111" anchorX="center" anchorY="middle" position={[0, +0.03, 0]}>
-                                    CHEMISTRY
-                                </Text>
-                            </group>}
-                        {label === 'PHYSICS' && <Text font="/fonts/CabinSketch-Bold.ttf" fontSize={0.30} color="#111111" anchorX="center" anchorY="middle" position={[0, 0, 0.01]}>
-                                PHYSICS
-                            </Text>}
-                        {label === "GEOMETRY" && <Text font="/fonts/CabinSketch-Bold.ttf" fontSize={0.25} color="#111111" anchorX="center" anchorY="middle" position={[0, 0, 0.01]}>
-                                GEOMETRY
-                            </Text>}
-                    </group>
+            {}
+            <mesh
+              position={[doorMeshX, -0.2, -0.01]}
+              rotation={[0, Math.PI, 0]}
+              scale={[side === "right" ? -1 : 1, 1, 1]}
+            >
+              <planeGeometry args={[doorWidth, doorHeight]} />
+              <meshBasicMaterial
+                color="#e0e0e0"
+                map={doorBackTexture}
+                transparent={true}
+                alphaTest={0.1}
+                roughness={0.8}
+                side={THREE.DoubleSide}
+              />
+            </mesh>
 
-                    {}
-                    {}
-                    <mesh position={[0, -0.1, 0.04]} scale={[side === 'right' ? -1 : 1, 1, 1]}>
-                        <planeGeometry args={[frameWidth, frameHeight]} />
-                        <meshBasicMaterial color="#C19A6B" map={frameTexture} transparent={true} alphaTest={0.1} roughness={0.9} />
-                    </mesh>
-
-                    {}
-                    {}
-                    <RoomInterior label={label} showRoom={shouldRenderRoom} onReady={handleRoomReady} isExiting={isInsideRoom && isAnimating} />
-
-                    {}
-                    {}
-                    <group ref={doorRef} position={[doorPivotX, 0, 0.01]}>
-                        {}
-                        <mesh position={[doorMeshX, -0.2, 0.005]} onClick={handleClick} onPointerEnter={handlePointerEnter} onPointerLeave={handlePointerLeave}>
-                            <planeGeometry args={[doorWidth, doorHeight]} />
-                            <meshBasicMaterial color="#e0e0e0" transparent={true} opacity={0} depthWrite={false} />
-                        </mesh>
-
-                        {}
-                        <mesh ref={doorPaintedRef} position={[doorMeshX, -0.2, -0.001]} scale={[side === 'right' && label !== 'THE STUDIO' ? -1 : 1, 1, 1]}>
-                            <planeGeometry args={[doorWidth, doorHeight]} />
-                            <meshBasicMaterial color="#e0e0e0" map={doorPaintedTexture} transparent={true} alphaTest={0.5} roughness={0.8} />
-                        </mesh>
-
-                        {}
-                        <mesh position={[doorMeshX, -0.2, 0]} scale={[side === 'right' && label !== 'THE STUDIO' ? -1 : 1, 1, 1]}>
-                            <planeGeometry args={[doorWidth, doorHeight]} />
-                            <revealMaterial color="#e0e0e0" ref={doorMaterialRef} map={doorTexture} transparent={true} alphaTest={0.1} roughness={0.8} uProgress={0.0} />
-                        </mesh>
-
-                        {}
-                        <mesh position={[doorMeshX, -0.2, -0.01]} rotation={[0, Math.PI, 0]} scale={[side === 'right' ? -1 : 1, 1, 1]}>
-                            <planeGeometry args={[doorWidth, doorHeight]} />
-                            <meshBasicMaterial color="#e0e0e0" map={doorBackTexture} transparent={true} alphaTest={0.1} roughness={0.8} side={THREE.DoubleSide} />
-                        </mesh>
-
-                        {}
-                        <group ref={handleRef} position={[doorMeshX + (side === 'left' ? 0.45 : -0.45), -0.29, 0.03]}>
-                            {}
-                            <mesh ref={handlePaintedRef} position={[side === 'left' ? -0.50 : 0.50, 0.14, -0.001]} scale={[side === 'right' ? -1 : 1, 1, 1]}>
-                                <planeGeometry args={[doorWidth, doorHeight]} />
-                                <meshBasicMaterial color="#e0e0e0" map={handlePaintedTexture} transparent={true} alphaTest={0.5} depthWrite={false} />
-                            </mesh>
-                            {}
-                            <mesh position={[side === 'left' ? -0.50 : 0.50, 0.14, 0]} scale={[side === 'right' ? -1 : 1, 1, 1]}>
-                                <planeGeometry args={[doorWidth, doorHeight]} />
-                                <revealMaterial color="#e0e0e0" ref={handleMaterialRef} map={handleTexture} transparent={true} alphaTest={0.1} depthWrite={false} uProgress={0.0} />
-                            </mesh>
-                        </group>
-                    </group>
-                </group>
-
-                {}
-                <PositionalAudio ref={hoverAudioRef} url="/sounds/uchyleniedrzwi.mp3" distanceModel="exponential" rolloffFactor={DOOR_AUDIO_SETTINGS.rolloff} refDistance={DOOR_AUDIO_SETTINGS.distance} loop={false} />
-                <PositionalAudio ref={openAudioRef} url="/sounds/otwarciedrzwi.mp3" distanceModel="exponential" rolloffFactor={DOOR_AUDIO_SETTINGS.rolloff} refDistance={DOOR_AUDIO_SETTINGS.distance} loop={false} />
-                <PositionalAudio ref={closeAudioRef} url="/sounds/zamknieciedrzwi.mp3" distanceModel="exponential" rolloffFactor={DOOR_AUDIO_SETTINGS.rolloff} refDistance={DOOR_AUDIO_SETTINGS.distance} loop={false} />
+            {}
+            <group
+              ref={handleRef}
+              position={[
+                doorMeshX + (side === "left" ? 0.45 : -0.45),
+                -0.29,
+                0.03,
+              ]}
+            >
+              {}
+              <mesh
+                ref={handlePaintedRef}
+                position={[side === "left" ? -0.5 : 0.5, 0.14, -0.001]}
+                scale={[side === "right" ? -1 : 1, 1, 1]}
+              >
+                <planeGeometry args={[doorWidth, doorHeight]} />
+                <meshBasicMaterial
+                  color="#e0e0e0"
+                  map={handlePaintedTexture}
+                  transparent={true}
+                  alphaTest={0.5}
+                  depthWrite={false}
+                />
+              </mesh>
+              {}
+              <mesh
+                position={[side === "left" ? -0.5 : 0.5, 0.14, 0]}
+                scale={[side === "right" ? -1 : 1, 1, 1]}
+              >
+                <planeGeometry args={[doorWidth, doorHeight]} />
+                <revealMaterial
+                  color="#e0e0e0"
+                  ref={handleMaterialRef}
+                  map={handleTexture}
+                  transparent={true}
+                  alphaTest={0.1}
+                  depthWrite={false}
+                  uProgress={0.0}
+                />
+              </mesh>
             </group>
-        </group>;
+          </group>
+        </group>
+
+        {}
+        <PositionalAudio
+          ref={hoverAudioRef}
+          url="/sounds/uchyleniedrzwi.mp3"
+          distanceModel="exponential"
+          rolloffFactor={DOOR_AUDIO_SETTINGS.rolloff}
+          refDistance={DOOR_AUDIO_SETTINGS.distance}
+          loop={false}
+        />
+        <PositionalAudio
+          ref={openAudioRef}
+          url="/sounds/otwarciedrzwi.mp3"
+          distanceModel="exponential"
+          rolloffFactor={DOOR_AUDIO_SETTINGS.rolloff}
+          refDistance={DOOR_AUDIO_SETTINGS.distance}
+          loop={false}
+        />
+        <PositionalAudio
+          ref={closeAudioRef}
+          url="/sounds/zamknieciedrzwi.mp3"
+          distanceModel="exponential"
+          rolloffFactor={DOOR_AUDIO_SETTINGS.rolloff}
+          refDistance={DOOR_AUDIO_SETTINGS.distance}
+          loop={false}
+        />
+      </group>
+    </group>
+  );
 };
 export default DoorSection;
