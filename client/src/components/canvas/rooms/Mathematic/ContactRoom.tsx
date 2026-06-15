@@ -292,6 +292,9 @@ const ContactRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
         rotation={[0, 0.3, 0]}
         texturePath="/textures/contact/beczka.webp"
         label="INTERACTIVE"
+        onClick={() =>
+          window.dispatchEvent(new CustomEvent("pinequest:interactive-open"))
+        }
       />
       {}
 
@@ -301,7 +304,9 @@ const ContactRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
         rotation={[0, -0.3, 0]}
         texturePath="/textures/contact/beczka.webp"
         label="AI QUIZ"
-        onClick={() => window.dispatchEvent(new CustomEvent('pinequest:quiz-open'))}
+        onClick={() =>
+          window.dispatchEvent(new CustomEvent("pinequest:quiz-open"))
+        }
       />
       {}
       <SocialBarrel
@@ -309,7 +314,9 @@ const ContactRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
         rotation={[0, 0, 0]}
         texturePath="/textures/contact/beczka.webp"
         label="TOMYO"
-        onClick={() => window.dispatchEvent(new CustomEvent('pinequest:tomyo-open'))}
+        onClick={() =>
+          window.dispatchEvent(new CustomEvent("pinequest:tomyo-open"))
+        }
       />
 
       {}
