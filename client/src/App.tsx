@@ -1,19 +1,10 @@
-import {
-  useState,
-  Suspense,
-  useEffect,
-  useCallback,
-  useLayoutEffect,
-  lazy,
-} from "react";
-import { Canvas, useThree, useFrame, useLoader } from "@react-three/fiber";
-import {
-  Preload,
-  useTexture,
-  Text,
-  PerformanceMonitor,
-} from "@react-three/drei";
+import { useState, Suspense, useEffect, useCallback, lazy } from "react";
+import { Canvas, useThree } from "@react-three/fiber";
+import { Preload, useTexture, PerformanceMonitor } from "@react-three/drei";
 import * as THREE from "three";
+import posthog from "posthog-js";
+
+// Бүрэлдэхүүн хэсгүүдийг импортлох
 import Preloader from "./components/dom/Preloader";
 import PaperTransition from "./components/dom/PaperTransition";
 import { AudioProvider, useAudio } from "./context/AudioManager";
@@ -30,14 +21,9 @@ import CircuitCanvas from "./components/ui/CircuitCanvas";
 import SchoolAssistant from "./components/ui/SchoolAssistant";
 import MathRoomAssistant from "./components/ui/MathRoomAssistant";
 import MathFormulaPanel from "./components/ui/MathFormulaPanel";
+import { AchievementsProvider } from "./context/AchievementsContext";
 import MathQuizPanel from "./components/ui/MathQuizPanel";
-import Interactive from "./components/ui/Interactive";
-import posthog from "posthog-js";
-posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
-  api_host: import.meta.env.VITE_POSTHOG_HOST,
-  person_profiles: "identified_only",
-});
-const Experience = lazy(() => import("./components/canvas/Experience"));
+
 import "./styles/main.scss";
 import {
   ENTRANCE_TEXTURES,
@@ -49,116 +35,40 @@ import {
   IMAGE_ASSETS,
   filterTexturesByDevice,
 } from "./config/texturePreloadList";
-import { TextureLoader } from "three";
-const preloadBrowserImage = (path) => {
+
+// 🔥 Experience-ийг зөвхөн ганцхан удаа энд зарлана
+const Experience = lazy(() => import("./components/canvas/Experience"));
+
+// PostHog Күлэгжүүлэлт / Идэвхжүүлэлт
+if (typeof window !== "undefined" && import.meta.env.VITE_POSTHOG_KEY) {
+  posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
+    api_host: import.meta.env.VITE_POSTHOG_HOST || "https://us.i.posthog.com",
+    person_profiles: "identified_only",
+  });
+}
+
+// Хөтчийн зураг урьдчилж ачаалагч функц
+const preloadBrowserImage = (path: string): void => {
   if (typeof window === "undefined") return;
   const img = new Image();
   img.src = path;
 };
-const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(
-  navigator.userAgent || "",
-);
-const isWeakCPU =
-  typeof navigator.hardwareConcurrency !== "undefined" &&
-  navigator.hardwareConcurrency <= 4;
-const isLowRAM =
-  typeof navigator.deviceMemory !== "undefined" && navigator.deviceMemory <= 4;
-const isSmallScreen = typeof window !== "undefined" && window.innerWidth < 450;
-const isLowEnd = isMobileDevice || isWeakCPU || isLowRAM || isSmallScreen;
+
+// Төхөөрөмж шалгах хувьсагчид
+const isMobileDevice =
+  typeof navigator !== "undefined" &&
+  /iPhone|iPad|iPod|Android/i.test(navigator.userAgent || "");
 const supportsHover =
   typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches;
-if (isLowEnd) {
+
+// Текстуруудыг урьдчилж ачаалах логик
+if (isMobileDevice) {
   const CORE_TEXTURES = [
     ...ENTRANCE_TEXTURES,
     ...CORRIDOR_TEXTURES,
     ...UI_TEXTURES,
     ...IMAGE_ASSETS,
   ];
-  const filteredCore = filterTexturesByDevice(CORE_TEXTURES, supportsHover);
-  const filteredAbout = filterTexturesByDevice(ABOUT_TEXTURES, supportsHover);
-  filteredCore.forEach((path) => useTexture.preload(path));
-  filteredAbout.forEach((path) => useLoader.preload(TextureLoader, path));
-} else {
-  const filteredAll = filterTexturesByDevice(PRELOAD_ALL, supportsHover);
-  const filteredLoader = filterTexturesByDevice(PRELOAD_LOADER, supportsHover);
-  filteredAll.forEach((path) => useTexture.preload(path));
-  filteredLoader.forEach((path) => useLoader.preload(TextureLoader, path));
-}
-const FONT_URL =
-  "https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hjp-Ek-_EeA.woff";
-const GlobalAudioEnabler = () => {
-  const { enableAudio } = useAudio();
-  useEffect(() => {
-    const handleInteraction = () => enableAudio();
-    window.addEventListener("click", handleInteraction, {
-      once: true,
-    });
-    window.addEventListener("touchstart", handleInteraction, {
-      once: true,
-    });
-    window.addEventListener("keydown", handleInteraction, {
-      once: true,
-    });
-import { useState, Suspense, useEffect, useCallback, lazy } from 'react';
-import { Canvas, useThree } from '@react-three/fiber';
-import { Preload, useTexture, PerformanceMonitor } from '@react-three/drei';
-import * as THREE from 'three';
-import posthog from 'posthog-js';
-
-// Бүрэлдэхүүн хэсгүүдийг импортлох
-import Preloader from './components/dom/Preloader';
-import PaperTransition from './components/dom/PaperTransition';
-import { AudioProvider, useAudio } from './context/AudioManager';
-import { initAudio } from './utils/audioManager';
-import { PerformanceProvider, usePerformance } from './context/PerformanceContext';
-import { SceneProvider, useScene } from './context/SceneContext';
-import NavigationUI from './components/ui/NavigationUI';
-import GlobalOverlay from './components/ui/GlobalOverlay';
-import ScreenReaderOverlay from './components/ui/ScreenReaderOverlay';
-import CircuitCanvas from './components/ui/CircuitCanvas';
-import SchoolAssistant from './components/ui/SchoolAssistant';
-import MathRoomAssistant from './components/ui/MathRoomAssistant';
-import MathFormulaPanel from './components/ui/MathFormulaPanel';
-import { AchievementsProvider } from './context/AchievementsContext';
-import MathQuizPanel from './components/ui/MathQuizPanel';
-
-import './styles/main.scss';
-import { 
-  ENTRANCE_TEXTURES, 
-  CORRIDOR_TEXTURES, 
-  UI_TEXTURES, 
-  PRELOAD_ALL, 
-  PRELOAD_LOADER, 
-  ABOUT_TEXTURES, 
-  IMAGE_ASSETS, 
-  filterTexturesByDevice 
-} from './config/texturePreloadList';
-
-// 🔥 Experience-ийг зөвхөн ганцхан удаа энд зарлана
-const Experience = lazy(() => import('./components/canvas/Experience'));
-
-// PostHog Күлэгжүүлэлт / Идэвхжүүлэлт
-if (typeof window !== 'undefined' && import.meta.env.VITE_POSTHOG_KEY) {
-  posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
-    api_host: import.meta.env.VITE_POSTHOG_HOST || 'https://us.i.posthog.com',
-    person_profiles: 'identified_only'
-  });
-}
-
-// Хөтчийн зураг урьдчилж ачаалагч функц
-const preloadBrowserImage = (path: string): void => {
-  if (typeof window === 'undefined') return;
-  const img = new Image();
-  img.src = path;
-};
-
-// Төхөөрөмж шалгах хувьсагчид
-const isMobileDevice = typeof navigator !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent || '');
-const supportsHover = typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches;
-
-// Текстуруудыг урьдчилж ачаалах логик
-if (isMobileDevice) {
-  const CORE_TEXTURES = [...ENTRANCE_TEXTURES, ...CORRIDOR_TEXTURES, ...UI_TEXTURES, ...IMAGE_ASSETS];
   const filteredCore = filterTexturesByDevice(CORE_TEXTURES, supportsHover);
   const filteredAbout = filterTexturesByDevice(ABOUT_TEXTURES, supportsHover);
   filteredCore.forEach((path: string) => useTexture.preload(path));
@@ -175,9 +85,9 @@ const GlobalAudioEnabler = (): null => {
   const { enableAudio } = useAudio();
   useEffect(() => {
     const handleInteraction = () => enableAudio();
-    window.addEventListener('click', handleInteraction, { once: true });
-    window.addEventListener('touchstart', handleInteraction, { once: true });
-    window.addEventListener('keydown', handleInteraction, { once: true });
+    window.addEventListener("click", handleInteraction, { once: true });
+    window.addEventListener("touchstart", handleInteraction, { once: true });
+    window.addEventListener("keydown", handleInteraction, { once: true });
     return () => {
       window.removeEventListener("click", handleInteraction);
       window.removeEventListener("touchstart", handleInteraction);
@@ -186,11 +96,13 @@ const GlobalAudioEnabler = (): null => {
   }, [enableAudio]);
   return null;
 };
-const PaperSceneBackground = () => {
+
+// Арын фон, манан, болон дулаан гэрэлтүүлэг тохируулагч
+const SceneStyling = (): JSX.Element => {
   const { scene } = useThree();
-  const texture = useTexture("/textures/paper-texture.webp");
+
   useEffect(() => {
-    scene.fog = new THREE.Fog('#f6f3e8', 20, 65);
+    scene.fog = new THREE.Fog("#f6f3e8", 20, 65);
     return () => {
       scene.fog = null;
     };
@@ -199,7 +111,12 @@ const PaperSceneBackground = () => {
   return (
     <>
       <ambientLight intensity={0.7} color="#fffbee" />
-      <directionalLight position={[5, 15, 5]} intensity={0.6} color="#ffeaa7" castShadow />
+      <directionalLight
+        position={[5, 15, 5]}
+        intensity={0.6}
+        color="#ffeaa7"
+        castShadow
+      />
       <pointLight position={[-10, 10, -10]} intensity={0.3} color="#fab1a0" />
     </>
   );
@@ -208,7 +125,8 @@ const PaperSceneBackground = () => {
 // Физикийн лаб-ын Overlay
 const PhysicsCircuitOverlay = (): JSX.Element | null => {
   const { currentRoom } = useScene();
-  const [shouldShowSimulator, setShouldShowSimulator] = useState<boolean>(false);
+  const [shouldShowSimulator, setShouldShowSimulator] =
+    useState<boolean>(false);
 
   useEffect(() => {
     if (currentRoom !== "physics") {
@@ -221,10 +139,13 @@ const PhysicsCircuitOverlay = (): JSX.Element | null => {
     return () => window.clearTimeout(timeoutId);
   }, [currentRoom]);
 
-  if (currentRoom !== 'physics') return null;
+  if (currentRoom !== "physics") return null;
 
   return (
-    <div className="physics-circuit-overlay" aria-label="Physics circuit simulator">
+    <div
+      className="physics-circuit-overlay"
+      aria-label="Physics circuit simulator"
+    >
       {shouldShowSimulator && <CircuitCanvas />}
     </div>
   );
@@ -253,12 +174,7 @@ function AppContent(): JSX.Element {
         <div className="app">
           <div className="canvas-wrapper">
             <Canvas
-              camera={{
-                position: [0, 0.2, 28],
-                fov: 60,
-                near: 0.1,
-                far: 150,
-              }}
+              camera={{ position: [0, 0.2, 28], fov: 60, near: 0.1, far: 150 }}
               gl={{
                 antialias: settings.antialias,
                 alpha: false,
@@ -269,17 +185,14 @@ function AppContent(): JSX.Element {
               dpr={settings.dpr}
               shadows={settings.shadows}
             >
-              <color attach="background" args={["#fafafa"]} />
-              <fog attach="fog" args={["#fafafa", 15, 50]} />
+              <color attach="background" args={["#f6f3e8"]} />
+              <SceneStyling />
 
-              {}
               <PerformanceMonitor
                 onDecline={() => downgradeTier()}
                 flipflops={3}
                 onFallback={() => downgradeTier()}
               />
-
-              <PerformanceMonitor onDecline={() => downgradeTier()} flipflops={3} onFallback={() => downgradeTier()} />
 
               <Suspense fallback={null}>
                 <Experience
@@ -292,7 +205,6 @@ function AppContent(): JSX.Element {
             </Canvas>
           </div>
 
-          {}
           {isLoaded && (
             <>
               <NavigationUI />
