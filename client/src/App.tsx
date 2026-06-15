@@ -84,6 +84,22 @@ const PaperSceneBackground = () => {
 };
 const PhysicsCircuitOverlay = () => {
   const { currentRoom } = useScene();
+  const [shouldShowSimulator, setShouldShowSimulator] = useState(false);
+
+  useEffect(() => {
+    if (currentRoom !== 'physics') {
+      setShouldShowSimulator(false);
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setShouldShowSimulator(true);
+    }, 180);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [currentRoom]);
 
   if (currentRoom !== 'physics') {
     return null;
@@ -94,7 +110,7 @@ const PhysicsCircuitOverlay = () => {
       className="physics-circuit-overlay"
       aria-label="Physics circuit simulator"
     >
-      <CircuitCanvas />
+      {shouldShowSimulator && <CircuitCanvas />}
     </div>
   );
 };
