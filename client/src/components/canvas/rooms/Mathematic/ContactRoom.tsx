@@ -301,6 +301,7 @@ const ContactRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
         rotation={[0, -0.3, 0]}
         texturePath="/textures/contact/beczka.webp"
         label="AI QUIZ"
+        onClick={() => window.dispatchEvent(new CustomEvent('pinequest:quiz-open'))}
       />
       {}
       <SocialBarrel
