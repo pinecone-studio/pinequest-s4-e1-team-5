@@ -69,6 +69,17 @@ const GRID = 24;
 const TOOLBAR_H = 54;
 const MAX_HISTORY = 60;
 
+// ─── Paper/sketch palette ─────────────────────────────────────────────────────
+const INK = '#2a2218';
+const INK_SOFT = '#5a4a3a';
+const PAPER = '#f9f6ef';
+const PAPER_DARK = '#f0ebe0';
+const PAPER_MID = '#e8e2d4';
+const SEPIA = '#6b3a1f';
+const COPPER_DARK = '#6f2a1c';
+const COPPER_MID = '#d28a70';
+const FONT_SKETCH = "'Cabin Sketch', 'Caveat', cursive, system-ui, sans-serif";
+
 const shelfItems = [
   { label: 'Wire', type: 'WIRE' },
   { label: 'Battery', type: 'BATTERY' },
@@ -313,30 +324,30 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.quadraticCurveTo(x, y, x + r, y);
 }
 
-function panel(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, fill = '#1e2430', stroke = '#3a4560') {
+function panel(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, fill = PAPER, stroke = INK) {
   ctx.save();
-  ctx.shadowColor = 'rgba(0,0,0,0.45)';
-  ctx.shadowBlur = 18;
-  ctx.shadowOffsetY = 6;
+  ctx.shadowColor = 'rgba(0,0,0,0.1)';
+  ctx.shadowBlur = 12;
+  ctx.shadowOffsetY = 3;
   ctx.fillStyle = fill;
   ctx.strokeStyle = stroke;
   ctx.lineWidth = 1.5;
-  roundRect(ctx, x, y, w, h, 12);
+  roundRect(ctx, x, y, w, h, 6);
   ctx.fill();
   ctx.stroke();
   ctx.restore();
 }
 
-function checkbox(ctx: CanvasRenderingContext2D, x: number, y: number, checked: boolean, accent = '#5b8fff') {
+function checkbox(ctx: CanvasRenderingContext2D, x: number, y: number, checked: boolean, accent = SEPIA) {
   ctx.save();
   roundRect(ctx, x, y, 16, 16, 3);
-  ctx.fillStyle = checked ? accent : 'rgba(255,255,255,0.08)';
+  ctx.fillStyle = checked ? accent : 'rgba(0,0,0,0.06)';
   ctx.fill();
-  ctx.strokeStyle = checked ? accent : 'rgba(255,255,255,0.3)';
+  ctx.strokeStyle = checked ? accent : `${INK}66`;
   ctx.lineWidth = 1.5;
   ctx.stroke();
   if (checked) {
-    ctx.strokeStyle = '#ffffff';
+    ctx.strokeStyle = PAPER;
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(x + 3, y + 8);
@@ -347,10 +358,10 @@ function checkbox(ctx: CanvasRenderingContext2D, x: number, y: number, checked: 
   ctx.restore();
 }
 
-function label(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, color = 'rgba(255,255,255,0.85)', size = 14, align: CanvasTextAlign = 'left') {
+function label(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, color = INK, size = 14, align: CanvasTextAlign = 'left') {
   ctx.save();
   ctx.fillStyle = color;
-  ctx.font = `${size}px system-ui, sans-serif`;
+  ctx.font = `${size}px ${FONT_SKETCH}`;
   ctx.textAlign = align;
   ctx.textBaseline = 'middle';
   ctx.fillText(text, x, y);
@@ -377,14 +388,13 @@ function drawToolbar(
   current: number,
   voltage: number
 ) {
-  // Background bar
   ctx.save();
   const grad = ctx.createLinearGradient(0, 0, 0, TOOLBAR_H);
-  grad.addColorStop(0, '#141922');
-  grad.addColorStop(1, '#1a2236');
+  grad.addColorStop(0, PAPER_MID);
+  grad.addColorStop(1, PAPER_DARK);
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, size.width, TOOLBAR_H);
-  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.strokeStyle = 'rgba(0,0,0,0.1)';
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(0, TOOLBAR_H);
@@ -392,36 +402,33 @@ function drawToolbar(
   ctx.stroke();
   ctx.restore();
 
-  // App title
   ctx.save();
-  ctx.font = 'bold 18px system-ui, sans-serif';
+  ctx.font = `bold 18px ${FONT_SKETCH}`;
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'left';
-  ctx.fillStyle = '#7eb3ff';
-  ctx.fillText('⚡ Circuit Lab', 16, TOOLBAR_H / 2);
+  ctx.fillStyle = SEPIA;
+  ctx.fillText('⚡ Хэлхээний лаборатори', 16, TOOLBAR_H / 2);
   ctx.restore();
 
-  // Undo / Redo / Clear buttons
   const btns = getToolbarButtons(size.width);
   Object.entries(btns).forEach(([key, btn]) => {
     const active = key === 'undo' ? canUndo : key === 'redo' ? canRedo : true;
     ctx.save();
-    ctx.globalAlpha = active ? 1 : 0.35;
-    ctx.fillStyle = key === 'clear' ? '#3d1e1e' : '#1e2a40';
-    ctx.strokeStyle = key === 'clear' ? '#aa3333' : '#3a5a8a';
+    ctx.globalAlpha = active ? 1 : 0.3;
+    ctx.fillStyle = key === 'clear' ? '#f5e8e4' : PAPER;
+    ctx.strokeStyle = key === 'clear' ? '#8B3a3a' : INK;
     ctx.lineWidth = 1.5;
-    roundRect(ctx, btn.x, btn.y, btn.w, btn.h, 8);
+    roundRect(ctx, btn.x, btn.y, btn.w, btn.h, 6);
     ctx.fill();
     ctx.stroke();
-    ctx.fillStyle = key === 'clear' ? '#ff7070' : '#aaccff';
-    ctx.font = '13px system-ui, sans-serif';
+    ctx.fillStyle = key === 'clear' ? '#8B3a3a' : INK;
+    ctx.font = `13px ${FONT_SKETCH}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(btn.text, btn.x + btn.w / 2, btn.y + btn.h / 2);
     ctx.restore();
   });
 
-  // Circuit status pill (right side of toolbar)
   const statusX = size.width - 260;
   const statusY = 10;
   const statusW = 240;
@@ -429,11 +436,11 @@ function drawToolbar(
 
   ctx.save();
   if (closedCircuit) {
-    ctx.fillStyle = 'rgba(30, 90, 30, 0.7)';
-    ctx.strokeStyle = '#44cc44';
+    ctx.fillStyle = 'rgba(50,120,50,0.15)';
+    ctx.strokeStyle = '#4a8030';
   } else {
-    ctx.fillStyle = 'rgba(80, 50, 10, 0.7)';
-    ctx.strokeStyle = '#cc8822';
+    ctx.fillStyle = 'rgba(140,100,20,0.12)';
+    ctx.strokeStyle = '#8a6020';
   }
   ctx.lineWidth = 1.5;
   roundRect(ctx, statusX, statusY, statusW, statusH, 17);
@@ -441,69 +448,73 @@ function drawToolbar(
   ctx.stroke();
 
   if (closedCircuit) {
-    ctx.fillStyle = '#88ff88';
-    ctx.font = 'bold 13px system-ui, sans-serif';
+    ctx.fillStyle = '#1a4a1a';
+    ctx.font = `bold 13px ${FONT_SKETCH}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(
-      `● Circuit ON  ${voltage.toFixed(0)}V  ${current.toFixed(2)}A  ${(voltage * current).toFixed(2)}W`,
+      `● Хэлхээ ON  ${voltage.toFixed(0)}В  ${current.toFixed(2)}А  ${(voltage * current).toFixed(2)}Вт`,
       statusX + statusW / 2,
       statusY + statusH / 2
     );
   } else {
-    ctx.fillStyle = '#ffbb55';
-    ctx.font = 'bold 13px system-ui, sans-serif';
+    ctx.fillStyle = '#4a3000';
+    ctx.font = `bold 13px ${FONT_SKETCH}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('○ Circuit OPEN — connect & close switch', statusX + statusW / 2, statusY + statusH / 2);
+    ctx.fillText('○ Хэлхээ нээлттэй — холбоод унтраалга хааж', statusX + statusW / 2, statusY + statusH / 2);
   }
   ctx.restore();
 }
 
 // ─── Shelf ────────────────────────────────────────────────────────────────────
 
-function drawShelfIcon(ctx: CanvasRenderingContext2D, label: string, x: number, y: number) {
+function drawShelfIcon(ctx: CanvasRenderingContext2D, lbl: string, x: number, y: number) {
   ctx.save();
-  ctx.strokeStyle = '#aac8ff';
-  ctx.fillStyle = '#aac8ff';
+  ctx.strokeStyle = INK;
+  ctx.fillStyle = INK;
   ctx.lineWidth = 2;
 
-  if (label === 'Wire') {
+  if (lbl === 'Wire') {
     const g = ctx.createLinearGradient(x - 24, y, x + 24, y);
-    g.addColorStop(0, '#6f2a1c'); g.addColorStop(0.5, '#e09070'); g.addColorStop(1, '#6f2a1c');
+    g.addColorStop(0, COPPER_DARK); g.addColorStop(0.5, COPPER_MID); g.addColorStop(1, COPPER_DARK);
     ctx.strokeStyle = g;
     ctx.lineWidth = 7;
     ctx.beginPath(); ctx.moveTo(x - 24, y); ctx.lineTo(x + 24, y); ctx.stroke();
-  } else if (label === 'Battery') {
-    ctx.fillStyle = '#222'; ctx.fillRect(x - 25, y - 10, 32, 20);
-    ctx.fillStyle = '#f0a23b'; ctx.fillRect(x + 7, y - 10, 18, 20);
-    ctx.fillStyle = '#fff'; ctx.fillRect(x + 25, y - 7, 5, 14);
-  } else if (label === 'AC Voltage') {
+  } else if (lbl === 'Battery') {
+    ctx.fillStyle = '#333'; ctx.fillRect(x - 25, y - 10, 32, 20);
+    ctx.fillStyle = '#c48820'; ctx.fillRect(x + 7, y - 10, 18, 20);
+    ctx.fillStyle = INK; ctx.fillRect(x + 25, y - 7, 5, 14);
+  } else if (lbl === 'AC Voltage') {
+    ctx.strokeStyle = INK;
     ctx.beginPath(); ctx.arc(x, y, 20, 0, Math.PI * 2); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(x - 13, y); ctx.bezierCurveTo(x - 6, y - 14, x + 6, y + 14, x + 13, y); ctx.stroke();
-  } else if (label === 'Light Bulb') {
-    ctx.strokeStyle = '#e08050';
+  } else if (lbl === 'Light Bulb') {
+    ctx.strokeStyle = '#c06020';
     ctx.beginPath(); ctx.arc(x, y - 5, 15, 0, Math.PI * 2); ctx.stroke();
-    ctx.strokeStyle = '#aac8ff';
+    ctx.strokeStyle = INK;
     ctx.strokeRect(x - 7, y + 10, 14, 8);
-  } else if (label === 'Resistor') {
+  } else if (lbl === 'Resistor') {
     const g = ctx.createLinearGradient(x - 27, y - 10, x + 27, y + 10);
     g.addColorStop(0, '#7a4a20'); g.addColorStop(0.5, '#d4a060'); g.addColorStop(1, '#7a4a20');
     ctx.fillStyle = g;
     roundRect(ctx, x - 26, y - 9, 52, 18, 9); ctx.fill();
-    ctx.fillStyle = '#111'; ctx.fillRect(x - 11, y - 9, 4, 18); ctx.fillRect(x + 2, y - 9, 4, 18);
-    ctx.fillStyle = '#d9c13f'; ctx.fillRect(x + 15, y - 9, 4, 18);
-  } else if (label === 'Capacitor') {
+    ctx.fillStyle = '#222'; ctx.fillRect(x - 11, y - 9, 4, 18); ctx.fillRect(x + 2, y - 9, 4, 18);
+    ctx.fillStyle = '#c9a030'; ctx.fillRect(x + 15, y - 9, 4, 18);
+  } else if (lbl === 'Capacitor') {
+    ctx.strokeStyle = INK;
     ctx.beginPath();
     ctx.moveTo(x - 28, y); ctx.lineTo(x - 8, y);
     ctx.moveTo(x + 8, y); ctx.lineTo(x + 28, y);
     ctx.moveTo(x - 8, y - 17); ctx.lineTo(x - 8, y + 17);
     ctx.moveTo(x + 8, y - 17); ctx.lineTo(x + 8, y + 17);
     ctx.stroke();
-  } else if (label === 'Inductor') {
+  } else if (lbl === 'Inductor') {
+    ctx.strokeStyle = INK;
     for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.arc(x - 20 + i * 10, y, 7, Math.PI, 0); ctx.stroke(); }
     ctx.beginPath(); ctx.moveTo(x - 35, y); ctx.lineTo(x - 27, y); ctx.moveTo(x + 27, y); ctx.lineTo(x + 35, y); ctx.stroke();
   } else {
+    ctx.strokeStyle = INK;
     ctx.beginPath();
     ctx.moveTo(x - 28, y + 6); ctx.lineTo(x - 8, y + 6);
     ctx.moveTo(x + 10, y + 6); ctx.lineTo(x + 28, y + 6);
@@ -520,12 +531,12 @@ function drawToolShelf(ctx: CanvasRenderingContext2D, size: CanvasSize) {
   panel(ctx, SHELF_X, SHELF_Y, SHELF_W, h);
 
   ctx.save();
-  ctx.fillStyle = '#7eb3ff';
-  ctx.font = 'bold 12px system-ui, sans-serif';
+  ctx.fillStyle = SEPIA;
+  ctx.font = `bold 12px ${FONT_SKETCH}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('COMPONENTS', SHELF_X + SHELF_W / 2, SHELF_Y + 22);
-  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.fillText('ХЭРЭГСЭЛ', SHELF_X + SHELF_W / 2, SHELF_Y + 22);
+  ctx.strokeStyle = 'rgba(0,0,0,0.1)';
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(SHELF_X + 10, SHELF_Y + 38);
@@ -535,8 +546,8 @@ function drawToolShelf(ctx: CanvasRenderingContext2D, size: CanvasSize) {
   shelfItems.forEach(({ label: lbl }, index) => {
     const y = SHELF_ITEM_START_Y + index * SHELF_ITEM_GAP;
     drawShelfIcon(ctx, lbl, SHELF_X + SHELF_W / 2, y);
-    ctx.fillStyle = 'rgba(200,220,255,0.85)';
-    ctx.font = '12px system-ui, sans-serif';
+    ctx.fillStyle = INK_SOFT;
+    ctx.font = `12px ${FONT_SKETCH}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillText(lbl, SHELF_X + SHELF_W / 2, y + 20);
@@ -549,14 +560,14 @@ function drawToolShelf(ctx: CanvasRenderingContext2D, size: CanvasSize) {
 
 function drawMeterIcon(ctx: CanvasRenderingContext2D, x: number, y: number, lbl: string) {
   ctx.save();
-  ctx.fillStyle = '#f19b32';
+  ctx.fillStyle = '#d48a20';
   ctx.strokeStyle = '#555';
   ctx.lineWidth = 1.5;
   roundRect(ctx, x - 26, y - 36, 52, 44, 8); ctx.fill(); ctx.stroke();
   ctx.fillStyle = '#fff4de';
   ctx.fillRect(x - 16, y - 24, 32, 14);
-  ctx.fillStyle = '#111';
-  ctx.font = '10px system-ui, sans-serif';
+  ctx.fillStyle = INK;
+  ctx.font = `10px ${FONT_SKETCH}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(lbl === 'V' ? 'Voltage' : 'Current', x, y - 28);
@@ -574,62 +585,59 @@ function drawControlPanels(ctx: CanvasRenderingContext2D, width: number) {
   const px = getControlPanelX(width);
   const ty = TOOLBAR_H;
 
-  // Display options panel
   panel(ctx, px, ty + 16, 210, 186);
-  label(ctx, 'DISPLAY', px + 16, ty + 30, '#7eb3ff', 12);
-  checkbox(ctx, px + 16, ty + 46, true); label(ctx, 'Show Current', px + 40, ty + 54);
+  label(ctx, 'ДЭЛГЭЦ', px + 16, ty + 30, SEPIA, 12);
+  checkbox(ctx, px + 16, ty + 46, true); label(ctx, 'Гүйдэл харах', px + 40, ty + 54, INK);
 
   ctx.save();
   ctx.beginPath(); ctx.arc(px + 55, ty + 86, 9, 0, Math.PI * 2);
-  ctx.fillStyle = '#4da6e0'; ctx.fill(); ctx.strokeStyle = '#7eb3ff'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = '#4da6e0'; ctx.fill(); ctx.strokeStyle = '#2a6a9a'; ctx.lineWidth = 2; ctx.stroke();
   ctx.restore();
-  label(ctx, 'Electrons', px + 78, ty + 86);
+  label(ctx, 'Электрон', px + 78, ty + 86, INK);
 
   ctx.save();
   ctx.beginPath(); ctx.arc(px + 55, ty + 114, 9, 0, Math.PI * 2);
-  ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.strokeStyle = `${INK}55`; ctx.lineWidth = 2; ctx.stroke();
   ctx.restore();
-  label(ctx, 'Conventional', px + 78, ty + 114, 'rgba(255,255,255,0.5)');
+  label(ctx, 'Конвенциональ', px + 78, ty + 114, INK_SOFT);
 
-  checkbox(ctx, px + 16, ty + 136, true); label(ctx, 'Labels', px + 40, ty + 144);
-  checkbox(ctx, px + 16, ty + 162, false); label(ctx, 'Values', px + 40, ty + 170);
-  checkbox(ctx, px + 16, ty + 186, false); label(ctx, 'Stopwatch', px + 40, ty + 194);
+  checkbox(ctx, px + 16, ty + 136, true); label(ctx, 'Шошго', px + 40, ty + 144, INK);
+  checkbox(ctx, px + 16, ty + 162, false); label(ctx, 'Утга', px + 40, ty + 170, INK);
+  checkbox(ctx, px + 16, ty + 186, false); label(ctx, 'Секундомер', px + 40, ty + 194, INK);
 
-  // Meters panel
   panel(ctx, px, ty + 218, 210, 140);
-  label(ctx, 'METERS', px + 16, ty + 232, '#7eb3ff', 12);
+  label(ctx, 'ХЭМЖИГЧ', px + 16, ty + 232, SEPIA, 12);
   drawMeterIcon(ctx, px + 58, ty + 278, 'V');
   drawMeterIcon(ctx, px + 154, ty + 278, 'A');
-  label(ctx, 'Voltmeter', px + 58, ty + 342, 'rgba(200,220,255,0.8)', 13, 'center');
-  label(ctx, 'Ammeter', px + 154, ty + 342, 'rgba(200,220,255,0.8)', 13, 'center');
+  label(ctx, 'Вольтметр', px + 58, ty + 342, INK_SOFT, 13, 'center');
+  label(ctx, 'Амперметр', px + 154, ty + 342, INK_SOFT, 13, 'center');
 
-  // Advanced panel
   panel(ctx, px, ty + 374, 210, 146);
   ctx.save();
-  ctx.fillStyle = '#c0392b';
+  ctx.fillStyle = '#8B3a3a';
   ctx.fillRect(px + 18, ty + 386, 18, 18);
-  ctx.fillStyle = '#fff';
-  ctx.font = 'bold 14px system-ui, sans-serif';
+  ctx.fillStyle = PAPER;
+  ctx.font = `bold 14px ${FONT_SKETCH}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText('−', px + 27, ty + 395);
   ctx.restore();
-  label(ctx, 'Advanced', px + 50, ty + 395, '#ffaa66', 15);
-  label(ctx, 'Wire Resistivity', px + 105, ty + 430, 'rgba(200,220,255,0.7)', 13, 'center');
-  label(ctx, 'Source Resistance', px + 105, ty + 488, 'rgba(200,220,255,0.7)', 13, 'center');
+  label(ctx, 'Нарийвчилсан', px + 50, ty + 395, SEPIA, 15);
+  label(ctx, 'Утасны эсэргүүцэл', px + 105, ty + 430, INK_SOFT, 13, 'center');
+  label(ctx, 'Эхний эсэргүүцэл', px + 105, ty + 488, INK_SOFT, 13, 'center');
 
   [448, 506].forEach((y, i) => {
     ctx.save();
-    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.strokeStyle = 'rgba(0,0,0,0.15)';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(px + 34, ty + y); ctx.lineTo(px + 176, ty + y); ctx.stroke();
-    ctx.fillStyle = '#fff';
-    ctx.strokeStyle = '#555';
+    ctx.fillStyle = PAPER;
+    ctx.strokeStyle = INK_SOFT;
     roundRect(ctx, px + 93 + i * 6, ty + y - 12, 14, 24, 4); ctx.fill(); ctx.stroke();
     ctx.restore();
-    label(ctx, 'tiny', px + 22, ty + y, 'rgba(200,220,255,0.5)', 11);
-    label(ctx, i === 0 ? 'lots' : '10Ω', px + 188, ty + y, 'rgba(200,220,255,0.5)', 11, 'right');
+    label(ctx, 'бага', px + 22, ty + y, INK_SOFT, 11);
+    label(ctx, i === 0 ? 'их' : '10Ω', px + 188, ty + y, INK_SOFT, 11, 'right');
   });
 }
 
@@ -650,14 +658,14 @@ function drawCircuitWire(ctx: CanvasRenderingContext2D, components: CircuitCompo
   if (!s || !e) return;
 
   ctx.save();
-  ctx.strokeStyle = '#6a3020';
+  ctx.strokeStyle = COPPER_DARK;
   ctx.lineWidth = 7;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
   elbowPath(ctx, s, e);
   ctx.stroke();
 
-  ctx.strokeStyle = 'rgba(220, 160, 110, 0.45)';
+  ctx.strokeStyle = 'rgba(210, 145, 100, 0.55)';
   ctx.lineWidth = 2.5;
   elbowPath(ctx, s, e);
   ctx.stroke();
@@ -668,7 +676,7 @@ function drawWirePreview(ctx: CanvasRenderingContext2D, components: CircuitCompo
   const s = getTerminalPoint(components, drag.from);
   if (!s) return;
   ctx.save();
-  ctx.strokeStyle = 'rgba(100, 180, 255, 0.65)';
+  ctx.strokeStyle = 'rgba(42,34,24,0.4)';
   ctx.lineWidth = 5;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
@@ -685,15 +693,15 @@ function drawTerminals(ctx: CanvasRenderingContext2D, c: CircuitComponent) {
   ctx.save();
   (Object.keys(terms) as TerminalKey[]).forEach((t) => {
     const p = terms[t];
-    ctx.fillStyle = '#4da6e0';
-    ctx.strokeStyle = '#d8f0ff';
+    ctx.fillStyle = INK;
+    ctx.strokeStyle = PAPER;
     ctx.lineWidth = 2.5;
     ctx.beginPath();
     ctx.arc(p.x, p.y, 11, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 13px system-ui, sans-serif';
+    ctx.fillStyle = PAPER;
+    ctx.font = `bold 13px ${FONT_SKETCH}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('−', p.x, p.y);
@@ -706,22 +714,22 @@ function drawTerminals(ctx: CanvasRenderingContext2D, c: CircuitComponent) {
 function drawSelectionFrame(ctx: CanvasRenderingContext2D, c: CircuitComponent) {
   const db = deleteBounds(c);
   ctx.save();
-  ctx.strokeStyle = '#ff5555';
+  ctx.strokeStyle = SEPIA;
   ctx.lineWidth = 2;
   ctx.setLineDash([7, 6]);
   roundRect(ctx, c.x - 8, c.y - 8, c.width + 16, c.height + 16, 14);
   ctx.stroke();
   ctx.setLineDash([]);
 
-  ctx.fillStyle = '#2a0a0a';
-  ctx.strokeStyle = '#ff5555';
+  ctx.fillStyle = '#f5e8e4';
+  ctx.strokeStyle = '#8B3a3a';
   ctx.lineWidth = 1.5;
   roundRect(ctx, db.x, db.y, db.width, db.height, 5);
   ctx.fill();
   ctx.stroke();
 
-  ctx.fillStyle = '#ff7070';
-  ctx.font = 'bold 14px system-ui, sans-serif';
+  ctx.fillStyle = '#8B3a3a';
+  ctx.font = `bold 14px ${FONT_SKETCH}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText('×', db.x + db.width / 2, db.y + db.height / 2);
@@ -732,7 +740,7 @@ function drawSelectionFrame(ctx: CanvasRenderingContext2D, c: CircuitComponent) 
 
 function drawHoverFrame(ctx: CanvasRenderingContext2D, c: CircuitComponent) {
   ctx.save();
-  ctx.strokeStyle = 'rgba(120, 200, 255, 0.5)';
+  ctx.strokeStyle = 'rgba(42,34,24,0.35)';
   ctx.lineWidth = 2;
   ctx.setLineDash([5, 5]);
   roundRect(ctx, c.x - 6, c.y - 6, c.width + 12, c.height + 12, 12);
@@ -786,7 +794,7 @@ function drawAnimatedElectrons(
         ctx.fill();
         ctx.stroke();
         ctx.fillStyle = '#fff';
-        ctx.font = 'bold 10px system-ui, sans-serif';
+        ctx.font = `bold 10px ${FONT_SKETCH}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('−', dotX, dotY);
@@ -802,40 +810,40 @@ function drawBattery(ctx: CanvasRenderingContext2D, c: CircuitComponent, cv: Ret
   const { x, y, width: w, height: h } = c;
   const tw = 16;
   ctx.save();
-  ctx.shadowColor = 'rgba(0,0,0,0.35)';
-  ctx.shadowBlur = 14;
-  ctx.shadowOffsetY = 5;
+  ctx.shadowColor = 'rgba(0,0,0,0.2)';
+  ctx.shadowBlur = 10;
+  ctx.shadowOffsetY = 4;
 
   ctx.fillStyle = '#1a1a1a'; roundRect(ctx, x, y + 9, w * 0.55, h - 18, 8); ctx.fill();
-  ctx.fillStyle = '#d48820'; ctx.fillRect(x + w * 0.55, y + 9, w * 0.33, h - 18);
-  ctx.fillStyle = '#f0cc50'; roundRect(ctx, x + w - tw, y + 17, tw, h - 34, 4); ctx.fill();
+  ctx.fillStyle = '#c48820'; ctx.fillRect(x + w * 0.55, y + 9, w * 0.33, h - 18);
+  ctx.fillStyle = '#e8b840'; roundRect(ctx, x + w - tw, y + 17, tw, h - 34, 4); ctx.fill();
 
   ctx.shadowColor = 'transparent';
   ctx.strokeStyle = '#333';
   ctx.lineWidth = 2.5;
   roundRect(ctx, x, y + 9, w - tw / 2, h - 18, 8); ctx.stroke();
 
-  ctx.fillStyle = '#fff';
-  ctx.font = 'bold 22px system-ui, sans-serif';
+  ctx.fillStyle = PAPER;
+  ctx.font = `bold 22px ${FONT_SKETCH}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText('−', x + 26, y + h / 2);
   ctx.fillText('+', x + w - 38, y + h / 2);
 
-  ctx.strokeStyle = '#e04040';
+  ctx.strokeStyle = '#8B3a3a';
   ctx.setLineDash([7, 8]);
   ctx.lineWidth = 2;
   roundRect(ctx, x - 14, y + 2, w + 28, h - 4, 20); ctx.stroke();
   ctx.setLineDash([]);
 
-  ctx.fillStyle = 'rgba(200,220,255,0.85)';
-  ctx.font = '13px system-ui, sans-serif';
-  ctx.fillText('Battery', x + w / 2, y + h + 22);
+  ctx.fillStyle = INK_SOFT;
+  ctx.font = `13px ${FONT_SKETCH}`;
+  ctx.fillText('Батарей', x + w / 2, y + h + 22);
 
   if (cv.voltage > 0) {
-    ctx.fillStyle = '#ffdd88';
-    ctx.font = 'bold 12px system-ui, sans-serif';
-    ctx.fillText(`${cv.voltage.toFixed(0)} V`, x + w / 2, y + h + 38);
+    ctx.fillStyle = SEPIA;
+    ctx.font = `bold 12px ${FONT_SKETCH}`;
+    ctx.fillText(`${cv.voltage.toFixed(0)} В`, x + w / 2, y + h + 38);
   }
   ctx.restore();
 }
@@ -869,15 +877,15 @@ function drawLightbulb(
     ig.addColorStop(1, 'rgba(255,210,80,0.9)');
     ctx.fillStyle = ig;
   } else {
-    ctx.fillStyle = 'rgba(60,60,75,0.9)';
+    ctx.fillStyle = 'rgba(200,195,185,0.9)';
   }
-  ctx.strokeStyle = '#444';
+  ctx.strokeStyle = '#555';
   ctx.lineWidth = 2.5;
   ctx.beginPath(); ctx.arc(cx, cy, 36, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
 
   ctx.shadowColor = isLit ? '#ffcc44' : 'transparent';
   ctx.shadowBlur = isLit ? 12 : 0;
-  ctx.strokeStyle = isLit ? '#ff8820' : '#666';
+  ctx.strokeStyle = isLit ? '#ff8820' : '#777';
   ctx.lineWidth = isLit ? 3 : 2;
   ctx.beginPath();
   ctx.moveTo(cx - 14, cy + 8);
@@ -886,29 +894,29 @@ function drawLightbulb(
   ctx.stroke();
   ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
 
-  ctx.strokeStyle = isLit ? '#aa5500' : '#555';
+  ctx.strokeStyle = isLit ? '#aa5500' : '#666';
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(cx - 10, cy + 22); ctx.lineTo(cx - 10, cy + 34);
   ctx.moveTo(cx + 10, cy + 22); ctx.lineTo(cx + 10, cy + 34);
   ctx.stroke();
 
-  ctx.fillStyle = '#555'; ctx.fillRect(cx - 18, cy + 34, 36, 12);
-  ctx.fillStyle = '#444'; ctx.fillRect(cx - 16, cy + 46, 32, 10);
-  ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
+  ctx.fillStyle = '#666'; ctx.fillRect(cx - 18, cy + 34, 36, 12);
+  ctx.fillStyle = '#555'; ctx.fillRect(cx - 16, cy + 46, 32, 10);
+  ctx.strokeStyle = '#444'; ctx.lineWidth = 2;
   ctx.strokeRect(cx - 18, cy + 34, 36, 22);
 
-  ctx.fillStyle = 'rgba(200,220,255,0.85)';
-  ctx.font = '13px system-ui, sans-serif';
+  ctx.fillStyle = INK_SOFT;
+  ctx.font = `13px ${FONT_SKETCH}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('Light Bulb', cx, y + h - 10);
+  ctx.fillText('Чийдэн', cx, y + h - 10);
 
   if (isLit) {
     const power = current * current * 8;
-    ctx.fillStyle = '#ffdd44';
-    ctx.font = 'bold 12px system-ui, sans-serif';
-    ctx.fillText(`${current.toFixed(2)}A  ${power.toFixed(1)}W`, cx, y + h + 14);
+    ctx.fillStyle = SEPIA;
+    ctx.font = `bold 12px ${FONT_SKETCH}`;
+    ctx.fillText(`${current.toFixed(2)}А  ${power.toFixed(1)}Вт`, cx, y + h + 14);
   }
   ctx.restore();
 }
@@ -920,11 +928,11 @@ function drawSwitch(ctx: CanvasRenderingContext2D, c: CircuitComponent, isClosed
   ctx.save();
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
-  ctx.shadowColor = 'rgba(0,0,0,0.25)';
-  ctx.shadowBlur = 8;
-  ctx.shadowOffsetY = 3;
+  ctx.shadowColor = 'rgba(0,0,0,0.15)';
+  ctx.shadowBlur = 6;
+  ctx.shadowOffsetY = 2;
 
-  ctx.strokeStyle = '#aaa';
+  ctx.strokeStyle = '#888';
   ctx.lineWidth = 4;
   ctx.beginPath();
   ctx.moveTo(c.x + 4, cy); ctx.lineTo(cx - 22, cy);
@@ -934,14 +942,14 @@ function drawSwitch(ctx: CanvasRenderingContext2D, c: CircuitComponent, isClosed
   ctx.shadowColor = 'transparent';
   ctx.shadowBlur = 0;
 
-  ctx.fillStyle = '#333';
+  ctx.fillStyle = '#444';
   ctx.strokeStyle = isClosed ? '#44bb44' : '#888';
   ctx.lineWidth = 2.5;
   ctx.beginPath(); ctx.arc(cx - 22, cy, 7, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
 
   if (isClosed) {
-    ctx.shadowColor = '#44ee44';
-    ctx.shadowBlur = 14;
+    ctx.shadowColor = 'rgba(60,180,60,0.5)';
+    ctx.shadowBlur = 10;
     ctx.strokeStyle = '#33cc33';
     ctx.lineWidth = 5;
     ctx.beginPath(); ctx.moveTo(cx - 14, cy); ctx.lineTo(cx + 22, cy); ctx.stroke();
@@ -956,22 +964,22 @@ function drawSwitch(ctx: CanvasRenderingContext2D, c: CircuitComponent, isClosed
     ctx.lineWidth = 4.5;
     ctx.beginPath(); ctx.moveTo(cx - 14, cy - 1); ctx.lineTo(cx + 18, cy - 27); ctx.stroke();
 
-    ctx.fillStyle = '#555';
+    ctx.fillStyle = '#666';
     ctx.strokeStyle = '#888';
     ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(cx + 18, cy - 27, 5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   }
 
-  ctx.fillStyle = 'rgba(200,220,255,0.85)';
-  ctx.font = '13px system-ui, sans-serif';
+  ctx.fillStyle = INK_SOFT;
+  ctx.font = `13px ${FONT_SKETCH}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(isClosed ? 'Switch [ON]' : 'Switch [OFF]', cx, c.y + c.height + 16);
+  ctx.fillText(isClosed ? 'Унтраалга [ON]' : 'Унтраалга [OFF]', cx, c.y + c.height + 16);
 
   if (!isClosed) {
-    ctx.fillStyle = '#ffaa44';
-    ctx.font = 'bold 11px system-ui, sans-serif';
-    ctx.fillText('Click to close', cx, c.y + c.height + 32);
+    ctx.fillStyle = SEPIA;
+    ctx.font = `bold 11px ${FONT_SKETCH}`;
+    ctx.fillText('Дарж хаах', cx, c.y + c.height + 32);
   }
   ctx.restore();
 }
@@ -981,17 +989,17 @@ function drawGenericComponent(ctx: CanvasRenderingContext2D, c: CircuitComponent
   const cy = c.y + c.height / 2;
 
   ctx.save();
-  ctx.shadowColor = 'rgba(0,0,0,0.25)';
-  ctx.shadowBlur = 10;
-  ctx.shadowOffsetY = 4;
-  ctx.strokeStyle = '#8899bb';
-  ctx.fillStyle = '#1c2438';
+  ctx.shadowColor = 'rgba(0,0,0,0.12)';
+  ctx.shadowBlur = 8;
+  ctx.shadowOffsetY = 3;
+  ctx.strokeStyle = INK;
+  ctx.fillStyle = PAPER_DARK;
   ctx.lineWidth = 2.5;
 
   if (c.type === 'WIRE') {
     ctx.shadowBlur = 0;
     const g = ctx.createLinearGradient(c.x, cy, c.x + c.width, cy);
-    g.addColorStop(0, '#6f2a1c'); g.addColorStop(0.5, '#d28a70'); g.addColorStop(1, '#6f2a1c');
+    g.addColorStop(0, COPPER_DARK); g.addColorStop(0.5, COPPER_MID); g.addColorStop(1, COPPER_DARK);
     ctx.strokeStyle = g;
     ctx.lineWidth = 8;
     ctx.lineCap = 'round';
@@ -1003,26 +1011,26 @@ function drawGenericComponent(ctx: CanvasRenderingContext2D, c: CircuitComponent
     ctx.beginPath();
     ctx.moveTo(cx - 22, cy - 10);
     ctx.bezierCurveTo(cx - 10, cy - 36, cx + 10, cy + 16, cx + 22, cy - 10);
-    ctx.strokeStyle = '#e07050';
+    ctx.strokeStyle = '#c06020';
     ctx.lineWidth = 2.5;
     ctx.stroke();
-    ctx.fillStyle = '#aac8ff';
-    ctx.font = 'bold 16px system-ui, sans-serif';
+    ctx.fillStyle = INK;
+    ctx.font = `bold 16px ${FONT_SKETCH}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('+', cx, cy - 32);
     ctx.fillText('−', cx, cy + 16);
   } else if (c.type === 'RESISTOR') {
     const g = ctx.createLinearGradient(c.x, c.y, c.x + c.width, c.y + c.height);
-    g.addColorStop(0, '#6a3a18'); g.addColorStop(0.5, '#c49050'); g.addColorStop(1, '#6a3a18');
+    g.addColorStop(0, '#7a4a20'); g.addColorStop(0.5, '#c49050'); g.addColorStop(1, '#7a4a20');
     ctx.fillStyle = g;
     roundRect(ctx, c.x + 18, c.y + 14, c.width - 36, 28, 14); ctx.fill(); ctx.stroke();
     ctx.shadowColor = 'transparent';
     ctx.fillStyle = '#111'; ctx.fillRect(cx - 26, c.y + 14, 5, 28); ctx.fillRect(cx - 5, c.y + 14, 5, 28);
-    ctx.fillStyle = '#d9c13f'; ctx.fillRect(cx + 24, c.y + 14, 5, 28);
+    ctx.fillStyle = '#c9a030'; ctx.fillRect(cx + 24, c.y + 14, 5, 28);
   } else if (c.type === 'CAPACITOR') {
     ctx.shadowColor = 'transparent';
-    ctx.strokeStyle = '#aac8ff';
+    ctx.strokeStyle = INK;
     ctx.lineWidth = 2.5;
     ctx.beginPath();
     ctx.moveTo(c.x + 8, cy); ctx.lineTo(cx - 14, cy);
@@ -1032,7 +1040,7 @@ function drawGenericComponent(ctx: CanvasRenderingContext2D, c: CircuitComponent
     ctx.stroke();
   } else if (c.type === 'INDUCTOR') {
     ctx.shadowColor = 'transparent';
-    ctx.strokeStyle = '#aac8ff';
+    ctx.strokeStyle = INK;
     ctx.beginPath();
     ctx.moveTo(c.x + 8, cy); ctx.lineTo(c.x + 26, cy); ctx.stroke();
     for (let i = 0; i < 6; i++) {
@@ -1043,8 +1051,8 @@ function drawGenericComponent(ctx: CanvasRenderingContext2D, c: CircuitComponent
   }
 
   ctx.shadowColor = 'transparent';
-  ctx.fillStyle = 'rgba(200,220,255,0.85)';
-  ctx.font = '13px system-ui, sans-serif';
+  ctx.fillStyle = INK_SOFT;
+  ctx.font = `13px ${FONT_SKETCH}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(getComponentLabel(c.type), cx, c.y + c.height + 16);
@@ -1060,12 +1068,12 @@ function drawMeasuringTool(
   const cy = c.y + c.height / 2;
   const isA = c.type === 'AMMETER';
   const val = cv.meterReadings[c.id] ?? 0;
-  const valStr = isA ? `${val.toFixed(2)} A` : `${val.toFixed(1)} V`;
+  const valStr = isA ? `${val.toFixed(2)} А` : `${val.toFixed(1)} В`;
 
   ctx.save();
-  ctx.shadowColor = 'rgba(0,0,0,0.3)';
-  ctx.shadowBlur = 10;
-  ctx.shadowOffsetY = 4;
+  ctx.shadowColor = 'rgba(0,0,0,0.15)';
+  ctx.shadowBlur = 8;
+  ctx.shadowOffsetY = 3;
   ctx.fillStyle = '#d48a20';
   ctx.strokeStyle = '#555';
   ctx.lineWidth = 2.5;
@@ -1074,11 +1082,11 @@ function drawMeasuringTool(
   ctx.shadowColor = 'transparent';
   ctx.fillStyle = '#fff4de';
   ctx.fillRect(c.x + 34, c.y + 26, c.width - 68, 18);
-  ctx.fillStyle = '#111';
-  ctx.font = 'bold 12px system-ui, sans-serif';
+  ctx.fillStyle = INK;
+  ctx.font = `bold 12px ${FONT_SKETCH}`;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText(isA ? 'Current' : 'Voltage', cx, c.y + 22);
-  ctx.font = 'bold 13px system-ui, sans-serif';
+  ctx.fillText(isA ? 'Гүйдэл' : 'Хүчдэл', cx, c.y + 22);
+  ctx.font = `bold 13px ${FONT_SKETCH}`;
   ctx.fillText(valStr, cx, c.y + 35);
 
   ctx.strokeStyle = '#555'; ctx.lineWidth = 2.5;
@@ -1087,9 +1095,9 @@ function drawMeasuringTool(
   ctx.moveTo(c.x + c.width - 14, cy); ctx.lineTo(c.x + c.width, cy + 14);
   ctx.stroke();
 
-  ctx.fillStyle = 'rgba(200,220,255,0.85)';
-  ctx.font = '13px system-ui, sans-serif';
-  ctx.fillText(isA ? 'Ammeter' : 'Voltmeter', cx, c.y + c.height + 14);
+  ctx.fillStyle = INK_SOFT;
+  ctx.font = `13px ${FONT_SKETCH}`;
+  ctx.fillText(isA ? 'Амперметр' : 'Вольтметр', cx, c.y + c.height + 14);
   ctx.restore();
 }
 
@@ -1125,19 +1133,19 @@ function drawSourcePreview(
 
 function drawBottomBar(ctx: CanvasRenderingContext2D, size: CanvasSize) {
   ctx.save();
-  ctx.fillStyle = 'rgba(14,18,30,0.85)';
+  ctx.fillStyle = 'rgba(232,226,212,0.95)';
   ctx.fillRect(0, size.height - 44, size.width, 44);
-  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.strokeStyle = 'rgba(0,0,0,0.08)';
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(0, size.height - 44); ctx.lineTo(size.width, size.height - 44); ctx.stroke();
 
-  ctx.fillStyle = 'rgba(180,200,255,0.75)';
-  ctx.font = '14px system-ui, sans-serif';
+  ctx.fillStyle = INK_SOFT;
+  ctx.font = `14px ${FONT_SKETCH}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(
-    'Drag tools to add  •  Drag terminal dots to wire  •  Click Switch to toggle  •  Del key to delete  •  Ctrl+Z / Ctrl+Y to undo/redo',
+    'Хэрэгслийг чирж нэмэх  •  Терминалын цэгийг чирж холбох  •  Унтраалга дарах  •  Del товч устгах  •  Ctrl+Z/Y буцаах',
     size.width / 2,
     size.height - 22
   );
@@ -1148,18 +1156,18 @@ function drawBottomBar(ctx: CanvasRenderingContext2D, size: CanvasSize) {
 
 function drawBackground(ctx: CanvasRenderingContext2D, size: CanvasSize) {
   const grad = ctx.createLinearGradient(0, 0, 0, size.height);
-  grad.addColorStop(0, '#1a2240');
-  grad.addColorStop(1, '#111828');
+  grad.addColorStop(0, '#f9f6f0');
+  grad.addColorStop(1, '#f2ecd8');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, size.width, size.height);
 
   ctx.save();
-  ctx.globalAlpha = 0.1;
-  ctx.fillStyle = '#6688cc';
+  ctx.globalAlpha = 0.18;
+  ctx.fillStyle = '#a08040';
   for (let x = 0; x < size.width; x += GRID) {
     for (let y = TOOLBAR_H; y < size.height - 44; y += GRID) {
       ctx.beginPath();
-      ctx.arc(x, y, 1, 0, Math.PI * 2);
+      ctx.arc(x, y, 1.2, 0, Math.PI * 2);
       ctx.fill();
     }
   }
@@ -1178,7 +1186,7 @@ function drawJunctions(ctx: CanvasRenderingContext2D, components: CircuitCompone
   });
 
   ctx.save();
-  ctx.fillStyle = '#88ccff';
+  ctx.fillStyle = INK;
   count.forEach((n, key) => {
     if (n < 3) return;
     const p: Point = JSON.parse(key);
@@ -1205,7 +1213,6 @@ export default function CircuitCanvas() {
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
 
-  // Refs mirroring state for RAF loop
   const circuitRef = useRef(circuitState);
   circuitRef.current = circuitState;
   const sizeRef = useRef(canvasSize);
@@ -1213,7 +1220,6 @@ export default function CircuitCanvas() {
   const selectedRef = useRef(selectedId);
   selectedRef.current = selectedId;
 
-  // Interaction refs
   const dragRef = useRef<DragState | null>(null);
   const sourceDragRef = useRef<SourceDragState | null>(null);
   const wireDragRef = useRef<WireDragState | null>(null);
@@ -1222,10 +1228,8 @@ export default function CircuitCanvas() {
   const mouseDownCompId = useRef<string | null>(null);
   const hoverIdRef = useRef<string | null>(null);
 
-  // Animation
   const animTimeRef = useRef(0);
 
-  // History for undo/redo
   const historyRef = useRef<CircuitState[]>([]);
   const historyIdxRef = useRef(-1);
 
@@ -1267,7 +1271,6 @@ export default function CircuitCanvas() {
     setSelectedId(null);
   };
 
-  // Resize
   const resizeFrame = useRef<{ id: number | null }>({ id: null });
   const updateSize = () => {
     const el = containerRef.current;
@@ -1286,7 +1289,6 @@ export default function CircuitCanvas() {
     };
   }, []);
 
-  // Keyboard: delete, undo, redo
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'z' && (e.ctrlKey || e.metaKey) && !e.shiftKey) { e.preventDefault(); undo(); return; }
@@ -1310,12 +1312,10 @@ export default function CircuitCanvas() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  // Initial history push
   useEffect(() => {
     pushHistory(circuitState);
   }, []);
 
-  // RAF loop
   useEffect(() => {
     let last = 0;
     let frameId: number;
@@ -1382,7 +1382,6 @@ export default function CircuitCanvas() {
     return () => cancelAnimationFrame(frameId);
   }, [canUndo, canRedo]);
 
-  // Mouse handlers
   const handleMouseDown = (e: MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -1392,7 +1391,6 @@ export default function CircuitCanvas() {
     const state = circuitRef.current;
     const size = sizeRef.current;
 
-    // Delete button
     const active = state.components.find((c) => c.id === selectedRef.current);
     if (active && insideRect(pt.x, pt.y, deleteBounds(active))) {
       const id = active.id;
@@ -1409,13 +1407,11 @@ export default function CircuitCanvas() {
       return;
     }
 
-    // Toolbar buttons
     const btns = getToolbarButtons(size.width);
     if (insideRect(pt.x, pt.y, { x: btns.undo.x, y: btns.undo.y, width: btns.undo.w, height: btns.undo.h })) { undo(); return; }
     if (insideRect(pt.x, pt.y, { x: btns.redo.x, y: btns.redo.y, width: btns.redo.w, height: btns.redo.h })) { redo(); return; }
     if (insideRect(pt.x, pt.y, { x: btns.clear.x, y: btns.clear.y, width: btns.clear.w, height: btns.clear.h })) { clearAll(); return; }
 
-    // Shelf / meter drag
     const shelfType = shelfItemAtPoint(pt.x, pt.y, size.height);
     const meterType = meterAtPoint(pt.x, pt.y, size.width);
     const srcType = shelfType ?? meterType;
@@ -1427,7 +1423,6 @@ export default function CircuitCanvas() {
       return;
     }
 
-    // Wire drag
     const term = terminalAtPoint(pt.x, pt.y, state.components);
     if (term) {
       wireDragRef.current = { from: term, point: pt };
@@ -1436,7 +1431,6 @@ export default function CircuitCanvas() {
       return;
     }
 
-    // Component select/drag
     const hit = [...state.components].reverse().find((c) => insideComponent(pt.x, pt.y, c));
     if (!hit) { setSelectedId(null); return; }
 
@@ -1452,7 +1446,6 @@ export default function CircuitCanvas() {
     const pt = getCanvasPoint(e, canvas);
     const state = circuitRef.current;
 
-    // Update hover
     const hitId = [...state.components].reverse().find((c) => insideComponent(pt.x, pt.y, c))?.id ?? null;
     hoverIdRef.current = hitId;
 
@@ -1505,7 +1498,6 @@ export default function CircuitCanvas() {
       }
     }
 
-    // Switch toggle (click, no drag)
     if (canvas && mouseDownPt.current && !wireDragRef.current && !sourceDragRef.current) {
       const pt = getCanvasPoint(e, canvas);
       const dist = Math.hypot(pt.x - mouseDownPt.current.x, pt.y - mouseDownPt.current.y);
@@ -1521,7 +1513,6 @@ export default function CircuitCanvas() {
       }
     }
 
-    // Finalize drag (push to history)
     if (dragRef.current) {
       pushHistory(circuitRef.current);
     }
