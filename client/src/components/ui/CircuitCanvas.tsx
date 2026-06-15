@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
+import { useEffect, useRef, useState, type MouseEvent } from 'react';
 
 type CircuitComponentType =
   | 'WIRE'
@@ -37,6 +37,7 @@ interface CircuitWire {
 interface CircuitState {
   components: CircuitComponent[];
   wires: CircuitWire[];
+  switchStates: Record<string, boolean>;
 }
 
 interface CanvasSize {
@@ -64,9 +65,9 @@ interface Point {
   y: number;
 }
 
-interface ResizeFrame {
-  id: number | null;
-}
+const GRID = 24;
+const TOOLBAR_H = 54;
+const MAX_HISTORY = 60;
 
 const shelfItems = [
   { label: 'Wire', type: 'WIRE' },
@@ -77,1562 +78,1481 @@ const shelfItems = [
   { label: 'Capacitor', type: 'CAPACITOR' },
   { label: 'Inductor', type: 'INDUCTOR' },
   { label: 'Switch', type: 'SWITCH' }
-] satisfies Array<{
-  label: string;
-  type: CircuitComponentType;
-}>;
+] satisfies Array<{ label: string; type: CircuitComponentType }>;
 
 const componentSizes: Record<CircuitComponentType, { width: number; height: number }> = {
-  WIRE: { width: 150, height: 34 },
+  WIRE: { width: 144, height: 24 },
   BATTERY: { width: 180, height: 62 },
   AC_VOLTAGE: { width: 118, height: 118 },
   LIGHTBULB: { width: 118, height: 142 },
-  RESISTOR: { width: 150, height: 58 },
-  CAPACITOR: { width: 120, height: 82 },
-  INDUCTOR: { width: 150, height: 70 },
-  SWITCH: { width: 140, height: 74 },
+  RESISTOR: { width: 144, height: 58 },
+  CAPACITOR: { width: 120, height: 72 },
+  INDUCTOR: { width: 144, height: 70 },
+  SWITCH: { width: 144, height: 64 },
   VOLTMETER: { width: 132, height: 86 },
   AMMETER: { width: 132, height: 86 }
 };
 
-const shelfBounds = {
-  x: 16,
-  y: 16,
-  width: 110,
-  itemStartY: 92,
-  itemGap: 66
-};
+const SHELF_X = 16;
+const SHELF_Y = TOOLBAR_H + 16;
+const SHELF_W = 110;
+const SHELF_ITEM_START_Y = SHELF_Y + 76;
+const SHELF_ITEM_GAP = 66;
+const DEL_BTN = 22;
 
-const deleteButtonSize = 22;
+function snapGrid(v: number) {
+  return Math.round(v / GRID) * GRID;
+}
 
 function getControlPanelX(width: number) {
   return Math.max(width - 236, 520);
 }
 
-function createCircuitComponent(
-  type: CircuitComponentType,
-  id: string,
-  x: number,
-  y: number
-): CircuitComponent {
+function createCircuitComponent(type: CircuitComponentType, id: string, x: number, y: number): CircuitComponent {
   const size = componentSizes[type];
-
-  return {
-    id,
-    type,
-    x,
-    y,
-    width: size.width,
-    height: size.height
-  };
+  return { id, type, x, y, width: size.width, height: size.height };
 }
 
 function getComponentLabel(type: CircuitComponentType) {
-  if (type === 'VOLTMETER') {
-    return 'Voltmeter';
-  }
-
-  if (type === 'AMMETER') {
-    return 'Ammeter';
-  }
-
-  return shelfItems.find((item) => item.type === type)?.label ?? type;
+  if (type === 'VOLTMETER') return 'Voltmeter';
+  if (type === 'AMMETER') return 'Ammeter';
+  return shelfItems.find((i) => i.type === type)?.label ?? type;
 }
 
 function createInitialComponents(width: number, height: number): CircuitComponent[] {
-  const centerX = width / 2;
-  const centerY = height / 2;
-
+  const cx = width / 2;
+  const cy = height / 2;
   return [
-    createCircuitComponent('BATTERY', 'battery-1', centerX - 210, centerY - 40),
-    createCircuitComponent('LIGHTBULB', 'lightbulb-1', centerX + 90, centerY - 88)
+    createCircuitComponent('BATTERY', 'battery-1', snapGrid(cx - 210), snapGrid(cy - 40)),
+    createCircuitComponent('LIGHTBULB', 'lightbulb-1', snapGrid(cx + 90), snapGrid(cy - 88))
   ];
 }
 
 function getInitialCanvasSize(): CanvasSize {
-  if (typeof window === 'undefined') {
-    return {
-      width: 1024,
-      height: 768
-    };
-  }
-
-  return {
-    width: window.innerWidth,
-    height: window.innerHeight
-  };
+  if (typeof window === 'undefined') return { width: 1024, height: 768 };
+  return { width: window.innerWidth, height: window.innerHeight };
 }
 
-function getCanvasPoint(
-  event: MouseEvent<HTMLCanvasElement>,
-  canvas: HTMLCanvasElement
-) {
+function getCanvasPoint(event: MouseEvent<HTMLCanvasElement>, canvas: HTMLCanvasElement) {
   const rect = canvas.getBoundingClientRect();
+  return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+}
 
+function insideComponent(px: number, py: number, c: CircuitComponent) {
+  return px >= c.x && px <= c.x + c.width && py >= c.y && py <= c.y + c.height;
+}
+
+function insideRect(px: number, py: number, r: { x: number; y: number; width: number; height: number }) {
+  return px >= r.x && px <= r.x + r.width && py >= r.y && py <= r.y + r.height;
+}
+
+function getTerminalPoints(c: CircuitComponent): Record<TerminalKey, Point> {
+  const cy = c.y + c.height / 2;
+  const cx = c.x + c.width / 2;
+
+  if (c.type === 'LIGHTBULB') {
+    return {
+      a: { x: c.x + c.width * 0.2, y: c.y + c.height * 0.72 },
+      b: { x: c.x + c.width * 0.8, y: c.y + c.height * 0.72 }
+    };
+  }
+  if (c.type === 'AC_VOLTAGE') {
+    return {
+      a: { x: cx - 40, y: cy + 38 },
+      b: { x: cx + 40, y: cy + 38 }
+    };
+  }
   return {
-    x: event.clientX - rect.left,
-    y: event.clientY - rect.top
+    a: { x: c.x, y: cy },
+    b: { x: c.x + c.width, y: cy }
   };
 }
 
-function isPointInsideComponent(
-  pointX: number,
-  pointY: number,
-  component: CircuitComponent
-) {
-  return (
-    pointX >= component.x &&
-    pointX <= component.x + component.width &&
-    pointY >= component.y &&
-    pointY <= component.y + component.height
-  );
+function sameEndpoint(a: WireEndpoint, b: WireEndpoint) {
+  return a.componentId === b.componentId && a.terminal === b.terminal;
 }
 
-function isPointInsideRect(
-  pointX: number,
-  pointY: number,
-  rect: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  }
-) {
-  return (
-    pointX >= rect.x &&
-    pointX <= rect.x + rect.width &&
-    pointY >= rect.y &&
-    pointY <= rect.y + rect.height
-  );
-}
-
-function getTerminalPoints(component: CircuitComponent): Record<TerminalKey, Point> {
-  const centerY = component.y + component.height / 2;
-  const centerX = component.x + component.width / 2;
-
-  if (component.type === 'LIGHTBULB') {
-    return {
-      a: {
-        x: component.x + component.width * 0.2,
-        y: component.y + component.height * 0.72
-      },
-      b: {
-        x: component.x + component.width * 0.8,
-        y: component.y + component.height * 0.72
-      }
-    };
-  }
-
-  if (component.type === 'AC_VOLTAGE') {
-    return {
-      a: {
-        x: centerX - 40,
-        y: centerY + 38
-      },
-      b: {
-        x: centerX + 40,
-        y: centerY + 38
-      }
-    };
-  }
-
-  return {
-    a: {
-      x: component.x,
-      y: centerY
-    },
-    b: {
-      x: component.x + component.width,
-      y: centerY
-    }
-  };
-}
-
-function isSameEndpoint(first: WireEndpoint, second: WireEndpoint) {
-  return first.componentId === second.componentId && first.terminal === second.terminal;
-}
-
-function getTerminalAtPoint(
-  pointX: number,
-  pointY: number,
-  components: CircuitComponent[]
-): WireEndpoint | null {
-  for (const component of [...components].reverse()) {
-    const terminals = getTerminalPoints(component);
-    const hitTerminal = (Object.keys(terminals) as TerminalKey[]).find((terminal) => {
-      const point = terminals[terminal];
-      const distanceX = pointX - point.x;
-      const distanceY = pointY - point.y;
-
-      return distanceX * distanceX + distanceY * distanceY <= 18 * 18;
+function terminalAtPoint(px: number, py: number, components: CircuitComponent[]): WireEndpoint | null {
+  for (const c of [...components].reverse()) {
+    const terms = getTerminalPoints(c);
+    const hit = (Object.keys(terms) as TerminalKey[]).find((t) => {
+      const p = terms[t];
+      return (px - p.x) ** 2 + (py - p.y) ** 2 <= 18 * 18;
     });
-
-    if (hitTerminal) {
-      return {
-        componentId: component.id,
-        terminal: hitTerminal
-      };
-    }
+    if (hit) return { componentId: c.id, terminal: hit };
   }
-
   return null;
 }
 
-function getTerminalPoint(
-  components: CircuitComponent[],
-  endpoint: WireEndpoint
-): Point | null {
-  const component = components.find((currentComponent) => currentComponent.id === endpoint.componentId);
-
-  if (!component) {
-    return null;
-  }
-
-  return getTerminalPoints(component)[endpoint.terminal];
+function getTerminalPoint(components: CircuitComponent[], ep: WireEndpoint): Point | null {
+  const c = components.find((x) => x.id === ep.componentId);
+  if (!c) return null;
+  return getTerminalPoints(c)[ep.terminal];
 }
 
-function isDuplicateWire(wires: CircuitWire[], from: WireEndpoint, to: WireEndpoint) {
-  return wires.some((wire) => (
-    (isSameEndpoint(wire.from, from) && isSameEndpoint(wire.to, to)) ||
-    (isSameEndpoint(wire.from, to) && isSameEndpoint(wire.to, from))
-  ));
-}
-
-function getShelfItemAtPoint(
-  pointX: number,
-  pointY: number,
-  canvasHeight: number
-): CircuitComponentType | null {
-  const shelfHeight = Math.min(canvasHeight - 96, 610);
-
-  if (
-    pointX < shelfBounds.x ||
-    pointX > shelfBounds.x + shelfBounds.width ||
-    pointY < shelfBounds.y ||
-    pointY > shelfBounds.y + shelfHeight
-  ) {
-    return null;
-  }
-
-  const shelfItem = shelfItems.find((item, index) => {
-    const itemCenterY = shelfBounds.itemStartY + index * shelfBounds.itemGap;
-
-    return pointY >= itemCenterY - 30 && pointY <= itemCenterY + 50;
-  });
-
-  return shelfItem?.type ?? null;
-}
-
-function getMeterToolAtPoint(pointX: number, pointY: number, canvasWidth: number) {
-  const panelX = getControlPanelX(canvasWidth);
-  const voltmeterBounds = {
-    x: panelX + 22,
-    y: 244,
-    width: 78,
-    height: 102
-  };
-  const ammeterBounds = {
-    x: panelX + 118,
-    y: 244,
-    width: 78,
-    height: 102
-  };
-
-  if (isPointInsideRect(pointX, pointY, voltmeterBounds)) {
-    return 'VOLTMETER';
-  }
-
-  if (isPointInsideRect(pointX, pointY, ammeterBounds)) {
-    return 'AMMETER';
-  }
-
-  return null;
-}
-
-function isSourceArea(pointX: number, pointY: number, size: CanvasSize) {
-  const panelX = getControlPanelX(size.width);
-
-  return (
-    getShelfItemAtPoint(pointX, pointY, size.height) !== null ||
-    (pointX >= panelX && pointX <= panelX + 210 && pointY >= 16 && pointY <= 530)
+function duplicateWire(wires: CircuitWire[], from: WireEndpoint, to: WireEndpoint) {
+  return wires.some(
+    (w) =>
+      (sameEndpoint(w.from, from) && sameEndpoint(w.to, to)) ||
+      (sameEndpoint(w.from, to) && sameEndpoint(w.to, from))
   );
 }
 
-function getDeleteButtonBounds(component: CircuitComponent) {
-  return {
-    x: component.x + component.width - deleteButtonSize / 2,
-    y: component.y - deleteButtonSize / 2,
-    width: deleteButtonSize,
-    height: deleteButtonSize
-  };
+function shelfItemAtPoint(px: number, py: number, canvasH: number): CircuitComponentType | null {
+  const maxH = Math.min(canvasH - TOOLBAR_H - 80, 610);
+  if (px < SHELF_X || px > SHELF_X + SHELF_W || py < SHELF_Y || py > SHELF_Y + maxH) return null;
+  const item = shelfItems.find((_, i) => {
+    const iy = SHELF_ITEM_START_Y + i * SHELF_ITEM_GAP;
+    return py >= iy - 30 && py <= iy + 36;
+  });
+  return item?.type ?? null;
 }
 
-function makeComponentId(type: CircuitComponentType) {
+function meterAtPoint(px: number, py: number, canvasW: number): CircuitComponentType | null {
+  const panelX = getControlPanelX(canvasW);
+  if (insideRect(px, py, { x: panelX + 22, y: TOOLBAR_H + 228, width: 78, height: 102 })) return 'VOLTMETER';
+  if (insideRect(px, py, { x: panelX + 118, y: TOOLBAR_H + 228, width: 78, height: 102 })) return 'AMMETER';
+  return null;
+}
+
+function isSourceArea(px: number, py: number, size: CanvasSize) {
+  const panelX = getControlPanelX(size.width);
+  return (
+    shelfItemAtPoint(px, py, size.height) !== null ||
+    (px >= panelX && px <= panelX + 210 && py >= TOOLBAR_H && py <= TOOLBAR_H + 530)
+  );
+}
+
+function deleteBounds(c: CircuitComponent) {
+  return { x: c.x + c.width - DEL_BTN / 2, y: c.y - DEL_BTN / 2, width: DEL_BTN, height: DEL_BTN };
+}
+
+function makeId(type: CircuitComponentType) {
   return `${type.toLowerCase()}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
-function calculateCircuitValues(components: CircuitComponent[], wires: CircuitWire[]) {
-  const batteryCount = components.filter((component) => component.type === 'BATTERY').length;
-  const acCount = components.filter((component) => component.type === 'AC_VOLTAGE').length;
-  const bulbCount = components.filter((component) => component.type === 'LIGHTBULB').length;
-  const resistorCount = components.filter((component) => component.type === 'RESISTOR').length;
-  const inductorCount = components.filter((component) => component.type === 'INDUCTOR').length;
-  const switchCount = components.filter((component) => component.type === 'SWITCH').length;
-  const capacitorCount = components.filter((component) => component.type === 'CAPACITOR').length;
-  const voltage = batteryCount * 9 + acCount * 6;
-  const source = components.find((component) => (
-    component.type === 'BATTERY' || component.type === 'AC_VOLTAGE'
-  ));
-  const loadCount = bulbCount + resistorCount + inductorCount;
-  const connectedComponentIds = new Set<string>();
+// ─── Circuit analysis ─────────────────────────────────────────────────────────
 
-  wires.forEach((wire) => {
-    connectedComponentIds.add(wire.from.componentId);
-    connectedComponentIds.add(wire.to.componentId);
+function calculateCircuitValues(
+  components: CircuitComponent[],
+  wires: CircuitWire[],
+  switchStates: Record<string, boolean>
+) {
+  const adj = new Map<string, Set<string>>();
+  function addEdge(a: string, b: string) {
+    if (!adj.has(a)) adj.set(a, new Set());
+    if (!adj.has(b)) adj.set(b, new Set());
+    adj.get(a)!.add(b);
+    adj.get(b)!.add(a);
+  }
+
+  wires.forEach((w) => addEdge(`${w.from.componentId}:${w.from.terminal}`, `${w.to.componentId}:${w.to.terminal}`));
+
+  components.forEach((c) => {
+    if (c.type === 'SWITCH' && !switchStates[c.id]) return;
+    if (c.type === 'CAPACITOR' || c.type === 'VOLTMETER') return;
+    addEdge(`${c.id}:a`, `${c.id}:b`);
   });
 
-  const sourceIsConnected = source ? connectedComponentIds.has(source.id) : false;
-  const loadIsConnected = components.some((component) => (
-    connectedComponentIds.has(component.id) &&
-    (component.type === 'LIGHTBULB' ||
-      component.type === 'RESISTOR' ||
-      component.type === 'INDUCTOR' ||
-      component.type === 'AMMETER')
-  ));
-  const closedCircuit = Boolean(
-    voltage > 0 &&
-    sourceIsConnected &&
-    loadIsConnected &&
-    loadCount > 0 &&
-    capacitorCount === 0 &&
-    wires.length >= 2
+  const source = components.find((c) => c.type === 'BATTERY' || c.type === 'AC_VOLTAGE');
+  const voltage =
+    components.filter((c) => c.type === 'BATTERY').length * 9 +
+    components.filter((c) => c.type === 'AC_VOLTAGE').length * 6;
+
+  if (!source || voltage === 0) {
+    return { closedCircuit: false, current: 0, meterReadings: {} as Record<string, number>, voltage: 0 };
+  }
+
+  const startKey = `${source.id}:a`;
+  const endKey = `${source.id}:b`;
+  const visited = new Set<string>([startKey]);
+  const queue = [startKey];
+  while (queue.length > 0) {
+    const cur = queue.shift()!;
+    if (cur === endKey) break;
+    adj.get(cur)?.forEach((n) => { if (!visited.has(n)) { visited.add(n); queue.push(n); } });
+  }
+
+  const reachable = visited.has(endKey);
+  const loadTypes = new Set(['LIGHTBULB', 'RESISTOR', 'INDUCTOR', 'AMMETER']);
+  const hasLoad = components.some(
+    (c) => loadTypes.has(c.type) && visited.has(`${c.id}:a`) && visited.has(`${c.id}:b`)
   );
+
+  const closedCircuit = reachable && hasLoad;
   const resistance =
-    bulbCount * 8 +
-    resistorCount * 10 +
-    wires.length * 0.2 +
-    inductorCount * 1.5 +
-    switchCount * 0.5 +
-    1;
+    components.filter((c) => c.type === 'LIGHTBULB').length * 8 +
+    components.filter((c) => c.type === 'RESISTOR').length * 10 +
+    components.filter((c) => c.type === 'INDUCTOR').length * 1.5 +
+    components.filter((c) => c.type === 'SWITCH' && switchStates[c.id]).length * 0.5 +
+    wires.length * 0.1 + 1;
   const current = closedCircuit ? voltage / resistance : 0;
-  const meterReadings = components.reduce<Record<string, number>>((readings, component) => {
-    if (component.type !== 'VOLTMETER' && component.type !== 'AMMETER') {
-      return readings;
-    }
 
-    const terminalWireCount = wires.filter((wire) => (
-      wire.from.componentId === component.id || wire.to.componentId === component.id
-    )).length;
-
-    if (component.type === 'AMMETER') {
-      return {
-        ...readings,
-        [component.id]: terminalWireCount >= 2 && closedCircuit ? current : 0
-      };
-    }
-
-    return {
-      ...readings,
-      [component.id]: terminalWireCount >= 2 && voltage > 0 ? voltage : 0
-    };
+  const meterReadings = components.reduce<Record<string, number>>((acc, c) => {
+    if (c.type !== 'VOLTMETER' && c.type !== 'AMMETER') return acc;
+    const wc = wires.filter((w) => w.from.componentId === c.id || w.to.componentId === c.id).length;
+    if (c.type === 'AMMETER') return { ...acc, [c.id]: wc >= 2 && closedCircuit ? current : 0 };
+    return { ...acc, [c.id]: wc >= 2 && voltage > 0 ? voltage : 0 };
   }, {});
 
+  return { closedCircuit, current, meterReadings, voltage };
+}
+
+// ─── Draw helpers ─────────────────────────────────────────────────────────────
+
+function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+}
+
+function panel(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, fill = '#1e2430', stroke = '#3a4560') {
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.45)';
+  ctx.shadowBlur = 18;
+  ctx.shadowOffsetY = 6;
+  ctx.fillStyle = fill;
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = 1.5;
+  roundRect(ctx, x, y, w, h, 12);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
+function checkbox(ctx: CanvasRenderingContext2D, x: number, y: number, checked: boolean, accent = '#5b8fff') {
+  ctx.save();
+  roundRect(ctx, x, y, 16, 16, 3);
+  ctx.fillStyle = checked ? accent : 'rgba(255,255,255,0.08)';
+  ctx.fill();
+  ctx.strokeStyle = checked ? accent : 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  if (checked) {
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x + 3, y + 8);
+    ctx.lineTo(x + 7, y + 12);
+    ctx.lineTo(x + 13, y + 4);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function label(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, color = 'rgba(255,255,255,0.85)', size = 14, align: CanvasTextAlign = 'left') {
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.font = `${size}px system-ui, sans-serif`;
+  ctx.textAlign = align;
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x, y);
+  ctx.restore();
+}
+
+// ─── Toolbar ──────────────────────────────────────────────────────────────────
+
+function getToolbarButtons(width: number) {
+  const cx = width / 2;
   return {
-    closedCircuit,
-    current,
-    meterReadings,
-    voltage
+    undo: { x: cx - 120, y: 10, w: 80, h: 34, text: '↩ Undo' },
+    redo: { x: cx - 30, y: 10, w: 80, h: 34, text: '↪ Redo' },
+    clear: { x: cx + 60, y: 10, w: 80, h: 34, text: '🗑 Clear' }
   };
 }
 
-function formatCurrent(value: number) {
-  return `${value.toFixed(2)} A`;
-}
-
-function formatVoltage(value: number) {
-  return `${value.toFixed(1)} V`;
-}
-
-function drawRoundedRect(
-  context: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  radius: number
+function drawToolbar(
+  ctx: CanvasRenderingContext2D,
+  size: CanvasSize,
+  canUndo: boolean,
+  canRedo: boolean,
+  closedCircuit: boolean,
+  current: number,
+  voltage: number
 ) {
-  context.beginPath();
-  context.moveTo(x + radius, y);
-  context.lineTo(x + width - radius, y);
-  context.quadraticCurveTo(x + width, y, x + width, y + radius);
-  context.lineTo(x + width, y + height - radius);
-  context.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-  context.lineTo(x + radius, y + height);
-  context.quadraticCurveTo(x, y + height, x, y + height - radius);
-  context.lineTo(x, y + radius);
-  context.quadraticCurveTo(x, y, x + radius, y);
-}
+  // Background bar
+  ctx.save();
+  const grad = ctx.createLinearGradient(0, 0, 0, TOOLBAR_H);
+  grad.addColorStop(0, '#141922');
+  grad.addColorStop(1, '#1a2236');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, size.width, TOOLBAR_H);
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, TOOLBAR_H);
+  ctx.lineTo(size.width, TOOLBAR_H);
+  ctx.stroke();
+  ctx.restore();
 
-function drawWorkspaceBackground(context: CanvasRenderingContext2D, size: CanvasSize) {
-  context.fillStyle = '#9fbeef';
-  context.fillRect(0, 0, size.width, size.height);
+  // App title
+  ctx.save();
+  ctx.font = 'bold 18px system-ui, sans-serif';
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#7eb3ff';
+  ctx.fillText('⚡ Circuit Lab', 16, TOOLBAR_H / 2);
+  ctx.restore();
 
-  context.save();
-  context.globalAlpha = 0.18;
-  context.fillStyle = '#ffffff';
+  // Undo / Redo / Clear buttons
+  const btns = getToolbarButtons(size.width);
+  Object.entries(btns).forEach(([key, btn]) => {
+    const active = key === 'undo' ? canUndo : key === 'redo' ? canRedo : true;
+    ctx.save();
+    ctx.globalAlpha = active ? 1 : 0.35;
+    ctx.fillStyle = key === 'clear' ? '#3d1e1e' : '#1e2a40';
+    ctx.strokeStyle = key === 'clear' ? '#aa3333' : '#3a5a8a';
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, btn.x, btn.y, btn.w, btn.h, 8);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = key === 'clear' ? '#ff7070' : '#aaccff';
+    ctx.font = '13px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(btn.text, btn.x + btn.w / 2, btn.y + btn.h / 2);
+    ctx.restore();
+  });
 
-  const gridStep = size.width > 1200 ? 42 : 32;
+  // Circuit status pill (right side of toolbar)
+  const statusX = size.width - 260;
+  const statusY = 10;
+  const statusW = 240;
+  const statusH = 34;
 
-  for (let x = 0; x < size.width; x += gridStep) {
-    for (let y = 0; y < size.height; y += gridStep) {
-      context.beginPath();
-      context.arc(x, y, 1.2, 0, Math.PI * 2);
-      context.fill();
-    }
+  ctx.save();
+  if (closedCircuit) {
+    ctx.fillStyle = 'rgba(30, 90, 30, 0.7)';
+    ctx.strokeStyle = '#44cc44';
+  } else {
+    ctx.fillStyle = 'rgba(80, 50, 10, 0.7)';
+    ctx.strokeStyle = '#cc8822';
   }
+  ctx.lineWidth = 1.5;
+  roundRect(ctx, statusX, statusY, statusW, statusH, 17);
+  ctx.fill();
+  ctx.stroke();
 
-  context.restore();
-}
-
-function drawPanel(
-  context: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  width: number,
-  height: number
-) {
-  context.save();
-  context.fillStyle = '#f6f6f6';
-  context.strokeStyle = '#111111';
-  context.lineWidth = 2;
-  drawRoundedRect(context, x, y, width, height, 8);
-  context.fill();
-  context.stroke();
-  context.restore();
-}
-
-function drawCheckBox(
-  context: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  checked: boolean
-) {
-  context.save();
-  context.strokeStyle = '#111111';
-  context.lineWidth = 2;
-  drawRoundedRect(context, x, y, 18, 18, 3);
-  context.stroke();
-
-  if (checked) {
-    context.beginPath();
-    context.moveTo(x + 4, y + 9);
-    context.lineTo(x + 8, y + 14);
-    context.lineTo(x + 16, y + 4);
-    context.stroke();
+  if (closedCircuit) {
+    ctx.fillStyle = '#88ff88';
+    ctx.font = 'bold 13px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(
+      `● Circuit ON  ${voltage.toFixed(0)}V  ${current.toFixed(2)}A  ${(voltage * current).toFixed(2)}W`,
+      statusX + statusW / 2,
+      statusY + statusH / 2
+    );
+  } else {
+    ctx.fillStyle = '#ffbb55';
+    ctx.font = 'bold 13px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('○ Circuit OPEN — connect & close switch', statusX + statusW / 2, statusY + statusH / 2);
   }
-
-  context.restore();
+  ctx.restore();
 }
 
-function drawToolIcon(context: CanvasRenderingContext2D, label: string, x: number, y: number) {
-  context.save();
-  context.strokeStyle = '#2a2a2a';
-  context.fillStyle = '#2a2a2a';
-  context.lineWidth = 2;
+// ─── Shelf ────────────────────────────────────────────────────────────────────
+
+function drawShelfIcon(ctx: CanvasRenderingContext2D, label: string, x: number, y: number) {
+  ctx.save();
+  ctx.strokeStyle = '#aac8ff';
+  ctx.fillStyle = '#aac8ff';
+  ctx.lineWidth = 2;
 
   if (label === 'Wire') {
-    const gradient = context.createLinearGradient(x - 24, y, x + 24, y);
-    gradient.addColorStop(0, '#6f2a1c');
-    gradient.addColorStop(0.5, '#d28a70');
-    gradient.addColorStop(1, '#6f2a1c');
-    context.strokeStyle = gradient;
-    context.lineWidth = 7;
-    context.beginPath();
-    context.moveTo(x - 24, y);
-    context.lineTo(x + 24, y);
-    context.stroke();
+    const g = ctx.createLinearGradient(x - 24, y, x + 24, y);
+    g.addColorStop(0, '#6f2a1c'); g.addColorStop(0.5, '#e09070'); g.addColorStop(1, '#6f2a1c');
+    ctx.strokeStyle = g;
+    ctx.lineWidth = 7;
+    ctx.beginPath(); ctx.moveTo(x - 24, y); ctx.lineTo(x + 24, y); ctx.stroke();
   } else if (label === 'Battery') {
-    context.fillStyle = '#111111';
-    context.fillRect(x - 25, y - 10, 32, 20);
-    context.fillStyle = '#f0a23b';
-    context.fillRect(x + 7, y - 10, 19, 20);
-    context.fillStyle = '#ffffff';
-    context.fillRect(x + 26, y - 6, 4, 12);
+    ctx.fillStyle = '#222'; ctx.fillRect(x - 25, y - 10, 32, 20);
+    ctx.fillStyle = '#f0a23b'; ctx.fillRect(x + 7, y - 10, 18, 20);
+    ctx.fillStyle = '#fff'; ctx.fillRect(x + 25, y - 7, 5, 14);
   } else if (label === 'AC Voltage') {
-    context.beginPath();
-    context.arc(x, y, 20, 0, Math.PI * 2);
-    context.stroke();
-    context.beginPath();
-    context.moveTo(x - 13, y);
-    context.bezierCurveTo(x - 7, y - 15, x + 7, y + 15, x + 13, y);
-    context.stroke();
-    context.fillText('+', x, y - 12);
-    context.fillText('-', x, y + 16);
+    ctx.beginPath(); ctx.arc(x, y, 20, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x - 13, y); ctx.bezierCurveTo(x - 6, y - 14, x + 6, y + 14, x + 13, y); ctx.stroke();
   } else if (label === 'Light Bulb') {
-    context.strokeStyle = '#d0704f';
-    context.beginPath();
-    context.arc(x, y - 4, 16, 0, Math.PI * 2);
-    context.stroke();
-    context.strokeStyle = '#555555';
-    context.strokeRect(x - 8, y + 12, 16, 10);
+    ctx.strokeStyle = '#e08050';
+    ctx.beginPath(); ctx.arc(x, y - 5, 15, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = '#aac8ff';
+    ctx.strokeRect(x - 7, y + 10, 14, 8);
   } else if (label === 'Resistor') {
-    const gradient = context.createLinearGradient(x - 27, y - 10, x + 27, y + 10);
-    gradient.addColorStop(0, '#a76b38');
-    gradient.addColorStop(0.5, '#e6c087');
-    gradient.addColorStop(1, '#a76b38');
-    context.fillStyle = gradient;
-    drawRoundedRect(context, x - 27, y - 10, 54, 20, 10);
-    context.fill();
-    context.fillStyle = '#111111';
-    context.fillRect(x - 12, y - 10, 4, 20);
-    context.fillRect(x + 2, y - 10, 4, 20);
-    context.fillStyle = '#d9c13f';
-    context.fillRect(x + 15, y - 10, 4, 20);
+    const g = ctx.createLinearGradient(x - 27, y - 10, x + 27, y + 10);
+    g.addColorStop(0, '#7a4a20'); g.addColorStop(0.5, '#d4a060'); g.addColorStop(1, '#7a4a20');
+    ctx.fillStyle = g;
+    roundRect(ctx, x - 26, y - 9, 52, 18, 9); ctx.fill();
+    ctx.fillStyle = '#111'; ctx.fillRect(x - 11, y - 9, 4, 18); ctx.fillRect(x + 2, y - 9, 4, 18);
+    ctx.fillStyle = '#d9c13f'; ctx.fillRect(x + 15, y - 9, 4, 18);
   } else if (label === 'Capacitor') {
-    context.beginPath();
-    context.moveTo(x - 28, y);
-    context.lineTo(x - 8, y);
-    context.moveTo(x + 8, y);
-    context.lineTo(x + 28, y);
-    context.moveTo(x - 8, y - 18);
-    context.lineTo(x - 8, y + 18);
-    context.moveTo(x + 8, y - 18);
-    context.lineTo(x + 8, y + 18);
-    context.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x - 28, y); ctx.lineTo(x - 8, y);
+    ctx.moveTo(x + 8, y); ctx.lineTo(x + 28, y);
+    ctx.moveTo(x - 8, y - 17); ctx.lineTo(x - 8, y + 17);
+    ctx.moveTo(x + 8, y - 17); ctx.lineTo(x + 8, y + 17);
+    ctx.stroke();
   } else if (label === 'Inductor') {
-    for (let i = 0; i < 5; i += 1) {
-      context.beginPath();
-      context.arc(x - 20 + i * 10, y, 7, Math.PI, 0);
-      context.stroke();
-    }
-    context.beginPath();
-    context.moveTo(x - 35, y);
-    context.lineTo(x - 27, y);
-    context.moveTo(x + 27, y);
-    context.lineTo(x + 35, y);
-    context.stroke();
+    for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.arc(x - 20 + i * 10, y, 7, Math.PI, 0); ctx.stroke(); }
+    ctx.beginPath(); ctx.moveTo(x - 35, y); ctx.lineTo(x - 27, y); ctx.moveTo(x + 27, y); ctx.lineTo(x + 35, y); ctx.stroke();
   } else {
-    context.beginPath();
-    context.moveTo(x - 28, y + 8);
-    context.lineTo(x - 8, y + 8);
-    context.moveTo(x + 10, y + 8);
-    context.lineTo(x + 28, y + 8);
-    context.moveTo(x - 6, y + 7);
-    context.lineTo(x + 12, y - 12);
-    context.stroke();
-    context.beginPath();
-    context.arc(x - 8, y + 8, 5, 0, Math.PI * 2);
-    context.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x - 28, y + 6); ctx.lineTo(x - 8, y + 6);
+    ctx.moveTo(x + 10, y + 6); ctx.lineTo(x + 28, y + 6);
+    ctx.moveTo(x - 6, y + 5); ctx.lineTo(x + 12, y - 13);
+    ctx.stroke();
+    ctx.beginPath(); ctx.arc(x - 8, y + 6, 5, 0, Math.PI * 2); ctx.stroke();
   }
 
-  context.restore();
+  ctx.restore();
 }
 
-function drawToolShelf(context: CanvasRenderingContext2D, height: number) {
-  const shelfWidth = 110;
+function drawToolShelf(ctx: CanvasRenderingContext2D, size: CanvasSize) {
+  const h = Math.min(size.height - TOOLBAR_H - 90, 610);
+  panel(ctx, SHELF_X, SHELF_Y, SHELF_W, h);
 
-  drawPanel(context, 16, 16, shelfWidth, Math.min(height - 96, 610));
+  ctx.save();
+  ctx.fillStyle = '#7eb3ff';
+  ctx.font = 'bold 12px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('COMPONENTS', SHELF_X + SHELF_W / 2, SHELF_Y + 22);
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(SHELF_X + 10, SHELF_Y + 38);
+  ctx.lineTo(SHELF_X + SHELF_W - 10, SHELF_Y + 38);
+  ctx.stroke();
 
-  context.save();
-  context.fillStyle = '#e8e8e8';
-  context.fillRect(18, 42, shelfWidth - 4, 1);
-  context.strokeStyle = '#888888';
-  context.lineWidth = 4;
-  context.beginPath();
-  context.moveTo(62, 31);
-  context.lineTo(71, 24);
-  context.lineTo(80, 31);
-  context.stroke();
-
-  shelfItems.forEach(({ label }, index) => {
-    const y = 92 + index * 66;
-    drawToolIcon(context, label, 71, y);
-    context.fillStyle = '#111111';
-    context.font = '15px sans-serif';
-    context.textAlign = 'center';
-    context.textBaseline = 'top';
-    context.fillText(label, 71, y + 24);
+  shelfItems.forEach(({ label: lbl }, index) => {
+    const y = SHELF_ITEM_START_Y + index * SHELF_ITEM_GAP;
+    drawShelfIcon(ctx, lbl, SHELF_X + SHELF_W / 2, y);
+    ctx.fillStyle = 'rgba(200,220,255,0.85)';
+    ctx.font = '12px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(lbl, SHELF_X + SHELF_W / 2, y + 20);
   });
 
-  context.fillStyle = '#e9f1ff';
-  context.strokeStyle = '#5c78a8';
-  context.lineWidth = 1.5;
-  drawRoundedRect(context, 16, height - 72, 44, 38, 5);
-  context.fill();
-  context.stroke();
-  drawToolIcon(context, 'Battery', 38, height - 53);
-
-  drawRoundedRect(context, 78, height - 72, 44, 38, 5);
-  context.fill();
-  context.stroke();
-  drawToolIcon(context, 'Capacitor', 100, height - 53);
-  context.restore();
+  ctx.restore();
 }
 
-function drawControlPanels(context: CanvasRenderingContext2D, width: number) {
-  const panelX = getControlPanelX(width);
+// ─── Right control panels ─────────────────────────────────────────────────────
 
-  drawPanel(context, panelX, 16, 210, 190);
-  context.save();
-  context.fillStyle = '#111111';
-  context.font = '18px sans-serif';
-  context.textAlign = 'left';
-  context.textBaseline = 'middle';
-  drawCheckBox(context, panelX + 16, 34, true);
-  context.fillText('Show Current', panelX + 46, 43);
+function drawMeterIcon(ctx: CanvasRenderingContext2D, x: number, y: number, lbl: string) {
+  ctx.save();
+  ctx.fillStyle = '#f19b32';
+  ctx.strokeStyle = '#555';
+  ctx.lineWidth = 1.5;
+  roundRect(ctx, x - 26, y - 36, 52, 44, 8); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#fff4de';
+  ctx.fillRect(x - 16, y - 24, 32, 14);
+  ctx.fillStyle = '#111';
+  ctx.font = '10px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(lbl === 'V' ? 'Voltage' : 'Current', x, y - 28);
+  ctx.fillText(lbl, x, y - 15);
+  ctx.strokeStyle = '#555';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x - 30, y + 4); ctx.lineTo(x - 52, y + 18);
+  ctx.moveTo(x + 30, y + 4); ctx.lineTo(x + 52, y + 18);
+  ctx.stroke();
+  ctx.restore();
+}
 
-  context.beginPath();
-  context.arc(panelX + 55, 76, 9, 0, Math.PI * 2);
-  context.fillStyle = '#78b9e8';
-  context.fill();
-  context.strokeStyle = '#111111';
-  context.stroke();
-  context.fillStyle = '#111111';
-  context.font = '16px sans-serif';
-  context.fillText('Electrons', panelX + 78, 76);
+function drawControlPanels(ctx: CanvasRenderingContext2D, width: number) {
+  const px = getControlPanelX(width);
+  const ty = TOOLBAR_H;
 
-  context.beginPath();
-  context.arc(panelX + 55, 108, 9, 0, Math.PI * 2);
-  context.stroke();
-  context.fillText('Conventional', panelX + 78, 108);
-  drawCheckBox(context, panelX + 16, 128, true);
-  context.fillText('Labels', panelX + 46, 137);
-  drawCheckBox(context, panelX + 16, 158, false);
-  context.fillText('Values', panelX + 46, 167);
-  drawCheckBox(context, panelX + 16, 184, false);
-  context.fillText('Stopwatch', panelX + 46, 193);
-  context.restore();
+  // Display options panel
+  panel(ctx, px, ty + 16, 210, 186);
+  label(ctx, 'DISPLAY', px + 16, ty + 30, '#7eb3ff', 12);
+  checkbox(ctx, px + 16, ty + 46, true); label(ctx, 'Show Current', px + 40, ty + 54);
 
-  drawPanel(context, panelX, 222, 210, 144);
-  context.save();
-  context.fillStyle = '#111111';
-  context.font = '14px sans-serif';
-  context.textAlign = 'center';
-  drawMeter(context, panelX + 58, 278, 'V');
-  drawMeter(context, panelX + 154, 278, 'A');
-  context.fillText('Voltmeter', panelX + 58, 342);
-  context.fillText('Ammeter', panelX + 154, 342);
-  context.restore();
+  ctx.save();
+  ctx.beginPath(); ctx.arc(px + 55, ty + 86, 9, 0, Math.PI * 2);
+  ctx.fillStyle = '#4da6e0'; ctx.fill(); ctx.strokeStyle = '#7eb3ff'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.restore();
+  label(ctx, 'Electrons', px + 78, ty + 86);
 
-  drawPanel(context, panelX, 380, 210, 150);
-  context.save();
-  context.fillStyle = '#f15a24';
-  context.fillRect(panelX + 18, 392, 20, 20);
-  context.fillStyle = '#ffffff';
-  context.font = '700 20px sans-serif';
-  context.textAlign = 'center';
-  context.textBaseline = 'middle';
-  context.fillText('−', panelX + 28, 402);
-  context.fillStyle = '#111111';
-  context.font = '18px sans-serif';
-  context.textAlign = 'left';
-  context.fillText('Advanced', panelX + 52, 402);
-  context.font = '15px sans-serif';
-  context.textAlign = 'center';
-  context.fillText('Wire Resistivity', panelX + 105, 440);
-  context.fillText('Source Resistance', panelX + 105, 498);
+  ctx.save();
+  ctx.beginPath(); ctx.arc(px + 55, ty + 114, 9, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.restore();
+  label(ctx, 'Conventional', px + 78, ty + 114, 'rgba(255,255,255,0.5)');
 
-  [458, 516].forEach((y, index) => {
-    context.strokeStyle = '#111111';
-    context.lineWidth = 2;
-    context.beginPath();
-    context.moveTo(panelX + 34, y);
-    context.lineTo(panelX + 176, y);
-    context.stroke();
-    context.fillStyle = '#ffffff';
-    context.strokeStyle = '#333333';
-    drawRoundedRect(context, panelX + 93 + index * 6, y - 13, 14, 26, 4);
-    context.fill();
-    context.stroke();
+  checkbox(ctx, px + 16, ty + 136, true); label(ctx, 'Labels', px + 40, ty + 144);
+  checkbox(ctx, px + 16, ty + 162, false); label(ctx, 'Values', px + 40, ty + 170);
+  checkbox(ctx, px + 16, ty + 186, false); label(ctx, 'Stopwatch', px + 40, ty + 194);
+
+  // Meters panel
+  panel(ctx, px, ty + 218, 210, 140);
+  label(ctx, 'METERS', px + 16, ty + 232, '#7eb3ff', 12);
+  drawMeterIcon(ctx, px + 58, ty + 278, 'V');
+  drawMeterIcon(ctx, px + 154, ty + 278, 'A');
+  label(ctx, 'Voltmeter', px + 58, ty + 342, 'rgba(200,220,255,0.8)', 13, 'center');
+  label(ctx, 'Ammeter', px + 154, ty + 342, 'rgba(200,220,255,0.8)', 13, 'center');
+
+  // Advanced panel
+  panel(ctx, px, ty + 374, 210, 146);
+  ctx.save();
+  ctx.fillStyle = '#c0392b';
+  ctx.fillRect(px + 18, ty + 386, 18, 18);
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 14px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('−', px + 27, ty + 395);
+  ctx.restore();
+  label(ctx, 'Advanced', px + 50, ty + 395, '#ffaa66', 15);
+  label(ctx, 'Wire Resistivity', px + 105, ty + 430, 'rgba(200,220,255,0.7)', 13, 'center');
+  label(ctx, 'Source Resistance', px + 105, ty + 488, 'rgba(200,220,255,0.7)', 13, 'center');
+
+  [448, 506].forEach((y, i) => {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(px + 34, ty + y); ctx.lineTo(px + 176, ty + y); ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.strokeStyle = '#555';
+    roundRect(ctx, px + 93 + i * 6, ty + y - 12, 14, 24, 4); ctx.fill(); ctx.stroke();
+    ctx.restore();
+    label(ctx, 'tiny', px + 22, ty + y, 'rgba(200,220,255,0.5)', 11);
+    label(ctx, i === 0 ? 'lots' : '10Ω', px + 188, ty + y, 'rgba(200,220,255,0.5)', 11, 'right');
   });
-
-  context.fillStyle = '#111111';
-  context.font = '12px sans-serif';
-  context.textAlign = 'left';
-  context.fillText('tiny', panelX + 22, 458);
-  context.fillText('tiny', panelX + 22, 516);
-  context.textAlign = 'right';
-  context.fillText('lots', panelX + 190, 458);
-  context.fillText('10 Ω', panelX + 190, 516);
-  context.restore();
 }
 
-function drawMeter(context: CanvasRenderingContext2D, x: number, y: number, label: string) {
-  context.save();
-  context.strokeStyle = '#333333';
-  context.fillStyle = '#f19b32';
-  context.lineWidth = 2;
-  drawRoundedRect(context, x - 25, y - 34, 50, 42, 8);
-  context.fill();
-  context.stroke();
-  context.fillStyle = '#f7f7f7';
-  context.fillRect(x - 15, y - 22, 30, 12);
-  context.fillStyle = '#111111';
-  context.font = '10px sans-serif';
-  context.textAlign = 'center';
-  context.fillText(label === 'V' ? 'Voltage' : 'Current', x, y - 26);
-  context.fillText(label, x, y - 13);
-  context.beginPath();
-  context.moveTo(x - 30, y + 4);
-  context.lineTo(x - 52, y + 16);
-  context.moveTo(x + 30, y + 4);
-  context.lineTo(x + 52, y + 16);
-  context.stroke();
-  context.restore();
+// ─── Wires ────────────────────────────────────────────────────────────────────
+
+function elbowPath(ctx: CanvasRenderingContext2D, s: Point, e: Point) {
+  const midX = (s.x + e.x) / 2;
+  ctx.beginPath();
+  ctx.moveTo(s.x, s.y);
+  ctx.lineTo(midX, s.y);
+  ctx.lineTo(midX, e.y);
+  ctx.lineTo(e.x, e.y);
+}
+
+function drawCircuitWire(ctx: CanvasRenderingContext2D, components: CircuitComponent[], wire: CircuitWire) {
+  const s = getTerminalPoint(components, wire.from);
+  const e = getTerminalPoint(components, wire.to);
+  if (!s || !e) return;
+
+  ctx.save();
+  ctx.strokeStyle = '#6a3020';
+  ctx.lineWidth = 7;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  elbowPath(ctx, s, e);
+  ctx.stroke();
+
+  ctx.strokeStyle = 'rgba(220, 160, 110, 0.45)';
+  ctx.lineWidth = 2.5;
+  elbowPath(ctx, s, e);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawWirePreview(ctx: CanvasRenderingContext2D, components: CircuitComponent[], drag: WireDragState) {
+  const s = getTerminalPoint(components, drag.from);
+  if (!s) return;
+  ctx.save();
+  ctx.strokeStyle = 'rgba(100, 180, 255, 0.65)';
+  ctx.lineWidth = 5;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.setLineDash([10, 8]);
+  elbowPath(ctx, s, drag.point);
+  ctx.stroke();
+  ctx.restore();
+}
+
+// ─── Component terminals ──────────────────────────────────────────────────────
+
+function drawTerminals(ctx: CanvasRenderingContext2D, c: CircuitComponent) {
+  const terms = getTerminalPoints(c);
+  ctx.save();
+  (Object.keys(terms) as TerminalKey[]).forEach((t) => {
+    const p = terms[t];
+    ctx.fillStyle = '#4da6e0';
+    ctx.strokeStyle = '#d8f0ff';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 11, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 13px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('−', p.x, p.y);
+  });
+  ctx.restore();
+}
+
+// ─── Selection frame ──────────────────────────────────────────────────────────
+
+function drawSelectionFrame(ctx: CanvasRenderingContext2D, c: CircuitComponent) {
+  const db = deleteBounds(c);
+  ctx.save();
+  ctx.strokeStyle = '#ff5555';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([7, 6]);
+  roundRect(ctx, c.x - 8, c.y - 8, c.width + 16, c.height + 16, 14);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = '#2a0a0a';
+  ctx.strokeStyle = '#ff5555';
+  ctx.lineWidth = 1.5;
+  roundRect(ctx, db.x, db.y, db.width, db.height, 5);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#ff7070';
+  ctx.font = 'bold 14px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('×', db.x + db.width / 2, db.y + db.height / 2);
+  ctx.restore();
+}
+
+// ─── Hover frame ──────────────────────────────────────────────────────────────
+
+function drawHoverFrame(ctx: CanvasRenderingContext2D, c: CircuitComponent) {
+  ctx.save();
+  ctx.strokeStyle = 'rgba(120, 200, 255, 0.5)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5, 5]);
+  roundRect(ctx, c.x - 6, c.y - 6, c.width + 12, c.height + 12, 12);
+  ctx.stroke();
+  ctx.restore();
+}
+
+// ─── Animated electrons ───────────────────────────────────────────────────────
+
+function drawAnimatedElectrons(
+  ctx: CanvasRenderingContext2D,
+  components: CircuitComponent[],
+  wires: CircuitWire[],
+  cv: ReturnType<typeof calculateCircuitValues>,
+  animTime: number
+) {
+  if (!cv.closedCircuit || cv.current <= 0) return;
+  const speed = Math.min(60 + cv.current * 28, 200);
+
+  ctx.save();
+  wires.forEach((wire) => {
+    const s = getTerminalPoint(components, wire.from);
+    const e = getTerminalPoint(components, wire.to);
+    if (!s || !e) return;
+
+    const segments: [Point, Point][] = [
+      [s, { x: (s.x + e.x) / 2, y: s.y }],
+      [{ x: (s.x + e.x) / 2, y: s.y }, { x: (s.x + e.x) / 2, y: e.y }],
+      [{ x: (s.x + e.x) / 2, y: e.y }, e]
+    ];
+
+    segments.forEach((seg, si) => {
+      const [a, b] = seg;
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const len = Math.sqrt(dx * dx + dy * dy);
+      if (len < 4) return;
+
+      const num = Math.max(1, Math.floor(len / 38));
+      const sp = 1 / num;
+      for (let i = 0; i < num; i++) {
+        const t = ((animTime * speed) / len + i * sp + si * 0.33) % 1;
+        const dotX = a.x + dx * t;
+        const dotY = a.y + dy * t;
+
+        ctx.fillStyle = '#3a9de0';
+        ctx.strokeStyle = 'rgba(220,240,255,0.9)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(dotX, dotY, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 10px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('−', dotX, dotY);
+      }
+    });
+  });
+  ctx.restore();
+}
+
+// ─── Component drawers ────────────────────────────────────────────────────────
+
+function drawBattery(ctx: CanvasRenderingContext2D, c: CircuitComponent, cv: ReturnType<typeof calculateCircuitValues>) {
+  const { x, y, width: w, height: h } = c;
+  const tw = 16;
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.35)';
+  ctx.shadowBlur = 14;
+  ctx.shadowOffsetY = 5;
+
+  ctx.fillStyle = '#1a1a1a'; roundRect(ctx, x, y + 9, w * 0.55, h - 18, 8); ctx.fill();
+  ctx.fillStyle = '#d48820'; ctx.fillRect(x + w * 0.55, y + 9, w * 0.33, h - 18);
+  ctx.fillStyle = '#f0cc50'; roundRect(ctx, x + w - tw, y + 17, tw, h - 34, 4); ctx.fill();
+
+  ctx.shadowColor = 'transparent';
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = 2.5;
+  roundRect(ctx, x, y + 9, w - tw / 2, h - 18, 8); ctx.stroke();
+
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 22px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('−', x + 26, y + h / 2);
+  ctx.fillText('+', x + w - 38, y + h / 2);
+
+  ctx.strokeStyle = '#e04040';
+  ctx.setLineDash([7, 8]);
+  ctx.lineWidth = 2;
+  roundRect(ctx, x - 14, y + 2, w + 28, h - 4, 20); ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = 'rgba(200,220,255,0.85)';
+  ctx.font = '13px system-ui, sans-serif';
+  ctx.fillText('Battery', x + w / 2, y + h + 22);
+
+  if (cv.voltage > 0) {
+    ctx.fillStyle = '#ffdd88';
+    ctx.font = 'bold 12px system-ui, sans-serif';
+    ctx.fillText(`${cv.voltage.toFixed(0)} V`, x + w / 2, y + h + 38);
+  }
+  ctx.restore();
+}
+
+function drawLightbulb(
+  ctx: CanvasRenderingContext2D,
+  c: CircuitComponent,
+  isLit: boolean,
+  current: number
+) {
+  const { x, y, width: w, height: h } = c;
+  const cx = x + w / 2;
+  const cy = y + 44;
+
+  ctx.save();
+  if (isLit) {
+    const brightness = Math.min(current / 2, 1);
+    const gr = 48 + brightness * 38;
+    const glow = ctx.createRadialGradient(cx, cy, 6, cx, cy, gr);
+    glow.addColorStop(0, `rgba(255, 238, 110, ${0.9 + brightness * 0.08})`);
+    glow.addColorStop(0.4, `rgba(255, 210, 50, ${0.28 + brightness * 0.15})`);
+    glow.addColorStop(1, 'rgba(255,200,0,0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath(); ctx.arc(cx, cy, gr, 0, Math.PI * 2); ctx.fill();
+  }
+
+  if (isLit) {
+    const ig = ctx.createRadialGradient(cx - 8, cy - 10, 2, cx, cy, 36);
+    ig.addColorStop(0, 'rgba(255,255,230,1)');
+    ig.addColorStop(0.55, 'rgba(255,235,140,0.95)');
+    ig.addColorStop(1, 'rgba(255,210,80,0.9)');
+    ctx.fillStyle = ig;
+  } else {
+    ctx.fillStyle = 'rgba(60,60,75,0.9)';
+  }
+  ctx.strokeStyle = '#444';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.arc(cx, cy, 36, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+  ctx.shadowColor = isLit ? '#ffcc44' : 'transparent';
+  ctx.shadowBlur = isLit ? 12 : 0;
+  ctx.strokeStyle = isLit ? '#ff8820' : '#666';
+  ctx.lineWidth = isLit ? 3 : 2;
+  ctx.beginPath();
+  ctx.moveTo(cx - 14, cy + 8);
+  ctx.quadraticCurveTo(cx - 5, cy - 12, cx + 2, cy + 4);
+  ctx.quadraticCurveTo(cx + 10, cy + 18, cx + 14, cy + 6);
+  ctx.stroke();
+  ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
+
+  ctx.strokeStyle = isLit ? '#aa5500' : '#555';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx - 10, cy + 22); ctx.lineTo(cx - 10, cy + 34);
+  ctx.moveTo(cx + 10, cy + 22); ctx.lineTo(cx + 10, cy + 34);
+  ctx.stroke();
+
+  ctx.fillStyle = '#555'; ctx.fillRect(cx - 18, cy + 34, 36, 12);
+  ctx.fillStyle = '#444'; ctx.fillRect(cx - 16, cy + 46, 32, 10);
+  ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
+  ctx.strokeRect(cx - 18, cy + 34, 36, 22);
+
+  ctx.fillStyle = 'rgba(200,220,255,0.85)';
+  ctx.font = '13px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('Light Bulb', cx, y + h - 10);
+
+  if (isLit) {
+    const power = current * current * 8;
+    ctx.fillStyle = '#ffdd44';
+    ctx.font = 'bold 12px system-ui, sans-serif';
+    ctx.fillText(`${current.toFixed(2)}A  ${power.toFixed(1)}W`, cx, y + h + 14);
+  }
+  ctx.restore();
+}
+
+function drawSwitch(ctx: CanvasRenderingContext2D, c: CircuitComponent, isClosed: boolean) {
+  const cx = c.x + c.width / 2;
+  const cy = c.y + c.height / 2;
+
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.shadowColor = 'rgba(0,0,0,0.25)';
+  ctx.shadowBlur = 8;
+  ctx.shadowOffsetY = 3;
+
+  ctx.strokeStyle = '#aaa';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(c.x + 4, cy); ctx.lineTo(cx - 22, cy);
+  ctx.moveTo(cx + 22, cy); ctx.lineTo(c.x + c.width - 4, cy);
+  ctx.stroke();
+
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+
+  ctx.fillStyle = '#333';
+  ctx.strokeStyle = isClosed ? '#44bb44' : '#888';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.arc(cx - 22, cy, 7, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+  if (isClosed) {
+    ctx.shadowColor = '#44ee44';
+    ctx.shadowBlur = 14;
+    ctx.strokeStyle = '#33cc33';
+    ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.moveTo(cx - 14, cy); ctx.lineTo(cx + 22, cy); ctx.stroke();
+    ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
+
+    ctx.fillStyle = '#22bb22';
+    ctx.strokeStyle = '#33ee33';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(cx + 22, cy, 7, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  } else {
+    ctx.strokeStyle = '#777';
+    ctx.lineWidth = 4.5;
+    ctx.beginPath(); ctx.moveTo(cx - 14, cy - 1); ctx.lineTo(cx + 18, cy - 27); ctx.stroke();
+
+    ctx.fillStyle = '#555';
+    ctx.strokeStyle = '#888';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(cx + 18, cy - 27, 5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  }
+
+  ctx.fillStyle = 'rgba(200,220,255,0.85)';
+  ctx.font = '13px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(isClosed ? 'Switch [ON]' : 'Switch [OFF]', cx, c.y + c.height + 16);
+
+  if (!isClosed) {
+    ctx.fillStyle = '#ffaa44';
+    ctx.font = 'bold 11px system-ui, sans-serif';
+    ctx.fillText('Click to close', cx, c.y + c.height + 32);
+  }
+  ctx.restore();
+}
+
+function drawGenericComponent(ctx: CanvasRenderingContext2D, c: CircuitComponent) {
+  const cx = c.x + c.width / 2;
+  const cy = c.y + c.height / 2;
+
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.25)';
+  ctx.shadowBlur = 10;
+  ctx.shadowOffsetY = 4;
+  ctx.strokeStyle = '#8899bb';
+  ctx.fillStyle = '#1c2438';
+  ctx.lineWidth = 2.5;
+
+  if (c.type === 'WIRE') {
+    ctx.shadowBlur = 0;
+    const g = ctx.createLinearGradient(c.x, cy, c.x + c.width, cy);
+    g.addColorStop(0, '#6f2a1c'); g.addColorStop(0.5, '#d28a70'); g.addColorStop(1, '#6f2a1c');
+    ctx.strokeStyle = g;
+    ctx.lineWidth = 8;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(c.x + 8, cy); ctx.lineTo(c.x + c.width - 8, cy); ctx.stroke();
+  } else if (c.type === 'AC_VOLTAGE') {
+    roundRect(ctx, cx - 38, cy - 48, 76, 76, 38); ctx.fill(); ctx.stroke();
+    ctx.shadowColor = 'transparent';
+    ctx.beginPath();
+    ctx.moveTo(cx - 22, cy - 10);
+    ctx.bezierCurveTo(cx - 10, cy - 36, cx + 10, cy + 16, cx + 22, cy - 10);
+    ctx.strokeStyle = '#e07050';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+    ctx.fillStyle = '#aac8ff';
+    ctx.font = 'bold 16px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('+', cx, cy - 32);
+    ctx.fillText('−', cx, cy + 16);
+  } else if (c.type === 'RESISTOR') {
+    const g = ctx.createLinearGradient(c.x, c.y, c.x + c.width, c.y + c.height);
+    g.addColorStop(0, '#6a3a18'); g.addColorStop(0.5, '#c49050'); g.addColorStop(1, '#6a3a18');
+    ctx.fillStyle = g;
+    roundRect(ctx, c.x + 18, c.y + 14, c.width - 36, 28, 14); ctx.fill(); ctx.stroke();
+    ctx.shadowColor = 'transparent';
+    ctx.fillStyle = '#111'; ctx.fillRect(cx - 26, c.y + 14, 5, 28); ctx.fillRect(cx - 5, c.y + 14, 5, 28);
+    ctx.fillStyle = '#d9c13f'; ctx.fillRect(cx + 24, c.y + 14, 5, 28);
+  } else if (c.type === 'CAPACITOR') {
+    ctx.shadowColor = 'transparent';
+    ctx.strokeStyle = '#aac8ff';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(c.x + 8, cy); ctx.lineTo(cx - 14, cy);
+    ctx.moveTo(cx + 14, cy); ctx.lineTo(c.x + c.width - 8, cy);
+    ctx.moveTo(cx - 14, c.y + 10); ctx.lineTo(cx - 14, c.y + c.height - 10);
+    ctx.moveTo(cx + 14, c.y + 10); ctx.lineTo(cx + 14, c.y + c.height - 10);
+    ctx.stroke();
+  } else if (c.type === 'INDUCTOR') {
+    ctx.shadowColor = 'transparent';
+    ctx.strokeStyle = '#aac8ff';
+    ctx.beginPath();
+    ctx.moveTo(c.x + 8, cy); ctx.lineTo(c.x + 26, cy); ctx.stroke();
+    for (let i = 0; i < 6; i++) {
+      ctx.beginPath(); ctx.arc(c.x + 38 + i * 14, cy, 10, Math.PI, 0); ctx.stroke();
+    }
+    ctx.beginPath();
+    ctx.moveTo(c.x + c.width - 26, cy); ctx.lineTo(c.x + c.width - 8, cy); ctx.stroke();
+  }
+
+  ctx.shadowColor = 'transparent';
+  ctx.fillStyle = 'rgba(200,220,255,0.85)';
+  ctx.font = '13px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(getComponentLabel(c.type), cx, c.y + c.height + 16);
+  ctx.restore();
 }
 
 function drawMeasuringTool(
-  context: CanvasRenderingContext2D,
-  component: CircuitComponent,
-  circuitValues: ReturnType<typeof calculateCircuitValues>
+  ctx: CanvasRenderingContext2D,
+  c: CircuitComponent,
+  cv: ReturnType<typeof calculateCircuitValues>
 ) {
-  const centerX = component.x + component.width / 2;
-  const centerY = component.y + component.height / 2;
-  const isAmmeter = component.type === 'AMMETER';
-  const measuredValue = circuitValues.meterReadings[component.id] ?? 0;
-  const value = isAmmeter
-    ? formatCurrent(measuredValue)
-    : formatVoltage(measuredValue);
+  const cx = c.x + c.width / 2;
+  const cy = c.y + c.height / 2;
+  const isA = c.type === 'AMMETER';
+  const val = cv.meterReadings[c.id] ?? 0;
+  const valStr = isA ? `${val.toFixed(2)} A` : `${val.toFixed(1)} V`;
 
-  context.save();
-  context.shadowColor = 'rgba(0, 0, 0, 0.18)';
-  context.shadowBlur = 10;
-  context.shadowOffsetY = 4;
-  context.fillStyle = '#f19b32';
-  context.strokeStyle = '#2a2a2a';
-  context.lineWidth = 3;
-  drawRoundedRect(context, component.x + 18, component.y + 8, component.width - 36, 52, 10);
-  context.fill();
-  context.stroke();
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.3)';
+  ctx.shadowBlur = 10;
+  ctx.shadowOffsetY = 4;
+  ctx.fillStyle = '#d48a20';
+  ctx.strokeStyle = '#555';
+  ctx.lineWidth = 2.5;
+  roundRect(ctx, c.x + 16, c.y + 8, c.width - 32, 52, 10); ctx.fill(); ctx.stroke();
 
-  context.shadowColor = 'transparent';
-  context.fillStyle = '#fff4de';
-  context.fillRect(component.x + 38, component.y + 27, component.width - 76, 18);
-  context.fillStyle = '#111111';
-  context.font = '700 13px sans-serif';
-  context.textAlign = 'center';
-  context.textBaseline = 'middle';
-  context.fillText(isAmmeter ? 'Current' : 'Voltage', centerX, component.y + 22);
-  context.font = '700 14px sans-serif';
-  context.fillText(value, centerX, component.y + 36);
+  ctx.shadowColor = 'transparent';
+  ctx.fillStyle = '#fff4de';
+  ctx.fillRect(c.x + 34, c.y + 26, c.width - 68, 18);
+  ctx.fillStyle = '#111';
+  ctx.font = 'bold 12px system-ui, sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(isA ? 'Current' : 'Voltage', cx, c.y + 22);
+  ctx.font = 'bold 13px system-ui, sans-serif';
+  ctx.fillText(valStr, cx, c.y + 35);
 
-  context.strokeStyle = '#333333';
-  context.lineWidth = 3;
-  context.beginPath();
-  context.moveTo(component.x + 16, centerY);
-  context.lineTo(component.x, centerY + 13);
-  context.moveTo(component.x + component.width - 16, centerY);
-  context.lineTo(component.x + component.width, centerY + 13);
-  context.stroke();
+  ctx.strokeStyle = '#555'; ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(c.x + 14, cy); ctx.lineTo(c.x, cy + 14);
+  ctx.moveTo(c.x + c.width - 14, cy); ctx.lineTo(c.x + c.width, cy + 14);
+  ctx.stroke();
 
-  context.fillStyle = '#111111';
-  context.font = '14px sans-serif';
-  context.fillText(isAmmeter ? 'Ammeter' : 'Voltmeter', centerX, component.y + component.height + 14);
-  context.restore();
-}
-
-function drawCircuitWire(
-  context: CanvasRenderingContext2D,
-  components: CircuitComponent[],
-  wire: CircuitWire
-) {
-  const start = getTerminalPoint(components, wire.from);
-  const end = getTerminalPoint(components, wire.to);
-
-  if (!start || !end) {
-    return;
-  }
-
-  context.save();
-  context.strokeStyle = '#7b3d2f';
-  context.lineWidth = 7;
-  context.lineCap = 'round';
-  context.beginPath();
-  context.moveTo(start.x, start.y);
-  context.lineTo(end.x, end.y);
-  context.stroke();
-
-  context.strokeStyle = 'rgba(255, 226, 196, 0.55)';
-  context.lineWidth = 2;
-  context.stroke();
-  context.restore();
-}
-
-function drawWirePreview(context: CanvasRenderingContext2D, components: CircuitComponent[], drag: WireDragState) {
-  const start = getTerminalPoint(components, drag.from);
-
-  if (!start) {
-    return;
-  }
-
-  context.save();
-  context.strokeStyle = 'rgba(123, 61, 47, 0.72)';
-  context.lineWidth = 6;
-  context.lineCap = 'round';
-  context.setLineDash([10, 8]);
-  context.beginPath();
-  context.moveTo(start.x, start.y);
-  context.lineTo(drag.point.x, drag.point.y);
-  context.stroke();
-  context.restore();
-}
-
-function drawComponentTerminals(context: CanvasRenderingContext2D, component: CircuitComponent) {
-  const terminals = getTerminalPoints(component);
-
-  context.save();
-
-  (Object.keys(terminals) as TerminalKey[]).forEach((terminal) => {
-    const point = terminals[terminal];
-    context.fillStyle = '#6ab5df';
-    context.strokeStyle = '#f4fbff';
-    context.lineWidth = 2.5;
-    context.beginPath();
-    context.arc(point.x, point.y, 11, 0, Math.PI * 2);
-    context.fill();
-    context.stroke();
-    context.fillStyle = '#ffffff';
-    context.font = '700 14px sans-serif';
-    context.textAlign = 'center';
-    context.textBaseline = 'middle';
-    context.fillText('-', point.x, point.y);
-  });
-
-  context.restore();
-}
-
-function drawSelectionFrame(context: CanvasRenderingContext2D, component: CircuitComponent) {
-  const deleteBounds = getDeleteButtonBounds(component);
-
-  context.save();
-  context.strokeStyle = '#e94b45';
-  context.lineWidth = 2;
-  context.setLineDash([7, 7]);
-  drawRoundedRect(
-    context,
-    component.x - 8,
-    component.y - 8,
-    component.width + 16,
-    component.height + 16,
-    14
-  );
-  context.stroke();
-  context.setLineDash([]);
-
-  context.fillStyle = '#ffffff';
-  context.strokeStyle = '#222222';
-  context.lineWidth = 2;
-  drawRoundedRect(
-    context,
-    deleteBounds.x,
-    deleteBounds.y,
-    deleteBounds.width,
-    deleteBounds.height,
-    5
-  );
-  context.fill();
-  context.stroke();
-
-  context.fillStyle = '#111111';
-  context.font = '700 15px sans-serif';
-  context.textAlign = 'center';
-  context.textBaseline = 'middle';
-  context.fillText(
-    '×',
-    deleteBounds.x + deleteBounds.width / 2,
-    deleteBounds.y + deleteBounds.height / 2
-  );
-  context.restore();
-}
-
-function drawElectronDots(
-  context: CanvasRenderingContext2D,
-  components: CircuitComponent[],
-  wires: CircuitWire[],
-  circuitValues: ReturnType<typeof calculateCircuitValues>
-) {
-  if (!circuitValues.closedCircuit || circuitValues.current <= 0) {
-    return;
-  }
-
-  context.save();
-  context.fillStyle = 'rgba(70, 166, 220, 0.82)';
-  context.strokeStyle = 'rgba(255, 255, 255, 0.55)';
-  context.lineWidth = 2;
-  context.font = '700 14px sans-serif';
-  context.textAlign = 'center';
-  context.textBaseline = 'middle';
-
-  wires.forEach((wire) => {
-    const start = getTerminalPoint(components, wire.from);
-    const end = getTerminalPoint(components, wire.to);
-
-    if (!start || !end) {
-      return;
-    }
-
-    const center = {
-      x: start.x + (end.x - start.x) * 0.5,
-      y: start.y + (end.y - start.y) * 0.5
-    };
-
-    context.beginPath();
-    context.arc(center.x, center.y, 12, 0, Math.PI * 2);
-    context.fill();
-    context.stroke();
-    context.fillStyle = '#ffffff';
-    context.fillText('-', center.x, center.y);
-    context.fillStyle = 'rgba(70, 166, 220, 0.82)';
-  });
-
-  context.restore();
-}
-
-function drawBattery(context: CanvasRenderingContext2D, component: CircuitComponent) {
-  const { x, y, width, height } = component;
-  const terminalWidth = 16;
-
-  context.save();
-  context.shadowColor = 'rgba(0, 0, 0, 0.25)';
-  context.shadowBlur = 12;
-  context.shadowOffsetY = 5;
-
-  context.fillStyle = '#111111';
-  drawRoundedRect(context, x, y + 9, width * 0.55, height - 18, 8);
-  context.fill();
-
-  context.fillStyle = '#f2a13a';
-  context.fillRect(x + width * 0.55, y + 9, width * 0.33, height - 18);
-
-  context.fillStyle = '#f7d36b';
-  drawRoundedRect(context, x + width - terminalWidth, y + 17, terminalWidth, height - 34, 4);
-  context.fill();
-
-  context.shadowColor = 'transparent';
-  context.strokeStyle = '#222222';
-  context.lineWidth = 3;
-  drawRoundedRect(context, x, y + 9, width - terminalWidth / 2, height - 18, 8);
-  context.stroke();
-
-  context.fillStyle = '#ffffff';
-  context.font = '700 24px sans-serif';
-  context.textAlign = 'center';
-  context.textBaseline = 'middle';
-  context.fillText('-', x + 26, y + height / 2);
-  context.fillText('+', x + width - 38, y + height / 2);
-
-  context.strokeStyle = '#f05b4f';
-  context.setLineDash([8, 9]);
-  context.lineWidth = 2;
-  drawRoundedRect(context, x - 16, y + 2, width + 32, height - 4, 22);
-  context.stroke();
-  context.setLineDash([]);
-
-  context.fillStyle = '#111111';
-  context.font = '14px sans-serif';
-  context.fillText('Battery', x + width / 2, y + height + 24);
-  context.restore();
-}
-
-function drawLightbulb(context: CanvasRenderingContext2D, component: CircuitComponent) {
-  const { x, y, width, height } = component;
-  const centerX = x + width / 2;
-  const bulbCenterY = y + 44;
-
-  context.save();
-  const glow = context.createRadialGradient(centerX, bulbCenterY, 10, centerX, bulbCenterY, 74);
-  glow.addColorStop(0, 'rgba(255, 239, 122, 0.9)');
-  glow.addColorStop(0.6, 'rgba(255, 221, 83, 0.22)');
-  glow.addColorStop(1, 'rgba(255, 221, 83, 0)');
-  context.fillStyle = glow;
-  context.beginPath();
-  context.arc(centerX, bulbCenterY, 74, 0, Math.PI * 2);
-  context.fill();
-
-  context.fillStyle = 'rgba(255, 255, 240, 0.82)';
-  context.strokeStyle = '#333333';
-  context.lineWidth = 3;
-  context.beginPath();
-  context.arc(centerX, bulbCenterY, 36, 0, Math.PI * 2);
-  context.fill();
-  context.stroke();
-
-  context.strokeStyle = '#d7744d';
-  context.lineWidth = 3;
-  context.beginPath();
-  context.moveTo(centerX - 17, bulbCenterY + 4);
-  context.quadraticCurveTo(centerX, bulbCenterY - 16, centerX + 17, bulbCenterY + 4);
-  context.stroke();
-
-  context.fillStyle = '#777777';
-  context.fillRect(centerX - 18, bulbCenterY + 34, 36, 12);
-  context.fillStyle = '#555555';
-  context.fillRect(centerX - 16, bulbCenterY + 46, 32, 10);
-  context.strokeStyle = '#222222';
-  context.strokeRect(centerX - 18, bulbCenterY + 34, 36, 22);
-
-  context.fillStyle = '#111111';
-  context.font = '14px sans-serif';
-  context.textAlign = 'center';
-  context.textBaseline = 'middle';
-  context.fillText('Light Bulb', centerX, y + height - 10);
-  context.restore();
-}
-
-function drawGenericCircuitComponent(
-  context: CanvasRenderingContext2D,
-  component: CircuitComponent
-) {
-  const centerX = component.x + component.width / 2;
-  const centerY = component.y + component.height / 2;
-  const label = getComponentLabel(component.type);
-
-  context.save();
-  context.shadowColor = 'rgba(0, 0, 0, 0.16)';
-  context.shadowBlur = 10;
-  context.shadowOffsetY = 4;
-  context.strokeStyle = '#2a2a2a';
-  context.fillStyle = '#fff8dc';
-  context.lineWidth = 3;
-
-  if (component.type === 'WIRE') {
-    context.shadowBlur = 0;
-    const gradient = context.createLinearGradient(
-      component.x,
-      centerY,
-      component.x + component.width,
-      centerY
-    );
-    gradient.addColorStop(0, '#6f2a1c');
-    gradient.addColorStop(0.5, '#d28a70');
-    gradient.addColorStop(1, '#6f2a1c');
-    context.strokeStyle = gradient;
-    context.lineWidth = 8;
-    context.lineCap = 'round';
-    context.beginPath();
-    context.moveTo(component.x + 8, centerY);
-    context.lineTo(component.x + component.width - 8, centerY);
-    context.stroke();
-  } else if (component.type === 'AC_VOLTAGE') {
-    context.beginPath();
-    context.arc(centerX, centerY - 10, 34, 0, Math.PI * 2);
-    context.fill();
-    context.stroke();
-    context.shadowColor = 'transparent';
-    context.beginPath();
-    context.moveTo(centerX - 22, centerY - 10);
-    context.bezierCurveTo(centerX - 10, centerY - 38, centerX + 10, centerY + 18, centerX + 22, centerY - 10);
-    context.strokeStyle = '#d0704f';
-    context.stroke();
-    context.fillStyle = '#111111';
-    context.font = '700 17px sans-serif';
-    context.fillText('+', centerX, centerY - 34);
-    context.fillText('-', centerX, centerY + 18);
-  } else if (component.type === 'RESISTOR') {
-    const gradient = context.createLinearGradient(
-      component.x,
-      component.y,
-      component.x + component.width,
-      component.y + component.height
-    );
-    gradient.addColorStop(0, '#a76b38');
-    gradient.addColorStop(0.5, '#e6c087');
-    gradient.addColorStop(1, '#a76b38');
-    context.fillStyle = gradient;
-    drawRoundedRect(context, component.x + 18, component.y + 14, component.width - 36, 28, 14);
-    context.fill();
-    context.stroke();
-    context.shadowColor = 'transparent';
-    context.fillStyle = '#111111';
-    context.fillRect(centerX - 25, component.y + 14, 5, 28);
-    context.fillRect(centerX - 4, component.y + 14, 5, 28);
-    context.fillStyle = '#d9c13f';
-    context.fillRect(centerX + 24, component.y + 14, 5, 28);
-  } else if (component.type === 'CAPACITOR') {
-    context.shadowColor = 'transparent';
-    context.beginPath();
-    context.moveTo(component.x + 8, centerY);
-    context.lineTo(centerX - 14, centerY);
-    context.moveTo(centerX + 14, centerY);
-    context.lineTo(component.x + component.width - 8, centerY);
-    context.moveTo(centerX - 14, component.y + 12);
-    context.lineTo(centerX - 14, component.y + component.height - 12);
-    context.moveTo(centerX + 14, component.y + 12);
-    context.lineTo(centerX + 14, component.y + component.height - 12);
-    context.stroke();
-  } else if (component.type === 'INDUCTOR') {
-    context.shadowColor = 'transparent';
-    context.beginPath();
-    context.moveTo(component.x + 8, centerY);
-    context.lineTo(component.x + 26, centerY);
-    context.stroke();
-
-    for (let index = 0; index < 6; index += 1) {
-      context.beginPath();
-      context.arc(component.x + 38 + index * 14, centerY, 10, Math.PI, 0);
-      context.stroke();
-    }
-
-    context.beginPath();
-    context.moveTo(component.x + component.width - 26, centerY);
-    context.lineTo(component.x + component.width - 8, centerY);
-    context.stroke();
-  } else if (component.type === 'SWITCH') {
-    context.shadowColor = 'transparent';
-    context.beginPath();
-    context.moveTo(component.x + 10, centerY + 14);
-    context.lineTo(centerX - 18, centerY + 14);
-    context.moveTo(centerX + 18, centerY + 14);
-    context.lineTo(component.x + component.width - 10, centerY + 14);
-    context.moveTo(centerX - 14, centerY + 12);
-    context.lineTo(centerX + 24, centerY - 18);
-    context.stroke();
-    context.beginPath();
-    context.arc(centerX - 18, centerY + 14, 6, 0, Math.PI * 2);
-    context.stroke();
-  }
-
-  context.shadowColor = 'transparent';
-  context.fillStyle = '#111111';
-  context.font = '14px sans-serif';
-  context.textAlign = 'center';
-  context.textBaseline = 'middle';
-  context.fillText(label, centerX, component.y + component.height + 16);
-  context.restore();
-}
-
-function drawBottomControls(context: CanvasRenderingContext2D, size: CanvasSize) {
-  context.save();
-  context.fillStyle = '#111111';
-  context.font = '18px sans-serif';
-  context.textAlign = 'center';
-  context.textBaseline = 'middle';
-  context.fillText(
-    'Drag tools to add. Drag terminal dots to wire. Use meters to measure.',
-    size.width / 2,
-    size.height - 34
-  );
-
-  const pauseX = size.width - 210;
-  const playX = size.width - 150;
-  const resetX = size.width - 70;
-
-  context.fillStyle = '#d8efff';
-  context.strokeStyle = '#6b8bad';
-  context.lineWidth = 2;
-  context.beginPath();
-  context.arc(pauseX, size.height - 42, 28, 0, Math.PI * 2);
-  context.fill();
-  context.stroke();
-  context.fillStyle = '#111111';
-  context.fillRect(pauseX - 9, size.height - 58, 6, 32);
-  context.fillRect(pauseX + 5, size.height - 58, 6, 32);
-
-  context.fillStyle = '#eeeeee';
-  context.beginPath();
-  context.arc(playX, size.height - 42, 22, 0, Math.PI * 2);
-  context.fill();
-  context.stroke();
-  context.fillStyle = '#999999';
-  context.beginPath();
-  context.moveTo(playX - 5, size.height - 54);
-  context.lineTo(playX + 12, size.height - 42);
-  context.lineTo(playX - 5, size.height - 30);
-  context.closePath();
-  context.fill();
-
-  context.fillStyle = '#f6a12d';
-  context.beginPath();
-  context.arc(resetX, size.height - 42, 30, 0, Math.PI * 2);
-  context.fill();
-  context.strokeStyle = '#c87a1c';
-  context.stroke();
-  context.strokeStyle = '#ffffff';
-  context.lineWidth = 6;
-  context.beginPath();
-  context.arc(resetX, size.height - 42, 14, 0.3, Math.PI * 1.65);
-  context.stroke();
-  context.restore();
+  ctx.fillStyle = 'rgba(200,220,255,0.85)';
+  ctx.font = '13px system-ui, sans-serif';
+  ctx.fillText(isA ? 'Ammeter' : 'Voltmeter', cx, c.y + c.height + 14);
+  ctx.restore();
 }
 
 function drawComponent(
-  context: CanvasRenderingContext2D,
-  component: CircuitComponent,
-  circuitValues: ReturnType<typeof calculateCircuitValues>
+  ctx: CanvasRenderingContext2D,
+  c: CircuitComponent,
+  cv: ReturnType<typeof calculateCircuitValues>,
+  switchStates: Record<string, boolean>
 ) {
-  if (component.type === 'BATTERY') {
-    drawBattery(context, component);
-  } else if (component.type === 'LIGHTBULB') {
-    drawLightbulb(context, component);
-  } else if (component.type === 'VOLTMETER' || component.type === 'AMMETER') {
-    drawMeasuringTool(context, component, circuitValues);
-  } else {
-    drawGenericCircuitComponent(context, component);
-  }
+  if (c.type === 'BATTERY') drawBattery(ctx, c, cv);
+  else if (c.type === 'LIGHTBULB') drawLightbulb(ctx, c, cv.closedCircuit, cv.current);
+  else if (c.type === 'SWITCH') drawSwitch(ctx, c, switchStates[c.id] ?? false);
+  else if (c.type === 'VOLTMETER' || c.type === 'AMMETER') drawMeasuringTool(ctx, c, cv);
+  else drawGenericComponent(ctx, c);
 }
 
 function drawSourcePreview(
-  context: CanvasRenderingContext2D,
+  ctx: CanvasRenderingContext2D,
   type: CircuitComponentType,
   point: Point,
-  circuitValues: ReturnType<typeof calculateCircuitValues>
+  cv: ReturnType<typeof calculateCircuitValues>,
+  switchStates: Record<string, boolean>
 ) {
   const size = componentSizes[type];
-  const previewComponent = createCircuitComponent(
-    type,
-    'source-preview',
-    point.x - size.width / 2,
-    point.y - size.height / 2
-  );
-
-  context.save();
-  context.globalAlpha = 0.62;
-  drawComponent(context, previewComponent, circuitValues);
-  context.restore();
+  const prev = createCircuitComponent(type, 'preview', point.x - size.width / 2, point.y - size.height / 2);
+  ctx.save();
+  ctx.globalAlpha = 0.6;
+  drawComponent(ctx, prev, cv, switchStates);
+  ctx.restore();
 }
+
+// ─── Bottom hint bar ──────────────────────────────────────────────────────────
+
+function drawBottomBar(ctx: CanvasRenderingContext2D, size: CanvasSize) {
+  ctx.save();
+  ctx.fillStyle = 'rgba(14,18,30,0.85)';
+  ctx.fillRect(0, size.height - 44, size.width, 44);
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, size.height - 44); ctx.lineTo(size.width, size.height - 44); ctx.stroke();
+
+  ctx.fillStyle = 'rgba(180,200,255,0.75)';
+  ctx.font = '14px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(
+    'Drag tools to add  •  Drag terminal dots to wire  •  Click Switch to toggle  •  Del key to delete  •  Ctrl+Z / Ctrl+Y to undo/redo',
+    size.width / 2,
+    size.height - 22
+  );
+  ctx.restore();
+}
+
+// ─── Background ───────────────────────────────────────────────────────────────
+
+function drawBackground(ctx: CanvasRenderingContext2D, size: CanvasSize) {
+  const grad = ctx.createLinearGradient(0, 0, 0, size.height);
+  grad.addColorStop(0, '#1a2240');
+  grad.addColorStop(1, '#111828');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, size.width, size.height);
+
+  ctx.save();
+  ctx.globalAlpha = 0.1;
+  ctx.fillStyle = '#6688cc';
+  for (let x = 0; x < size.width; x += GRID) {
+    for (let y = TOOLBAR_H; y < size.height - 44; y += GRID) {
+      ctx.beginPath();
+      ctx.arc(x, y, 1, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+// ─── Wire junction dots ───────────────────────────────────────────────────────
+
+function drawJunctions(ctx: CanvasRenderingContext2D, components: CircuitComponent[], wires: CircuitWire[]) {
+  const count = new Map<string, number>();
+  wires.forEach((w) => {
+    const sk = JSON.stringify(getTerminalPoint(components, w.from));
+    const ek = JSON.stringify(getTerminalPoint(components, w.to));
+    count.set(sk, (count.get(sk) ?? 0) + 1);
+    count.set(ek, (count.get(ek) ?? 0) + 1);
+  });
+
+  ctx.save();
+  ctx.fillStyle = '#88ccff';
+  count.forEach((n, key) => {
+    if (n < 3) return;
+    const p: Point = JSON.parse(key);
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.restore();
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
 
 export default function CircuitCanvas() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const dragRef = useRef<DragState | null>(null);
-  const sourceDragRef = useRef<SourceDragState | null>(null);
-  const wireDragRef = useRef<WireDragState | null>(null);
-  const resizeFrameRef = useRef<ResizeFrame>({
-    id: null
-  });
-  const [isDragging, setIsDragging] = useState(false);
-  const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
-  const [sourcePreviewPoint, setSourcePreviewPoint] = useState<Point | null>(null);
-  const [wirePreviewPoint, setWirePreviewPoint] = useState<Point | null>(null);
 
   const [canvasSize, setCanvasSize] = useState<CanvasSize>(() => getInitialCanvasSize());
   const [circuitState, setCircuitState] = useState<CircuitState>(() => {
-    const initialSize = getInitialCanvasSize();
-
-    return {
-      components: createInitialComponents(initialSize.width, initialSize.height),
-      wires: []
-    };
+    const s = getInitialCanvasSize();
+    return { components: createInitialComponents(s.width, s.height), wires: [], switchStates: {} };
   });
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
 
-  const updateCanvasSize = useCallback(() => {
-    const container = containerRef.current;
-    const width = container?.clientWidth || window.innerWidth;
-    const height = container?.clientHeight || window.innerHeight;
+  // Refs mirroring state for RAF loop
+  const circuitRef = useRef(circuitState);
+  circuitRef.current = circuitState;
+  const sizeRef = useRef(canvasSize);
+  sizeRef.current = canvasSize;
+  const selectedRef = useRef(selectedId);
+  selectedRef.current = selectedId;
 
-    setCanvasSize({ width, height });
+  // Interaction refs
+  const dragRef = useRef<DragState | null>(null);
+  const sourceDragRef = useRef<SourceDragState | null>(null);
+  const wireDragRef = useRef<WireDragState | null>(null);
+  const sourcePreviewRef = useRef<Point | null>(null);
+  const mouseDownPt = useRef<Point | null>(null);
+  const mouseDownCompId = useRef<string | null>(null);
+  const hoverIdRef = useRef<string | null>(null);
+
+  // Animation
+  const animTimeRef = useRef(0);
+
+  // History for undo/redo
+  const historyRef = useRef<CircuitState[]>([]);
+  const historyIdxRef = useRef(-1);
+
+  const pushHistory = (state: CircuitState) => {
+    const newHist = historyRef.current.slice(0, historyIdxRef.current + 1);
+    newHist.push(JSON.parse(JSON.stringify(state)));
+    if (newHist.length > MAX_HISTORY) newHist.shift();
+    historyRef.current = newHist;
+    historyIdxRef.current = newHist.length - 1;
+    setCanUndo(historyIdxRef.current > 0);
+    setCanRedo(false);
+  };
+
+  const undo = () => {
+    if (historyIdxRef.current <= 0) return;
+    historyIdxRef.current -= 1;
+    const s = historyRef.current[historyIdxRef.current];
+    setCircuitState(s);
+    setCanUndo(historyIdxRef.current > 0);
+    setCanRedo(true);
+    setSelectedId(null);
+  };
+
+  const redo = () => {
+    if (historyIdxRef.current >= historyRef.current.length - 1) return;
+    historyIdxRef.current += 1;
+    const s = historyRef.current[historyIdxRef.current];
+    setCircuitState(s);
+    setCanUndo(true);
+    setCanRedo(historyIdxRef.current < historyRef.current.length - 1);
+    setSelectedId(null);
+  };
+
+  const clearAll = () => {
+    const s = getInitialCanvasSize();
+    const next: CircuitState = { components: createInitialComponents(s.width, s.height), wires: [], switchStates: {} };
+    pushHistory(next);
+    setCircuitState(next);
+    setSelectedId(null);
+  };
+
+  // Resize
+  const resizeFrame = useRef<{ id: number | null }>({ id: null });
+  const updateSize = () => {
+    const el = containerRef.current;
+    setCanvasSize({ width: el?.clientWidth ?? window.innerWidth, height: el?.clientHeight ?? window.innerHeight });
+  };
+  useEffect(() => {
+    updateSize();
+    const onResize = () => {
+      if (resizeFrame.current.id !== null) return;
+      resizeFrame.current.id = requestAnimationFrame(() => { resizeFrame.current.id = null; updateSize(); });
+    };
+    window.addEventListener('resize', onResize);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      if (resizeFrame.current.id !== null) cancelAnimationFrame(resizeFrame.current.id);
+    };
   }, []);
 
+  // Keyboard: delete, undo, redo
   useEffect(() => {
-    updateCanvasSize();
-
-    const handleResize = () => {
-      if (resizeFrameRef.current.id !== null) {
-        return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'z' && (e.ctrlKey || e.metaKey) && !e.shiftKey) { e.preventDefault(); undo(); return; }
+      if ((e.key === 'y' && (e.ctrlKey || e.metaKey)) || (e.key === 'z' && (e.ctrlKey || e.metaKey) && e.shiftKey)) { e.preventDefault(); redo(); return; }
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedRef.current) {
+        e.preventDefault();
+        const id = selectedRef.current;
+        setCircuitState((s) => {
+          const next: CircuitState = {
+            components: s.components.filter((c) => c.id !== id),
+            wires: s.wires.filter((w) => w.from.componentId !== id && w.to.componentId !== id),
+            switchStates: Object.fromEntries(Object.entries(s.switchStates).filter(([k]) => k !== id))
+          };
+          pushHistory(next);
+          return next;
+        });
+        setSelectedId(null);
       }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
-      resizeFrameRef.current.id = window.requestAnimationFrame(() => {
-        resizeFrameRef.current.id = null;
-        updateCanvasSize();
+  // Initial history push
+  useEffect(() => {
+    pushHistory(circuitState);
+  }, []);
+
+  // RAF loop
+  useEffect(() => {
+    let last = 0;
+    let frameId: number;
+    const prevSize = { width: 0, height: 0 };
+
+    const loop = (ts: number) => {
+      const dt = last ? Math.min((ts - last) / 1000, 0.05) : 0;
+      last = ts;
+
+      const canvas = canvasRef.current;
+      if (!canvas) { frameId = requestAnimationFrame(loop); return; }
+      const ctx = canvas.getContext('2d');
+      if (!ctx) { frameId = requestAnimationFrame(loop); return; }
+
+      const size = sizeRef.current;
+      if (size.width === 0 || size.height === 0) { frameId = requestAnimationFrame(loop); return; }
+
+      const pr = window.devicePixelRatio || 1;
+      if (size.width !== prevSize.width || size.height !== prevSize.height) {
+        canvas.width = size.width * pr;
+        canvas.height = size.height * pr;
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
+        prevSize.width = size.width;
+        prevSize.height = size.height;
+      }
+      ctx.setTransform(pr, 0, 0, pr, 0, 0);
+      ctx.clearRect(0, 0, size.width, size.height);
+
+      const state = circuitRef.current;
+      const cv = calculateCircuitValues(state.components, state.wires, state.switchStates);
+      if (cv.closedCircuit) animTimeRef.current += dt;
+
+      drawBackground(ctx, size);
+      drawToolbar(ctx, size, canUndo, canRedo, cv.closedCircuit, cv.current, cv.voltage);
+      drawToolShelf(ctx, size);
+      drawControlPanels(ctx, size.width);
+
+      state.wires.forEach((w) => drawCircuitWire(ctx, state.components, w));
+      drawJunctions(ctx, state.components, state.wires);
+
+      state.components.forEach((c) => {
+        if (c.id === hoverIdRef.current && c.id !== selectedRef.current) drawHoverFrame(ctx, c);
+        drawComponent(ctx, c, cv, state.switchStates);
+        drawTerminals(ctx, c);
       });
-    };
 
-    window.addEventListener('resize', handleResize);
+      drawAnimatedElectrons(ctx, state.components, state.wires, cv, animTimeRef.current);
 
-    return () => {
-      window.removeEventListener('resize', handleResize);
+      if (wireDragRef.current) drawWirePreview(ctx, state.components, wireDragRef.current);
 
-      if (resizeFrameRef.current.id !== null) {
-        window.cancelAnimationFrame(resizeFrameRef.current.id);
-      }
-    };
-  }, [updateCanvasSize]);
+      const sel = state.components.find((c) => c.id === selectedRef.current);
+      if (sel) drawSelectionFrame(ctx, sel);
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (!selectedComponentId || (event.key !== 'Delete' && event.key !== 'Backspace')) {
-        return;
+      if (sourceDragRef.current && sourcePreviewRef.current) {
+        drawSourcePreview(ctx, sourceDragRef.current.type, sourcePreviewRef.current, cv, state.switchStates);
       }
 
-      event.preventDefault();
-      setCircuitState((currentState) => ({
-        components: currentState.components.filter((component) => component.id !== selectedComponentId),
-        wires: currentState.wires.filter((wire) => (
-          wire.from.componentId !== selectedComponentId && wire.to.componentId !== selectedComponentId
-        ))
-      }));
-      setSelectedComponentId(null);
+      drawBottomBar(ctx, size);
+      frameId = requestAnimationFrame(loop);
     };
 
-    window.addEventListener('keydown', handleKeyDown);
+    frameId = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(frameId);
+  }, [canUndo, canRedo]);
 
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [selectedComponentId]);
-
-  useEffect(() => {
+  // Mouse handlers
+  const handleMouseDown = (e: MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
+    const pt = getCanvasPoint(e, canvas);
+    mouseDownPt.current = pt;
 
-    if (!canvas || canvasSize.width === 0 || canvasSize.height === 0) {
+    const state = circuitRef.current;
+    const size = sizeRef.current;
+
+    // Delete button
+    const active = state.components.find((c) => c.id === selectedRef.current);
+    if (active && insideRect(pt.x, pt.y, deleteBounds(active))) {
+      const id = active.id;
+      setCircuitState((s) => {
+        const next: CircuitState = {
+          components: s.components.filter((c) => c.id !== id),
+          wires: s.wires.filter((w) => w.from.componentId !== id && w.to.componentId !== id),
+          switchStates: Object.fromEntries(Object.entries(s.switchStates).filter(([k]) => k !== id))
+        };
+        pushHistory(next);
+        return next;
+      });
+      setSelectedId(null);
       return;
     }
 
-    const context = canvas.getContext('2d');
+    // Toolbar buttons
+    const btns = getToolbarButtons(size.width);
+    if (insideRect(pt.x, pt.y, { x: btns.undo.x, y: btns.undo.y, width: btns.undo.w, height: btns.undo.h })) { undo(); return; }
+    if (insideRect(pt.x, pt.y, { x: btns.redo.x, y: btns.redo.y, width: btns.redo.w, height: btns.redo.h })) { redo(); return; }
+    if (insideRect(pt.x, pt.y, { x: btns.clear.x, y: btns.clear.y, width: btns.clear.w, height: btns.clear.h })) { clearAll(); return; }
 
-    if (!context) {
-      return;
-    }
-
-    const pixelRatio = window.devicePixelRatio || 1;
-    canvas.width = canvasSize.width * pixelRatio;
-    canvas.height = canvasSize.height * pixelRatio;
-    canvas.style.width = '100%';
-    canvas.style.height = '100%';
-
-    context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-    context.clearRect(0, 0, canvasSize.width, canvasSize.height);
-    drawWorkspaceBackground(context, canvasSize);
-    drawToolShelf(context, canvasSize.height);
-    drawControlPanels(context, canvasSize.width);
-    const circuitValues = calculateCircuitValues(circuitState.components, circuitState.wires);
-
-    circuitState.wires.forEach((wire) => {
-      drawCircuitWire(context, circuitState.components, wire);
-    });
-
-    circuitState.components.forEach((component) => {
-      drawComponent(context, component, circuitValues);
-      drawComponentTerminals(context, component);
-    });
-    drawElectronDots(context, circuitState.components, circuitState.wires, circuitValues);
-
-    if (wireDragRef.current) {
-      drawWirePreview(context, circuitState.components, wireDragRef.current);
-    }
-
-    const selectedComponent = circuitState.components.find(
-      (component) => component.id === selectedComponentId
-    );
-
-    if (selectedComponent) {
-      drawSelectionFrame(context, selectedComponent);
-    }
-
-    if (sourceDragRef.current && sourcePreviewPoint) {
-      drawSourcePreview(
-        context,
-        sourceDragRef.current.type,
-        sourcePreviewPoint,
-        circuitValues
-      );
-    }
-
-    drawBottomControls(context, canvasSize);
-  }, [canvasSize, circuitState, selectedComponentId, sourcePreviewPoint, wirePreviewPoint]);
-
-  const handleMouseDown = (event: MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-
-    if (!canvas) {
-      return;
-    }
-
-    const point = getCanvasPoint(event, canvas);
-    const activeComponent = circuitState.components.find(
-      (component) => component.id === selectedComponentId
-    );
-
-    if (
-      activeComponent &&
-      isPointInsideRect(point.x, point.y, getDeleteButtonBounds(activeComponent))
-    ) {
-      setCircuitState((currentState) => ({
-        components: currentState.components.filter((component) => component.id !== activeComponent.id),
-        wires: currentState.wires.filter((wire) => (
-          wire.from.componentId !== activeComponent.id && wire.to.componentId !== activeComponent.id
-        ))
-      }));
-      setSelectedComponentId(null);
-      return;
-    }
-
-    const shelfType = getShelfItemAtPoint(point.x, point.y, canvasSize.height);
-    const meterType = getMeterToolAtPoint(point.x, point.y, canvasSize.width);
-    const sourceType = shelfType ?? meterType;
-
-    if (sourceType) {
-      sourceDragRef.current = {
-        type: sourceType
-      };
-      setSourcePreviewPoint(point);
-      setSelectedComponentId(null);
+    // Shelf / meter drag
+    const shelfType = shelfItemAtPoint(pt.x, pt.y, size.height);
+    const meterType = meterAtPoint(pt.x, pt.y, size.width);
+    const srcType = shelfType ?? meterType;
+    if (srcType) {
+      sourceDragRef.current = { type: srcType };
+      sourcePreviewRef.current = pt;
+      setSelectedId(null);
       setIsDragging(true);
       return;
     }
 
-    const terminal = getTerminalAtPoint(point.x, point.y, circuitState.components);
-
-    if (terminal) {
-      wireDragRef.current = {
-        from: terminal,
-        point
-      };
-      setWirePreviewPoint(point);
-      setSelectedComponentId(null);
+    // Wire drag
+    const term = terminalAtPoint(pt.x, pt.y, state.components);
+    if (term) {
+      wireDragRef.current = { from: term, point: pt };
+      setSelectedId(null);
       setIsDragging(true);
       return;
     }
 
-    const hitComponent = [...circuitState.components]
-      .reverse()
-      .find((component) => isPointInsideComponent(point.x, point.y, component));
+    // Component select/drag
+    const hit = [...state.components].reverse().find((c) => insideComponent(pt.x, pt.y, c));
+    if (!hit) { setSelectedId(null); return; }
 
-    if (!hitComponent) {
-      setSelectedComponentId(null);
-      return;
-    }
-
-    setSelectedComponentId(hitComponent.id);
-    dragRef.current = {
-      id: hitComponent.id,
-      offsetX: point.x - hitComponent.x,
-      offsetY: point.y - hitComponent.y
-    };
+    mouseDownCompId.current = hit.id;
+    setSelectedId(hit.id);
+    dragRef.current = { id: hit.id, offsetX: pt.x - hit.x, offsetY: pt.y - hit.y };
     setIsDragging(true);
   };
 
-  const handleMouseMove = (event: MouseEvent<HTMLCanvasElement>) => {
+  const handleMouseMove = (e: MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
-    const dragState = dragRef.current;
-    const sourceDragState = sourceDragRef.current;
-    const wireDragState = wireDragRef.current;
+    if (!canvas) return;
+    const pt = getCanvasPoint(e, canvas);
+    const state = circuitRef.current;
 
-    if (!canvas) {
-      return;
-    }
+    // Update hover
+    const hitId = [...state.components].reverse().find((c) => insideComponent(pt.x, pt.y, c))?.id ?? null;
+    hoverIdRef.current = hitId;
 
-    const point = getCanvasPoint(event, canvas);
+    if (sourceDragRef.current) { sourcePreviewRef.current = pt; return; }
+    if (wireDragRef.current) { wireDragRef.current = { ...wireDragRef.current, point: pt }; return; }
+    if (!dragRef.current) return;
 
-    if (sourceDragState) {
-      setSourcePreviewPoint(point);
-      return;
-    }
-
-    if (wireDragState) {
-      wireDragRef.current = {
-        ...wireDragState,
-        point
-      };
-      setWirePreviewPoint(point);
-      return;
-    }
-
-    if (!dragState) {
-      return;
-    }
-
-    setCircuitState((currentState) => ({
-      components: currentState.components.map((component) => {
-        if (component.id !== dragState.id) {
-          return component;
-        }
-
-        return {
-          ...component,
-          x: point.x - dragState.offsetX,
-          y: point.y - dragState.offsetY
-        };
-      }),
-      wires: currentState.wires
+    const d = dragRef.current;
+    setCircuitState((s) => ({
+      ...s,
+      components: s.components.map((c) =>
+        c.id === d.id ? { ...c, x: snapGrid(pt.x - d.offsetX), y: snapGrid(pt.y - d.offsetY) } : c
+      )
     }));
   };
 
-  const handleMouseUp = (event: MouseEvent<HTMLCanvasElement>) => {
+  const handleMouseUp = (e: MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
-    const sourceDragState = sourceDragRef.current;
-    const wireDragState = wireDragRef.current;
+    const state = circuitRef.current;
 
-    if (canvas && wireDragState) {
-      const point = getCanvasPoint(event, canvas);
-      const targetTerminal = getTerminalAtPoint(point.x, point.y, circuitState.components);
-
-      if (
-        targetTerminal &&
-        !isSameEndpoint(wireDragState.from, targetTerminal) &&
-        !isDuplicateWire(circuitState.wires, wireDragState.from, targetTerminal)
-      ) {
-        const newWire = {
-          id: makeComponentId('WIRE'),
-          from: wireDragState.from,
-          to: targetTerminal
-        };
-
-        setCircuitState((currentState) => ({
-          components: currentState.components,
-          wires: [...currentState.wires, newWire]
-        }));
+    if (canvas && wireDragRef.current) {
+      const pt = getCanvasPoint(e, canvas);
+      const target = terminalAtPoint(pt.x, pt.y, state.components);
+      if (target && !sameEndpoint(wireDragRef.current.from, target) && !duplicateWire(state.wires, wireDragRef.current.from, target)) {
+        const newWire: CircuitWire = { id: makeId('WIRE'), from: wireDragRef.current.from, to: target };
+        setCircuitState((s) => {
+          const next = { ...s, wires: [...s.wires, newWire] };
+          pushHistory(next);
+          return next;
+        });
       }
     }
 
-    if (canvas && sourceDragState) {
-      const point = getCanvasPoint(event, canvas);
-
-      if (!isSourceArea(point.x, point.y, canvasSize)) {
-        const size = componentSizes[sourceDragState.type];
-        const newComponent = createCircuitComponent(
-          sourceDragState.type,
-          makeComponentId(sourceDragState.type),
-          point.x - size.width / 2,
-          point.y - size.height / 2
-        );
-
-        setCircuitState((currentState) => ({
-          components: [...currentState.components, newComponent],
-          wires: currentState.wires
-        }));
-        setSelectedComponentId(newComponent.id);
+    if (canvas && sourceDragRef.current) {
+      const pt = getCanvasPoint(e, canvas);
+      if (!isSourceArea(pt.x, pt.y, sizeRef.current)) {
+        const type = sourceDragRef.current.type;
+        const sz = componentSizes[type];
+        const nc = createCircuitComponent(type, makeId(type), snapGrid(pt.x - sz.width / 2), snapGrid(pt.y - sz.height / 2));
+        setCircuitState((s) => {
+          const next: CircuitState = {
+            ...s,
+            components: [...s.components, nc],
+            switchStates: type === 'SWITCH' ? { ...s.switchStates, [nc.id]: false } : s.switchStates
+          };
+          pushHistory(next);
+          return next;
+        });
+        setSelectedId(nc.id);
       }
+    }
+
+    // Switch toggle (click, no drag)
+    if (canvas && mouseDownPt.current && !wireDragRef.current && !sourceDragRef.current) {
+      const pt = getCanvasPoint(e, canvas);
+      const dist = Math.hypot(pt.x - mouseDownPt.current.x, pt.y - mouseDownPt.current.y);
+      if (dist < 6) {
+        const sw = state.components.find((c) => c.type === 'SWITCH' && c.id === mouseDownCompId.current);
+        if (sw) {
+          setCircuitState((s) => {
+            const next = { ...s, switchStates: { ...s.switchStates, [sw.id]: !s.switchStates[sw.id] } };
+            pushHistory(next);
+            return next;
+          });
+        }
+      }
+    }
+
+    // Finalize drag (push to history)
+    if (dragRef.current) {
+      pushHistory(circuitRef.current);
     }
 
     wireDragRef.current = null;
-    setWirePreviewPoint(null);
     sourceDragRef.current = null;
-    setSourcePreviewPoint(null);
+    sourcePreviewRef.current = null;
     dragRef.current = null;
+    mouseDownPt.current = null;
+    mouseDownCompId.current = null;
     setIsDragging(false);
   };
 
   const handleMouseLeave = () => {
     wireDragRef.current = null;
-    setWirePreviewPoint(null);
     sourceDragRef.current = null;
-    setSourcePreviewPoint(null);
+    sourcePreviewRef.current = null;
     dragRef.current = null;
+    hoverIdRef.current = null;
     setIsDragging(false);
   };
 
   return (
-    <div
-      ref={containerRef}
-      style={{
-        width: '100%',
-        height: '100%',
-        overflow: 'hidden'
-      }}
-    >
+    <div ref={containerRef} style={{ width: '100%', height: '100%', overflow: 'hidden' }}>
       <canvas
         ref={canvasRef}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
-        style={{
-          display: 'block',
-          width: '100%',
-          height: '100%',
-          cursor: isDragging ? 'grabbing' : 'grab'
-        }}
+        style={{ display: 'block', width: '100%', height: '100%', cursor: isDragging ? 'grabbing' : 'default' }}
       />
     </div>
   );
