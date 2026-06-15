@@ -80,6 +80,9 @@ const DoorSection = ({
     exitRoom: contextExitRoom,
     enterRoom,
     pendingDoorClick,
+    approvedSchoolDoorClick,
+    requestSchoolLevel,
+    clearSchoolDoorApproval,
     isTeleporting,
     isFastTeleport,
     signalRoomReady,
@@ -95,6 +98,7 @@ const DoorSection = ({
   const hoverAudioRef = useRef();
   const openAudioRef = useRef();
   const closeAudioRef = useRef();
+  const pendingSchoolApprovalRef = useRef(false);
   const doorId = useMemo(() => {
     if (roomId) return roomId;
     if (label === 'MATHS') return 'math';
@@ -103,15 +107,10 @@ const DoorSection = ({
     if (label === "GEOMETRY") return 'geometry';
     return null;
   }, [label, roomId]);
-  useEffect(() => {
-    const isSegment0 = segmentIndex === 0;
-    if (pendingDoorClick && pendingDoorClick === doorId && isSegment0 && !isOpen && !isAnimating) {
-      handleClick({
-        stopPropagation: () => {},
-        isTeleport: true
-      });
-    }
-  }, [pendingDoorClick, doorId, segmentIndex, isOpen, isAnimating]);
+  const doorApprovalId = useMemo(() => {
+    if (!doorId) return null;
+    return `${segmentIndex}:${doorId}`;
+  }, [doorId, segmentIndex]);
   useEffect(() => {
     if (isTeleporting && teleportPhase === 'teleporting' && isInsideRoom && currentRoom === doorId) {
       setIsOpen(false);
@@ -272,7 +271,7 @@ const DoorSection = ({
       if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
     };
   }, []);
-  const handleClick = useCallback(e => {
+  const openRoomDoor = useCallback(e => {
     e?.stopPropagation?.();
     const isTeleport = e?.isTeleport || false;
     if (isAnimating) return;
@@ -303,6 +302,8 @@ const DoorSection = ({
         rotationZ: 0
       };
     }
+    const needsSchoolApproval = e?.needsSchoolApproval || false;
+    pendingSchoolApprovalRef.current = needsSchoolApproval;
     const useFastMode = isTeleport && isFastTeleport;
     const alignDuration = useFastMode ? 0.01 : 1.0;
     const doorWorldPos = new THREE.Vector3();
@@ -348,13 +349,72 @@ const DoorSection = ({
             console.warn(`[DoorSection ${label}] Room load timeout - forcing open`);
             roomReadyRef.current = true;
             setRoomReady(true);
-            openDoor(useFastMode);
+            openDoor(useFastMode, pendingSchoolApprovalRef.current);
           }
         }, 8000);
       }
     });
   }, [camera, side, isOpen, isAnimating, setCameraOverride, isFastTeleport]);
-  const openDoor = useCallback((fastMode = false) => {
+  const handleClick = useCallback(e => {
+    e?.stopPropagation?.();
+    if (isAnimating) return;
+    if (isOpen) {
+      openRoomDoor(e);
+      return;
+    }
+    openRoomDoor({
+      stopPropagation: () => {},
+      needsSchoolApproval: true
+    });
+  }, [isAnimating, isOpen, openRoomDoor]);
+  useEffect(() => {
+    const isSegment0 = segmentIndex === 0;
+    if (pendingDoorClick && pendingDoorClick === doorId && isSegment0 && !isOpen && !isAnimating) {
+      openRoomDoor({
+        stopPropagation: () => {},
+        isTeleport: true
+      });
+    }
+  }, [pendingDoorClick, doorId, segmentIndex, isOpen, isAnimating, openRoomDoor]);
+  const continueIntoRoom = useCallback((fastMode = false) => {
+    setIsAnimating(true);
+    const flyDuration = fastMode ? 0.01 : 1.5;
+    const direction = new THREE.Vector3();
+    camera.getWorldDirection(direction);
+    const flyDistance = enterDistance;
+    const targetX = camera.position.x + direction.x * flyDistance;
+    const targetZ = camera.position.z + direction.z * flyDistance;
+    gsap.to(camera.position, {
+      x: targetX,
+      z: targetZ,
+      duration: flyDuration,
+      ease: fastMode ? 'none' : 'power2.inOut',
+      onComplete: () => {
+        roomEntryState.current = {
+          x: camera.position.x,
+          y: camera.position.y,
+          z: camera.position.z,
+          rotationY: camera.rotation.y
+        };
+        setIsAnimating(false);
+        setIsInsideRoom(true);
+        setTimeout(() => {
+          enterRoom(doorId);
+          onEnter?.();
+          if (fastMode) {
+            signalRoomReady();
+          }
+        }, 250);
+      }
+    });
+  }, [camera, enterDistance, enterRoom, doorId, onEnter, signalRoomReady]);
+  useEffect(() => {
+    if (approvedSchoolDoorClick && approvedSchoolDoorClick === doorApprovalId && isOpen && !isAnimating) {
+      clearSchoolDoorApproval();
+      continueIntoRoom(false);
+    }
+  }, [approvedSchoolDoorClick, doorApprovalId, isOpen, isAnimating, clearSchoolDoorApproval, continueIntoRoom]);
+  const openDoor = useCallback((fastMode = false, needsSchoolApproval = false) => {
     if (!doorRef.current) return;
     setIsOpen(true);
     const openAngle = side === 'left' ? Math.PI * 0.6 : -Math.PI * 0.6;
@@ -366,7 +426,6 @@ const DoorSection = ({
     }
     const handleDuration = fastMode ? 0.01 : 0.15;
     const doorDuration = fastMode ? 0.01 : 0.7;
-    const flyDuration = fastMode ? 0.01 : 1.5;
     if (handleRef.current) {
       gsap.to(handleRef.current.rotation, {
         z: side === 'left' ? 0.4 : -0.4,
@@ -379,44 +438,28 @@ const DoorSection = ({
       duration: doorDuration,
       ease: fastMode ? 'none' : 'power2.out',
       onComplete: () => {
-        const direction = new THREE.Vector3();
-        camera.getWorldDirection(direction);
-        const flyDistance = enterDistance;
-        const targetX = camera.position.x + direction.x * flyDistance;
-        const targetZ = camera.position.z + direction.z * flyDistance;
-        gsap.to(camera.position, {
-          x: targetX,
-          z: targetZ,
-          duration: flyDuration,
-          ease: fastMode ? 'none' : 'power2.inOut',
-          onComplete: () => {
-            roomEntryState.current = {
-              x: camera.position.x,
-              y: camera.position.y,
-              z: camera.position.z,
-              rotationY: camera.rotation.y
-            };
-            setIsAnimating(false);
-            setIsInsideRoom(true);
-            setTimeout(() => {
-              enterRoom(doorId);
-              onEnter?.();
-              if (fastMode) {
-                signalRoomReady();
-              }
-            }, 250);
-          }
-        });
+        if (needsSchoolApproval) {
+          pendingSchoolApprovalRef.current = false;
+          setIsAnimating(false);
+          requestSchoolLevel({
+            doorId: doorApprovalId,
+            side,
+            label
+          });
+          return;
+        }
+
+        continueIntoRoom(fastMode);
       }
     });
-  }, [side, onEnter, camera, enterRoom, doorId, signalRoomReady]);
+  }, [side, requestSchoolLevel, doorApprovalId, label, continueIntoRoom]);
   const roomReadyRef = useRef(false);
   const handleRoomReady = useCallback(() => {
     if (roomReadyRef.current) return;
     if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
     roomReadyRef.current = true;
     setRoomReady(true);
-    openDoor(isFastTeleport);
+    openDoor(isFastTeleport, pendingSchoolApprovalRef.current);
   }, [openDoor, isFastTeleport]);
   const exitRoom = useCallback(() => {
     if (!isInsideRoom || isAnimating) return;

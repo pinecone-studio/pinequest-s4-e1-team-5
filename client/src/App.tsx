@@ -12,6 +12,7 @@ import NavigationUI from './components/ui/NavigationUI';
 import GlobalOverlay from './components/ui/GlobalOverlay';
 import ScreenReaderOverlay from './components/ui/ScreenReaderOverlay';
 import CircuitCanvas from './components/ui/CircuitCanvas';
+import SchoolAssistant from './components/ui/SchoolAssistant';
 import posthog from 'posthog-js';
 posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
   api_host: import.meta.env.VITE_POSTHOG_HOST,
@@ -168,6 +169,7 @@ function AppContent() {
           {isLoaded && <>
               <NavigationUI />
               <GlobalOverlay />
+              <SchoolAssistant />
               <PaperTransition />
               <ScreenReaderOverlay />
               <PhysicsCircuitOverlay />
