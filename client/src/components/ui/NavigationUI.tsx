@@ -4,8 +4,6 @@ import { useScene } from '../../context/SceneContext';
 import { useAudio } from '../../context/AudioManager';
 import { setMusicVolume, getMusicVolume } from '../../utils/audioManager';
 import { useAchievements } from '../../context/AchievementsContext';
-import AchievementPopup from './AchievementPopup';
-import AchievementsPanel from './AchievementsPanel';
 import '../../styles/NavigationUI.scss';
 const ROOMS = [{
   id: 'about',
@@ -56,7 +54,6 @@ const NavigationUI = () => {
   const [hoveredRoom, setHoveredRoom] = useState(null);
   const [isExiting, setIsExiting] = useState(false);
   const [isAudioMenuOpen, setIsAudioMenuOpen] = useState(false);
-  const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
   const [bgmVol, setBgmVol] = useState(0.3);
   const [isUIHidden, setIsUIHidden] = useState(false);
   const mapPanelRef = useRef();
@@ -67,7 +64,6 @@ const NavigationUI = () => {
       if (e.detail) {
         setIsMenuOpen(false);
         setIsAudioMenuOpen(false);
-        setIsAchievementsOpen(false);
       }
     };
     window.addEventListener('inspectChange', handleInspectChange);
@@ -132,7 +128,6 @@ const NavigationUI = () => {
     if (isInRoom || isTeleporting) {
       setIsMenuOpen(false);
       setIsAudioMenuOpen(false);
-      setIsAchievementsOpen(false);
       setIsExiting(false);
     }
   }, [isInRoom, isTeleporting]);
@@ -151,12 +146,11 @@ const NavigationUI = () => {
       if (e.key === 'Escape') {
         if (isMenuOpen) setIsMenuOpen(false);
         if (isAudioMenuOpen) setIsAudioMenuOpen(false);
-        if (isAchievementsOpen) setIsAchievementsOpen(false);
       }
     };
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
-  }, [isMenuOpen, isAudioMenuOpen, isAchievementsOpen]);
+  }, [isMenuOpen, isAudioMenuOpen]);
   const handleMapKeyDown = e => {
     if (e.key !== 'Tab' || !mapPanelRef.current) return;
     const focusable = mapPanelRef.current.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
@@ -179,7 +173,6 @@ const NavigationUI = () => {
     if (roomId === currentRoom || isTeleporting) return;
     setIsMenuOpen(false);
     setIsAudioMenuOpen(false);
-    setIsAchievementsOpen(false);
     teleportTo(roomId);
   };
   const handleBackClick = () => {
@@ -187,9 +180,6 @@ const NavigationUI = () => {
     requestExit();
   };
   return <div className="navigation-ui">
-            {}
-            <AchievementPopup />
-
             {}
             {hasEntered && isInRoom && <button className={`nav-btn back-btn ${isExiting ? 'exiting' : ''}`} onClick={handleBackClick} aria-label="Back to corridor">
                     <svg viewBox="0 0 24 24" className="icon-back">
@@ -218,14 +208,6 @@ const NavigationUI = () => {
                                 <path d="M15 9a5 5 0 0 1 0 6" />
                                 <path d="M18 5a9 9 0 0 1 0 14" />
                             </svg>}
-                    </button>
-                    {}
-                    <button className={`nav-btn achievements-btn ${isAchievementsOpen ? 'open' : ''}`} onClick={() => setIsAchievementsOpen(!isAchievementsOpen)} aria-label="Achievements" aria-expanded={isAchievementsOpen}>
-                        <svg viewBox="0 0 24 24" className="icon-trophy">
-                            <path d="M8 21h8M12 17v4M7 4h10M5 4h14v5a7 7 0 0 1-7 7 7 7 0 0 1-7-7z" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M5 9H3V6h2" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M19 9h2V6h-2" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
                     </button>
                 </div>}
 
@@ -333,13 +315,9 @@ const NavigationUI = () => {
                 </div>}
 
             {}
-            <AchievementsPanel isOpen={isAchievementsOpen} onClose={() => setIsAchievementsOpen(false)} />
-
-            {}
-            {(isMenuOpen || isAudioMenuOpen || isAchievementsOpen) && <div className="menu-overlay" onClick={() => {
+            {(isMenuOpen || isAudioMenuOpen) && <div className="menu-overlay" onClick={() => {
       setIsMenuOpen(false);
       setIsAudioMenuOpen(false);
-      setIsAchievementsOpen(false);
     }} />}
         </div>;
 };
