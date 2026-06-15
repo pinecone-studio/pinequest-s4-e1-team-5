@@ -23,7 +23,7 @@ const RoomWarmup = ({
   useFrame(() => {
     if (isDone || completeFired.current) return;
     frameCount.current++;
-    const targetFrames = isLowTier ? 1 : 3;
+    const targetFrames = isLowTier ? 1 : 2;
     if (frameCount.current >= targetFrames) {
       completeFired.current = true;
       const finishWarmup = () => {

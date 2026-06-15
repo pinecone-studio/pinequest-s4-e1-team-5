@@ -5,20 +5,30 @@
     pointer-events: none;
 }
 
+.school-assistant__backdrop {
+    position: absolute;
+    inset: 0;
+    pointer-events: auto;
+    cursor: pointer;
+}
+
 .school-assistant__stage {
     position: absolute;
-    bottom: clamp(48px, 10vh, 112px);
+    bottom: clamp(0px, 4vh, 48px);
     display: grid;
-    grid-template-columns: clamp(160px, 17vw, 260px) minmax(280px, 410px);
+    grid-template-columns: minmax(280px, 400px) clamp(200px, 20vw, 320px);
     align-items: end;
     gap: clamp(10px, 1.8vw, 18px);
     pointer-events: auto;
     filter: drop-shadow(0 16px 18px rgba(0, 0, 0, 0.12));
+    left: 50%;
+    transform: translateX(-46%);
 }
 
 .school-assistant--left .school-assistant__stage {
-    right: clamp(26px, 6vw, 112px);
-    grid-template-columns: minmax(280px, 410px) clamp(178px, 18vw, 286px);
+    left: 50%;
+    transform: translateX(-46%);
+    grid-template-columns: minmax(280px, 400px) clamp(200px, 20vw, 320px);
 }
 
 .school-assistant--left .school-assistant__avatar-wrap {
@@ -32,8 +42,9 @@
 }
 
 .school-assistant--right .school-assistant__stage {
-    right: clamp(26px, 6vw, 112px);
-    grid-template-columns: minmax(280px, 410px) clamp(178px, 18vw, 286px);
+    left: 50%;
+    transform: translateX(-46%);
+    grid-template-columns: minmax(280px, 400px) clamp(200px, 20vw, 320px);
 }
 
 .school-assistant--right .school-assistant__avatar-wrap {
@@ -51,7 +62,7 @@
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    min-height: clamp(286px, 39vh, 470px);
+    min-height: clamp(320px, 46vh, 540px);
 }
 
 .school-assistant__avatar-wrap::after {
@@ -68,8 +79,8 @@
 .school-assistant__avatar {
     position: relative;
     z-index: 1;
-    width: clamp(176px, 17.5vw, 282px);
-    max-height: clamp(300px, 41vh, 482px);
+    width: clamp(210px, 21vw, 340px);
+    max-height: clamp(340px, 48vh, 560px);
     object-fit: contain;
 }
 

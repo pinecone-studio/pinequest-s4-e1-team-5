@@ -99,7 +99,7 @@ const BIRD_HEIGHT = 0.35;
 const RIGHT_CROP_AMOUNT = 0.2;
 const MathRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
   const { openOverlay, isTeleporting } = useScene();
-  const { showTutorial, unlockAchievement, hidePopup } = useAchievements();
+  const { unlockAchievement, hidePopup } = useAchievements();
   const { globalVolume, isMuted } = useAudio();
   const effectiveVolume = isMuted ? 0 : AUDIO_SETTINGS.volume * globalVolume;
   const audioRef = useRef();
@@ -181,9 +181,6 @@ const MathRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
     if (frameCount.current >= FRAMES_TO_WAIT) {
       hasSignaledReady.current = true;
       onReady?.();
-      setTimeout(() => {
-        if (!isWarmup) showTutorial("gallery_inspect");
-      }, 2000);
     }
   });
   const BALCONY_WIDTH = 5;

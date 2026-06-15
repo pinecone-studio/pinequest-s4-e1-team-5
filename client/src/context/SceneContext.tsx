@@ -23,6 +23,7 @@ export const SceneProvider = ({
   const [schoolLevel, setSchoolLevel] = useState(null);
   const [schoolAssistantDoorId, setSchoolAssistantDoorId] = useState(null);
   const [approvedSchoolDoorClick, setApprovedSchoolDoorClick] = useState(null);
+  const [cancelledSchoolDoorClick, setCancelledSchoolDoorClick] = useState(null);
   const [schoolAssistantPlacement, setSchoolAssistantPlacement] = useState(null);
   const enterRoom = useCallback(roomId => {
     setCurrentRoom(roomId);
@@ -71,6 +72,16 @@ export const SceneProvider = ({
   }, [schoolAssistantDoorId]);
   const clearSchoolDoorApproval = useCallback(() => {
     setApprovedSchoolDoorClick(null);
+  }, []);
+  const cancelSchoolLevel = useCallback(() => {
+    const doorId = schoolAssistantDoorId;
+    setSchoolAssistantVisible(false);
+    setSchoolAssistantDoorId(null);
+    setSchoolAssistantPlacement(null);
+    if (doorId) setCancelledSchoolDoorClick(doorId);
+  }, [schoolAssistantDoorId]);
+  const clearCancelledSchoolDoorClick = useCallback(() => {
+    setCancelledSchoolDoorClick(null);
   }, []);
   const openOverlay = useCallback(content => {
     setOverlayContent(content);
@@ -149,8 +160,11 @@ export const SceneProvider = ({
     cancelTeleport,
     requestSchoolLevel,
     chooseSchoolLevel,
-    clearSchoolDoorApproval
-  }), [currentRoom, hasEntered, exitRequested, overlayContent, enterRoom, exitRoom, requestExit, clearExitRequest, markEntered, openOverlay, closeOverlay, teleportTarget, isTeleporting, teleportPhase, pendingDoorClick, isFastTeleport, schoolAssistantVisible, schoolLevel, schoolAssistantPlacement, approvedSchoolDoorClick, teleportTo, requestDoorOpen, startTeleportTransition, openTeleportTransition, completeTeleport, signalRoomReady, finishPaperOpen, cancelTeleport, requestSchoolLevel, chooseSchoolLevel, clearSchoolDoorApproval]);
+    clearSchoolDoorApproval,
+    cancelSchoolLevel,
+    cancelledSchoolDoorClick,
+    clearCancelledSchoolDoorClick
+  }), [currentRoom, hasEntered, exitRequested, overlayContent, enterRoom, exitRoom, requestExit, clearExitRequest, markEntered, openOverlay, closeOverlay, teleportTarget, isTeleporting, teleportPhase, pendingDoorClick, isFastTeleport, schoolAssistantVisible, schoolLevel, schoolAssistantPlacement, approvedSchoolDoorClick, cancelledSchoolDoorClick, teleportTo, requestDoorOpen, startTeleportTransition, openTeleportTransition, completeTeleport, signalRoomReady, finishPaperOpen, cancelTeleport, requestSchoolLevel, chooseSchoolLevel, clearSchoolDoorApproval, cancelSchoolLevel, clearCancelledSchoolDoorClick]);
   return <SceneContext.Provider value={value}>
             {children}
         </SceneContext.Provider>;

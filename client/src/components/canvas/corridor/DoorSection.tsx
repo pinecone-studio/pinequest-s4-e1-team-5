@@ -81,6 +81,8 @@ const DoorSection = ({
     enterRoom,
     pendingDoorClick,
     approvedSchoolDoorClick,
+    cancelledSchoolDoorClick,
+    clearCancelledSchoolDoorClick,
     requestSchoolLevel,
     clearSchoolDoorApproval,
     isTeleporting,
@@ -599,6 +601,12 @@ const DoorSection = ({
       }
     });
   }, [isOpen]);
+  useEffect(() => {
+    if (cancelledSchoolDoorClick && cancelledSchoolDoorClick === doorApprovalId && isOpen && !isAnimating) {
+      clearCancelledSchoolDoorClick();
+      closeDoor();
+    }
+  }, [cancelledSchoolDoorClick, doorApprovalId, isOpen, isAnimating, clearCancelledSchoolDoorClick, closeDoor]);
   const handlePointerEnter = () => {
     if (isOpen || isAnimating) return;
     setIsHovered(true);

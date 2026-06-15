@@ -20,7 +20,8 @@ const SchoolAssistant = () => {
   const {
     schoolAssistantVisible,
     schoolAssistantPlacement,
-    chooseSchoolLevel
+    chooseSchoolLevel,
+    cancelSchoolLevel
   } = useScene();
   const panelRef = useRef<HTMLElement | null>(null);
   const firstButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -50,16 +51,17 @@ const SchoolAssistant = () => {
   const sideClass = schoolAssistantPlacement?.side === 'right' ? 'school-assistant--right' : 'school-assistant--left';
 
   return <div className={`school-assistant ${sideClass}`} role="dialog" aria-modal="true" aria-labelledby="school-assistant-title">
-      <section className="school-assistant__stage" ref={panelRef}>
+      <div className="school-assistant__backdrop" onClick={cancelSchoolLevel} aria-hidden="true" />
+      <section className="school-assistant__stage" ref={panelRef} onClick={e => e.stopPropagation()}>
         <div className="school-assistant__avatar-wrap" aria-hidden="true">
           <img className="school-assistant__avatar" src="/textures/corridor/avatar_anim/3.webp" alt="" />
         </div>
 
         <div className="school-assistant__content">
           <div className="school-assistant__bubble">
-            <p className="school-assistant__eyebrow">AI assistant</p>
+            <p className="school-assistant__eyebrow"></p>
             <h2 id="school-assistant-title">Та хэддүгээр анги вэ?</h2>
-            <p className="school-assistant__message">Өрөө рүү орохын өмнө түвшнээ сонгоорой.</p>
+            <p className="school-assistant__message">Өрөө рүү орохын өмнө ангиa сонгоорой.</p>
           </div>
 
           <div className="school-assistant__choices" aria-label="Ангийн түвшин сонгох">
