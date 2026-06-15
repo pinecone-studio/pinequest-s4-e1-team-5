@@ -3,17 +3,11 @@ import gsap from 'gsap';
 import { useScene } from '../../context/SceneContext';
 import '../../styles/MathRoomAssistant.scss';
 
-const AVATAR_FRAMES = Array.from({ length: 9 }, (_, i) => `/textures/corridor/avatar_anim/${i + 1}.webp`);
-
 const MathRoomAssistant = () => {
   const { currentRoom } = useScene();
   const [visible, setVisible] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const panelRef = useRef<HTMLDivElement | null>(null);
-  const frameRef = useRef<HTMLImageElement | null>(null);
-  const frameIndex = useRef(0);
-  const isReversing = useRef(false);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const prevRoom = useRef<string | null>(null);
 
   useEffect(() => {
@@ -35,18 +29,6 @@ const MathRoomAssistant = () => {
     }
   }, [visible, dismissed]);
 
-  useEffect(() => {
-    if (!visible || dismissed) return;
-    timerRef.current = setInterval(() => {
-      if (!frameRef.current) return;
-      if (frameIndex.current >= 8) isReversing.current = true;
-      if (frameIndex.current <= 0) isReversing.current = false;
-      frameIndex.current += isReversing.current ? -1 : 1;
-      frameRef.current.src = AVATAR_FRAMES[frameIndex.current];
-    }, 1000 / 20);
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [visible, dismissed]);
-
   const handleDismiss = () => {
     if (!panelRef.current) { setDismissed(true); return; }
     gsap.to(panelRef.current, {
@@ -60,25 +42,7 @@ const MathRoomAssistant = () => {
   return (
     <div className="math-assistant" role="dialog" aria-label="AI туслагч">
       <div className="math-assistant__stage" ref={panelRef}>
-        <div className="math-assistant__avatar-wrap" aria-hidden="true">
-          <img
-            ref={frameRef}
-            className="math-assistant__avatar"
-            src={AVATAR_FRAMES[0]}
-            alt=""
-          />
-        </div>
         <div className="math-assistant__content">
-          <div className="math-assistant__bubble">
-            <p className="math-assistant__eyebrow">AI туслагч</p>
-            <h2>Танд юу гэж тусалах вэ?</h2>
-            <p className="math-assistant__hint">
-              ТОМЬЁ дарж томьёо харах, бодлого оруулах эсвэл зургаар шинжлүүлэх боломжтой.
-            </p>
-          </div>
-          <button className="math-assistant__dismiss" onClick={handleDismiss} aria-label="Хаах">
-            Ойлголоо ✕
-          </button>
         </div>
       </div>
     </div>

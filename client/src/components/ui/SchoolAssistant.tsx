@@ -64,14 +64,6 @@ const SchoolAssistant = () => {
       aria-labelledby="school-assistant-title"
     >
       <section className="school-assistant__stage" ref={panelRef}>
-        <div className="school-assistant__avatar-wrap" aria-hidden="true">
-          <img
-            className="school-assistant__avatar"
-            src="/textures/corridor/avatar_anim/3.webp"
-            alt=""
-          />
-        </div>
-
         <div className="school-assistant__content">
           <div className="school-assistant__bubble">
             <p className="school-assistant__eyebrow">AI assistant</p>
