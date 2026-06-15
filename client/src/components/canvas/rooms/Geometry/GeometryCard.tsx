@@ -3,11 +3,13 @@ import {
   memo,
   useCallback,
   useImperativeHandle,
+  useMemo,
   useRef,
   useState,
 } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Text } from '@react-three/drei';
+import GeometryShapePreview from './GeometryShapePreview';
 import * as THREE from 'three';
 import gsap from 'gsap';
 import { useScene } from '../../../../context/SceneContext';
@@ -88,10 +90,14 @@ const GeometryCard = memo(
       const materialRef = useRef<any>(null);
       const [isAnimating, setIsAnimating] = useState(false);
       const [quiz, setQuiz] = useState<QuizState>({ phase: 'idle' });
+      const [paramVals, setParamVals] = useState(() =>
+        topic.interactive.params.map(p => p.default),
+      );
+      const calcResult = topic.interactive.calculate(paramVals[0], paramVals[1], paramVals[2]);
       const swayOffset = useRef(Math.random() * 100);
       const swaySpeed = useRef(0.22 + Math.random() * 0.18);
 
-      const { openOverlay } = useScene();
+      useScene();
 
       useImperativeHandle(ref, () => ({
         openCard: () =>
@@ -131,6 +137,7 @@ const GeometryCard = memo(
           new Promise<void>((resolve) => {
             setIsAnimating(true);
             setQuiz({ phase: 'idle' });
+            setParamVals(topic.interactive.params.map(p => p.default));
             const tl = gsap.timeline({
               onComplete: () => { setIsAnimating(false); resolve(); },
             });
@@ -196,13 +203,42 @@ const GeometryCard = memo(
         else setQuiz({ phase: 'idle' });
       }, [quiz]);
 
-      const handleInteractive = useCallback(() => {
-        openOverlay({
-          title: topic.title,
-          description: topic.fullDetail,
-          platformConfig: { label: 'ГЕОМЕТР' },
-        });
-      }, [openOverlay, topic]);
+      const normalizedParams = topic.interactive.params.map((p, i) =>
+        (paramVals[i] - p.min) / (p.max - p.min),
+      );
+
+      const handleTrackDown = useCallback((e: Parameters<NonNullable<JSX.IntrinsicElements['mesh']['onPointerDown']>>[0], pi: number) => {
+        e.stopPropagation();
+        const p = topic.interactive.params[pi];
+
+        // Set value from UV on initial click
+        let startVal = paramVals[pi];
+        if (e.uv) {
+          startVal = Math.round(p.min + e.uv.x * (p.max - p.min));
+          setParamVals(prev => { const n = [...prev]; n[pi] = startVal; return n; });
+        }
+
+        const startClientX = e.clientX;
+        const range = p.max - p.min;
+        const pixelsForRange = 280;
+
+        const onMove = (we: PointerEvent) => {
+          const dx = we.clientX - startClientX;
+          const delta = Math.round((dx / pixelsForRange) * range);
+          const newVal = Math.max(p.min, Math.min(p.max, startVal + delta));
+          setParamVals(prev => { const n = [...prev]; n[pi] = newVal; return n; });
+        };
+
+        const onUp = () => {
+          setCursor('auto');
+          window.removeEventListener('pointermove', onMove);
+          window.removeEventListener('pointerup', onUp);
+        };
+
+        setCursor('ew-resize');
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp);
+      }, [paramVals, topic.interactive.params]);
 
       const setCursor = (val: string) => { document.body.style.cursor = val; };
 
@@ -224,6 +260,7 @@ const GeometryCard = memo(
             <planeGeometry args={[0.28, 0.18]} />
             <meshBasicMaterial color="#ffffff" map={clothespinTexture} transparent alphaTest={0.1} side={THREE.DoubleSide} />
           </mesh>
+
 
           <group ref={paperRef} position={[0, PAPER_REF_Y, 0]}>
             <mesh>
@@ -354,32 +391,100 @@ const GeometryCard = memo(
             {isSelected && (
               <group rotation={[0, Math.PI, 0]} position={[0, 0, -0.015]} renderOrder={50}>
                 
-                {/* Section 1: Interactive */}
-                <group position={[0, 0.98, 0]}>
-                  <mesh
-                    onClick={(e) => { e.stopPropagation(); handleInteractive(); }}
-                    onPointerEnter={(e) => { e.stopPropagation(); setCursor('pointer'); }}
-                    onPointerLeave={(e) => { e.stopPropagation(); setCursor('auto'); }}
-                  >
-                    <planeGeometry args={[1.1, 1.1 / 3.613]} />
-                    <meshBasicMaterial color="#ffffff" map={buttonTexture} transparent alphaTest={0.05} side={THREE.DoubleSide} depthTest={false} />
+                {/* Section 1: Interactive Calculator */}
+                <group position={[0, 0.65, 0]}>
+                  {/* Header */}
+                  <mesh position={[0, 0.37, 0]}>
+                    <planeGeometry args={[1.3, 0.068]} />
+                    <meshBasicMaterial color={accent} side={THREE.DoubleSide} depthTest={false} />
                   </mesh>
-                  <Text
-                    position={[0, 0, 0.01]}
-                    fontSize={0.088}
-                    color="#1c1c1c"
-                    font={FONT}
-                    anchorX="center"
-                    anchorY="middle"
-                    fillOpacity={backOpacity}
-                    depthTest={false}
-                  >
-                    INTERACTIVE
+                  <Text position={[0, 0.37, 0.01]} fontSize={0.044} color="#ffffff" font={FONT} anchorX="center" anchorY="middle" letterSpacing={0.07} fillOpacity={backOpacity} depthTest={false}>
+                    ИНТЕРАКТИВ ТООЦОО
                   </Text>
+
+                  {/* 3D Shape Preview */}
+                  <mesh position={[0, 0.215, -0.002]}>
+                    <planeGeometry args={[0.50, 0.295]} />
+                    <meshBasicMaterial color={accent} transparent opacity={0.16} side={THREE.DoubleSide} depthTest={false} />
+                  </mesh>
+                  <mesh position={[0, 0.215, -0.001]}>
+                    <planeGeometry args={[0.48, 0.275]} />
+                    <meshBasicMaterial color="#f5ede0" transparent opacity={0.94} side={THREE.DoubleSide} depthTest={false} />
+                  </mesh>
+                  <group position={[0, 0.215, 0.01]} renderOrder={56}>
+                    <GeometryShapePreview
+                      topicId={topic.id}
+                      norms={normalizedParams}
+                      accent={accent}
+                      isSelected={isSelected}
+                    />
+                  </group>
+
+                  {/* Param slider rows */}
+                  {topic.interactive.params.map((param, pi) => {
+                    const yp = 0.025 - pi * 0.128;
+                    const val = paramVals[pi];
+                    const pct = Math.max(0, Math.min(1, (val - param.min) / (param.max - param.min)));
+                    const TW = 0.52, TX = 0.07;
+                    return (
+                      <group key={param.name} position={[0, yp, 0.01]}>
+                        {/* Label */}
+                        <Text position={[-0.62, 0, 0.01]} fontSize={0.040} color="#444" font={FONT} anchorX="left" anchorY="middle" fillOpacity={backOpacity} depthTest={false}>
+                          {param.label}
+                        </Text>
+                        {/* Track bg */}
+                        <mesh position={[TX, 0, 0]}>
+                          <planeGeometry args={[TW, 0.014]} />
+                          <meshBasicMaterial color="#d0d0d0" side={THREE.DoubleSide} depthTest={false} />
+                        </mesh>
+                        {/* Track fill */}
+                        {pct > 0.005 && (
+                          <mesh position={[TX - TW / 2 + (pct * TW) / 2, 0, 0.001]}>
+                            <planeGeometry args={[pct * TW, 0.014]} />
+                            <meshBasicMaterial color={accent} transparent opacity={0.72} side={THREE.DoubleSide} depthTest={false} />
+                          </mesh>
+                        )}
+                        {/* Thumb circle */}
+                        <mesh position={[TX - TW / 2 + pct * TW, 0, 0.003]}>
+                          <circleGeometry args={[0.020, 12]} />
+                          <meshBasicMaterial color={accent} side={THREE.DoubleSide} depthTest={false} />
+                        </mesh>
+                        {/* Invisible drag hitbox */}
+                        <mesh
+                          position={[TX, 0, 0.005]}
+                          onPointerDown={(e) => handleTrackDown(e, pi)}
+                          onPointerEnter={(e) => { e.stopPropagation(); setCursor('ew-resize'); }}
+                          onPointerLeave={(e) => { e.stopPropagation(); setCursor('auto'); }}
+                        >
+                          <planeGeometry args={[TW + 0.06, 0.065]} />
+                          <meshBasicMaterial transparent opacity={0} side={THREE.DoubleSide} depthTest={false} />
+                        </mesh>
+                        {/* Value */}
+                        <Text position={[TX + TW / 2 + 0.09, 0, 0.003]} fontSize={0.060} color={accent} font={FONT} anchorX="center" anchorY="middle" fillOpacity={backOpacity} depthTest={false}>
+                          {val}
+                        </Text>
+                      </group>
+                    );
+                  })}
+
+                  {/* Result */}
+                  <group position={[0, 0.025 - topic.interactive.params.length * 0.128 - 0.082, 0]}>
+                    <mesh position={[0, 0, -0.002]}>
+                      <planeGeometry args={[1.32, 0.112]} />
+                      <meshBasicMaterial color={accent} transparent opacity={0.22} side={THREE.DoubleSide} depthTest={false} />
+                    </mesh>
+                    <mesh position={[0, 0, -0.001]}>
+                      <planeGeometry args={[1.30, 0.108]} />
+                      <meshBasicMaterial color="#fdf6e0" transparent opacity={0.9} side={THREE.DoubleSide} depthTest={false} />
+                    </mesh>
+                    <Text position={[0, 0, 0.003]} fontSize={0.070} color={accent} font={FONT} anchorX="center" anchorY="middle" fillOpacity={backOpacity} depthTest={false}>
+                      = {calcResult.toFixed(2)} {topic.interactive.unit}
+                    </Text>
+                  </group>
                 </group>
 
                 {/* Divider 1 */}
-                <mesh position={[0, 0.74, 0]}>
+                <mesh position={[0, 0.05, 0]}>
                   <planeGeometry args={[1.3, 0.003]} />
                   <meshBasicMaterial color="#cccccc" side={THREE.DoubleSide} depthTest={false} />
                 </mesh>
