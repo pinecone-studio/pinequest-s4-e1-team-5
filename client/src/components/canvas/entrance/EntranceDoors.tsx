@@ -52,7 +52,7 @@ const EntranceDoors = ({
   const bricksTexture = useTexture('/textures/entrance/wall_bricks_2.webp');
   const stonePathTexture = useTexture('/textures/entrance/stone-path.webp');
   const catFrontBodyTexture = useTexture('/textures/entrance/cat2.png'); 
-  const windowSketchTexture = useTexture('/textures/entrance/window_sketch.webp');
+  const windowSketchTexture = useTexture('/textures/entrance/window_sketch2.png');
   const treeTexture = useTexture('/textures/entrance/tree22.png'); 
   const mouseTexture = useTexture('/textures/entrance/mouse24.png'); 
   const potTexture = useTexture('/textures/entrance/duck_pot1.png'); 
@@ -411,7 +411,7 @@ const EntranceDoors = ({
                 
                 <mesh position={[0, 0, 0.2]}>
                     <planeGeometry args={[1.5, 1.5]} />
-                    <meshBasicMaterial color="#D2B48C" map={windowSketchTexture} transparent={true} />
+                    <meshBasicMaterial color="#e0e0e0" map={windowSketchTexture} transparent={true} />
                 </mesh>
             </group>
 
