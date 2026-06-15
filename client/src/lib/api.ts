@@ -107,3 +107,10 @@ export function generateMathQuiz(topic: string, gradeRange = "6-9", count = 3) {
     body: JSON.stringify({ gradeRange, subject: "math", topic, count }),
   });
 }
+
+export function generateGeometryQuiz(topic: string, gradeRange = "6-9", count = 3) {
+  return apiFetch<QuizResult>("/api/quiz", {
+    method: "POST",
+    body: JSON.stringify({ gradeRange, subject: "geometry", topic, count }),
+  });
+}
