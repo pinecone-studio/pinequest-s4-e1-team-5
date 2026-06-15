@@ -21,6 +21,13 @@ import MathFormulaPanel from './components/ui/MathFormulaPanel';
 import { AchievementsProvider } from './context/AchievementsContext';
 
 // Стил болон Тохиргооны импорт
+import MathQuizPanel from './components/ui/MathQuizPanel';
+import posthog from 'posthog-js';
+posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
+  api_host: import.meta.env.VITE_POSTHOG_HOST,
+  person_profiles: 'identified_only'
+});
+const Experience = lazy(() => import('./components/canvas/Experience'));
 import './styles/main.scss';
 import { 
   ENTRANCE_TEXTURES, 
@@ -189,6 +196,7 @@ function AppContent(): JSX.Element {
               <SchoolAssistant />
               <MathRoomAssistant />
               <MathFormulaPanel />
+              <MathQuizPanel />
               <PaperTransition />
               <ScreenReaderOverlay />
               <PhysicsCircuitOverlay />
