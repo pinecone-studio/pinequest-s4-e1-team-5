@@ -4,7 +4,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 const SignSystem = props => {
   const groupRef = useRef();
-  const signTexture = useTexture('/textures/entrance/sign.webp');
+  const signTexture = useTexture('/textures/entrance/sign4.png');
   const mountTexture = useTexture('/textures/entrance/belka.webp');
   const timeOffset = useMemo(() => Math.random() * 100, []);
   useFrame(state => {
