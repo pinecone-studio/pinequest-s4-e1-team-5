@@ -3,16 +3,12 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { Text, Plane, useTexture } from '@react-three/drei';
 import * as THREE from 'three';
 import gsap from 'gsap';
-import { PositionalAudio } from '@react-three/drei';
 import '../shaders/RevealMaterial';
-import { useAudio } from '../../../../context/AudioManager';
+
 import { isTouchDevice } from '../../../../utils/deviceDetect';
-const ENTRANCE_DOOR_AUDIO_SETTINGS = {
-  hoverVolume: 2.0,
-  openVolume: 2.0,
-  distance: 3,
-  rolloff: 2
-};
+
+
+
 const Door = ({
   position,
   side = 'left',
@@ -40,12 +36,7 @@ const Door = ({
     camera
   } = useThree();
   const closeTimerRef = useRef(null);
-  const {
-    globalVolume,
-    isMuted
-  } = useAudio();
-  const hoverAudioRef = useRef();
-  const openAudioRef = useRef();
+ 
   const doorWidth = 1.2;
   const doorHeight = 2.2;
   const frameThickness = 0.1;
@@ -85,12 +76,7 @@ const Door = ({
     if (!doorRef.current) return;
     isOpenRef.current = true;
     const openAngle = side === 'left' ? Math.PI * 0.6 : -Math.PI * 0.6;
-    if (openAudioRef.current) {
-      const vol = isMuted ? 0 : ENTRANCE_DOOR_AUDIO_SETTINGS.openVolume * globalVolume;
-      openAudioRef.current.setVolume(vol);
-      if (openAudioRef.current.isPlaying) openAudioRef.current.stop();
-      openAudioRef.current.play();
-    }
+   
     gsap.to(doorRef.current.rotation, {
       y: openAngle,
       duration: 0.7,
@@ -161,8 +147,8 @@ const Door = ({
             </mesh>
 
             {}
-            <PositionalAudio ref={hoverAudioRef} url="/sounds/uchyleniedrzwi.mp3" distanceModel="exponential" rolloffFactor={ENTRANCE_DOOR_AUDIO_SETTINGS.rolloff} refDistance={ENTRANCE_DOOR_AUDIO_SETTINGS.distance} loop={false} />
-            <PositionalAudio ref={openAudioRef} url="/sounds/otwarciedrzwi.mp3" distanceModel="exponential" rolloffFactor={ENTRANCE_DOOR_AUDIO_SETTINGS.rolloff} refDistance={ENTRANCE_DOOR_AUDIO_SETTINGS.distance} loop={false} />
+            {/* <PositionalAudio ref={hoverAudioRef} url="/sounds/uchyleniedrzwi.mp3" distanceModel="exponential" rolloffFactor={ENTRANCE_DOOR_AUDIO_SETTINGS.rolloff} refDistance={ENTRANCE_DOOR_AUDIO_SETTINGS.distance} loop={false} />
+            <PositionalAudio ref={openAudioRef} url="/sounds/otwarciedrzwi.mp3" distanceModel="exponential" rolloffFactor={ENTRANCE_DOOR_AUDIO_SETTINGS.rolloff} refDistance={ENTRANCE_DOOR_AUDIO_SETTINGS.distance} loop={false} /> */}
 
             {}
             <group>
@@ -184,22 +170,11 @@ const Door = ({
             <group ref={doorRef} position={[side === 'left' ? -doorWidth / 2 : doorWidth / 2, 0, 0]}>
                 <mesh position={[side === 'left' ? doorWidth / 2 : -doorWidth / 2, 0, 0.02]} onClick={handleClick} onPointerEnter={e => {
         e.stopPropagation();
-        if (!isHoveredRef.current && !isOpenRef.current) {
-          if (hoverAudioRef.current && !isHoveredRef.current) {
-            const vol = isMuted ? 0 : ENTRANCE_DOOR_AUDIO_SETTINGS.hoverVolume * globalVolume;
-            hoverAudioRef.current.setVolume(vol);
-            if (hoverAudioRef.current.isPlaying) hoverAudioRef.current.stop();
-            if (hoverAudioRef.current.context.state === 'running') {
-              hoverAudioRef.current.play();
-            }
-          }
-        }
+        
         isHoveredRef.current = true;
       }} onPointerLeave={() => {
         isHoveredRef.current = false;
-        if (hoverAudioRef.current && hoverAudioRef.current.isPlaying) {
-          hoverAudioRef.current.stop();
-        }
+       
       }}>
                     <planeGeometry args={[doorWidth, doorHeight]} />
                     {}

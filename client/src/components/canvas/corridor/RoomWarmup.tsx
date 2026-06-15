@@ -1,9 +1,12 @@
 import { useRef, useState, Suspense } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import GalleryRoom from '../rooms/Gallery/GalleryRoom';
-import StudioRoom from '../rooms/Studio/StudioRoom';
-import AboutRoom from '../rooms/About/AboutRoom';
-import ContactRoom from '../rooms/Contact/ContactRoom';
+import MathRoom from '../rooms/Mathematic/MathRoom';
+import ChemistryRoom from '../rooms/Chemistry/ChemistryRoom';
+import PhysicRoom from '../rooms/Physics/PhysicRoom';
+import GeometryRoom from '../rooms/Geometry/GeometryRoom';
+
+
+
 const RoomWarmup = ({
   onWarmupComplete,
   isLowTier
@@ -53,22 +56,22 @@ const RoomWarmup = ({
             {}
             <Suspense fallback={null}>
                 <group position={[-20, 0, 0]}>
-                    <GalleryRoom showRoom={true} onReady={noop} isExiting={false} isWarmup={true} />
+                    <MathRoom showRoom={true} onReady={noop} isExiting={false} isWarmup={true} />
                 </group>
             </Suspense>
             <Suspense fallback={null}>
                 <group position={[20, 0, 0]}>
-                    <StudioRoom showRoom={true} onReady={noop} isExiting={false} isWarmup={true} />
+                    <ChemistryRoom showRoom={true} onReady={noop} isExiting={false} isWarmup={true} />
                 </group>
             </Suspense>
             <Suspense fallback={null}>
                 <group position={[-20, 0, -50]}>
-                    <AboutRoom showRoom={true} onReady={noop} isExiting={false} isWarmup={true} />
+                    <PhysicRoom showRoom={true} onReady={noop} isExiting={false} isWarmup={true} />
                 </group>
             </Suspense>
             <Suspense fallback={null}>
                 <group position={[20, 0, -50]}>
-                    <ContactRoom showRoom={true} onReady={noop} isExiting={false} isWarmup={true} />
+                    <GeometryRoom showRoom={true} onReady={noop} isExiting={false} isWarmup={true} />
                 </group>
             </Suspense>
         </group>;

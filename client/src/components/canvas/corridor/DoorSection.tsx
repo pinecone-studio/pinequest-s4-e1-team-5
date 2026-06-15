@@ -21,18 +21,6 @@ const DOOR_AUDIO_SETTINGS = {
   rolloff: 2,
   closeDelay: 0.5
 };
-const DOOR_TEXTURES = {
-  'THE GALLERY': '/textures/corridor/doors/drzwiabout_painted.webp',
-  'THE STUDIO': '/textures/corridor/doors/drzwiabout_painted.webp',
-  'THE ABOUT': '/textures/corridor/doors/drzwiabout_painted.webp',
-  "LET'S CONNECT": '/textures/corridor/doors/drzwiabout_painted.webp'
-};
-const DOOR_PAINTED_TEXTURES = {
-  'THE GALLERY': '/textures/corridor/doors/drzwiabout_painted.webp',
-  'THE STUDIO': '/textures/corridor/doors/drzwiabout_painted.webp',
-  'THE ABOUT': '/textures/corridor/doors/drzwiabout_painted.webp',
-  "LET'S CONNECT": '/textures/corridor/doors/drzwiabout_painted.webp'
-};
 const WALL_DX = WALL_X_OUTER - WALL_X_INNER;
 const WALL_DZ = DOOR_Z_SPAN;
 const WALL_LENGTH = Math.sqrt(WALL_DX * WALL_DX + WALL_DZ * WALL_DZ);
