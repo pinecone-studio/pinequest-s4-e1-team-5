@@ -54,6 +54,7 @@ const GeometryRoomInner = ({ showRoom, onReady, isWarmup }: Props) => {
   const [selectedCard, setSelectedCard] = useState<number | null>(null);
   const [globalIsAnimating, setGlobalIsAnimating] = useState(false);
   const cardRefs = useRef<(GeometryCardHandle | null)[]>([]);
+  const activeCardRef = useRef<number | null>(null);
 
   // ── Signal ready ────────────────────────────────────────────────────────────
   const hasSignaledReady = useRef(false);
@@ -137,18 +138,22 @@ const GeometryRoomInner = ({ showRoom, onReady, isWarmup }: Props) => {
       if (globalIsAnimating) return;
       if (selectedCard === clickedIdx) {
         setGlobalIsAnimating(true);
+        activeCardRef.current = null;
         await cardRefs.current[clickedIdx]?.closeCard();
         setSelectedCard(null);
         setGlobalIsAnimating(false);
       } else if (selectedCard !== null) {
         setGlobalIsAnimating(true);
+        activeCardRef.current = null;
         await cardRefs.current[selectedCard]?.closeCard();
         setSelectedCard(null);
+        activeCardRef.current = clickedIdx;
         await cardRefs.current[clickedIdx]?.openCard();
         setSelectedCard(clickedIdx);
         setGlobalIsAnimating(false);
       } else {
         setGlobalIsAnimating(true);
+        activeCardRef.current = clickedIdx;
         await cardRefs.current[clickedIdx]?.openCard();
         setSelectedCard(clickedIdx);
         setGlobalIsAnimating(false);
