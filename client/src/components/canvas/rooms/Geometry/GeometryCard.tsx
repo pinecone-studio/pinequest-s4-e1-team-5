@@ -12,7 +12,7 @@ import * as THREE from 'three';
 import gsap from 'gsap';
 import { useScene } from '../../../../context/SceneContext';
 import PaperMaterial from '../Mathematic/PaperMaterial';
-import { generateGeometryQuiz, type QuizQuestion } from '../../../../lib/api';
+import { generateMathQuiz, type QuizQuestion } from '../../../../lib/api';
 import {
   type TopicData,
   CARD_COUNT,
@@ -191,7 +191,7 @@ const GeometryCard = memo(
       const startQuiz = useCallback(async () => {
         setQuiz({ phase: 'loading' });
         try {
-          const res = await generateGeometryQuiz(topic.apiTopic, '6-9', 3);
+          const res = await generateMathQuiz(topic.apiTopic, '6-9', 3);
           setQuiz({
             phase: 'questions',
             questions: res.questions,
