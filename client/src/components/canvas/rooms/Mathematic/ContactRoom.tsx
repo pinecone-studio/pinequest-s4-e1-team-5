@@ -308,6 +308,7 @@ const ContactRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
         rotation={[0, 0, 0]}
         texturePath="/textures/contact/beczka.webp"
         label="TOMYO"
+        onClick={() => window.dispatchEvent(new CustomEvent('pinequest:tomyo-open'))}
       />
 
       {}
