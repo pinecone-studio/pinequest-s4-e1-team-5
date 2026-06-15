@@ -108,9 +108,53 @@ export function generateMathQuiz(topic: string, gradeRange = "6-9", count = 3) {
   });
 }
 
-export function generateGeometryQuiz(topic: string, gradeRange = "6-9", count = 3) {
-  return apiFetch<QuizResult>("/api/quiz", {
+export function getFormulasBySubject(subject: string) {
+  return apiFetch<{ data: FormulaRow[] }>(
+    `/api/formulas?subject=${encodeURIComponent(subject)}`
+  );
+}
+
+export type DetectedFormulaItem = {
+  detected: { name: string; formula: string; usageInProblem: string };
+  dbMatches: FormulaRow[];
+};
+
+export type DetectFormulaResponse = {
+  explanation: string;
+  results: DetectedFormulaItem[];
+};
+
+export function detectFormulasFromImage(
+  image: string,
+  mimeType: string = "image/jpeg"
+) {
+  return apiFetch<DetectFormulaResponse>("/api/formulas/detect", {
     method: "POST",
-    body: JSON.stringify({ gradeRange, subject: "geometry", topic, count }),
+    body: JSON.stringify({ image, mimeType }),
+  });
+}
+
+export type TutorSolveResult = {
+  problemType: string;
+  subject: string;
+  grade: number;
+  topic: string;
+  givenValues: string[];
+  unknownValue: string;
+  formulaUsed: string;
+  whyFormula: string;
+  solutionSteps: string[];
+  finalAnswer: string;
+  wolframQuery: string;
+};
+
+export function solveProblem(
+  problem: string,
+  subject: string = "math",
+  grade: number = 9
+) {
+  return apiFetch<TutorSolveResult>("/api/tutor/solve", {
+    method: "POST",
+    body: JSON.stringify({ problem, subject, grade }),
   });
 }
