@@ -19,12 +19,18 @@ export const SceneProvider = ({
   const [teleportPhase, setTeleportPhase] = useState(null);
   const [pendingDoorClick, setPendingDoorClick] = useState(null);
   const [isFastTeleport, setIsFastTeleport] = useState(false);
+  const [schoolAssistantVisible, setSchoolAssistantVisible] = useState(false);
+  const [schoolLevel, setSchoolLevel] = useState(null);
+  const [schoolAssistantDoorId, setSchoolAssistantDoorId] = useState(null);
+  const [approvedSchoolDoorClick, setApprovedSchoolDoorClick] = useState(null);
+  const [schoolAssistantPlacement, setSchoolAssistantPlacement] = useState(null);
   const enterRoom = useCallback(roomId => {
     setCurrentRoom(roomId);
     setExitRequested(false);
     setOverlayContent(null);
     setIsTeleporting(false);
     setPendingDoorClick(null);
+    setApprovedSchoolDoorClick(null);
   }, []);
   const exitRoom = useCallback(() => {
     setCurrentRoom(null);
@@ -40,6 +46,31 @@ export const SceneProvider = ({
   }, []);
   const markEntered = useCallback(() => {
     setHasEntered(true);
+    setSchoolAssistantVisible(false);
+  }, []);
+  const requestSchoolLevel = useCallback(prompt => {
+    const nextDoorId = typeof prompt === 'object' && prompt !== null ? prompt.doorId : prompt;
+    const nextPlacement = typeof prompt === 'object' && prompt !== null ? {
+      side: prompt.side ?? 'left',
+      label: prompt.label ?? null
+    } : null;
+    setSchoolAssistantDoorId(nextDoorId ?? null);
+    setSchoolAssistantPlacement(nextPlacement);
+    setSchoolAssistantVisible(true);
+  }, []);
+  const chooseSchoolLevel = useCallback(level => {
+    setSchoolLevel(level);
+    setSchoolAssistantVisible(false);
+    if (schoolAssistantDoorId) {
+      setApprovedSchoolDoorClick(schoolAssistantDoorId);
+      setSchoolAssistantDoorId(null);
+      setSchoolAssistantPlacement(null);
+    } else {
+      setHasEntered(true);
+    }
+  }, [schoolAssistantDoorId]);
+  const clearSchoolDoorApproval = useCallback(() => {
+    setApprovedSchoolDoorClick(null);
   }, []);
   const openOverlay = useCallback(content => {
     setOverlayContent(content);
@@ -104,6 +135,10 @@ export const SceneProvider = ({
     teleportPhase,
     pendingDoorClick,
     isFastTeleport,
+    schoolAssistantVisible,
+    schoolLevel,
+    schoolAssistantPlacement,
+    approvedSchoolDoorClick,
     teleportTo,
     requestDoorOpen,
     startTeleportTransition,
@@ -111,8 +146,11 @@ export const SceneProvider = ({
     completeTeleport,
     signalRoomReady,
     finishPaperOpen,
-    cancelTeleport
-  }), [currentRoom, hasEntered, exitRequested, overlayContent, enterRoom, exitRoom, requestExit, clearExitRequest, markEntered, openOverlay, closeOverlay, teleportTarget, isTeleporting, teleportPhase, pendingDoorClick, isFastTeleport, teleportTo, requestDoorOpen, startTeleportTransition, openTeleportTransition, completeTeleport, signalRoomReady, finishPaperOpen, cancelTeleport]);
+    cancelTeleport,
+    requestSchoolLevel,
+    chooseSchoolLevel,
+    clearSchoolDoorApproval
+  }), [currentRoom, hasEntered, exitRequested, overlayContent, enterRoom, exitRoom, requestExit, clearExitRequest, markEntered, openOverlay, closeOverlay, teleportTarget, isTeleporting, teleportPhase, pendingDoorClick, isFastTeleport, schoolAssistantVisible, schoolLevel, schoolAssistantPlacement, approvedSchoolDoorClick, teleportTo, requestDoorOpen, startTeleportTransition, openTeleportTransition, completeTeleport, signalRoomReady, finishPaperOpen, cancelTeleport, requestSchoolLevel, chooseSchoolLevel, clearSchoolDoorApproval]);
   return <SceneContext.Provider value={value}>
             {children}
         </SceneContext.Provider>;

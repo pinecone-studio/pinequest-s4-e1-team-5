@@ -39,7 +39,8 @@ const NavigationUI = () => {
     requestExit,
     hasEntered,
     teleportTo,
-    isTeleporting
+    isTeleporting,
+    schoolAssistantVisible
   } = useScene();
   const {
     isMuted,
@@ -121,12 +122,12 @@ const NavigationUI = () => {
     setMusicVolume(val);
   };
   useEffect(() => {
-    if (!hasEntered && !isTeleporting) {
+    if (!hasEntered && !isTeleporting && !schoolAssistantVisible) {
       showTutorial('corridor_enter');
     } else if (hasEntered && !isTeleporting && !isInRoom) {
       showTutorial('corridor_explore');
     }
-  }, [hasEntered, isTeleporting, isInRoom, showTutorial]);
+  }, [hasEntered, isTeleporting, isInRoom, schoolAssistantVisible, showTutorial]);
   useEffect(() => {
     if (isInRoom || isTeleporting) {
       setIsMenuOpen(false);
