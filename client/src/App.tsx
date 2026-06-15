@@ -19,15 +19,8 @@ import SchoolAssistant from './components/ui/SchoolAssistant';
 import MathRoomAssistant from './components/ui/MathRoomAssistant';
 import MathFormulaPanel from './components/ui/MathFormulaPanel';
 import { AchievementsProvider } from './context/AchievementsContext';
-
-// Стил болон Тохиргооны импорт
 import MathQuizPanel from './components/ui/MathQuizPanel';
-import posthog from 'posthog-js';
-posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
-  api_host: import.meta.env.VITE_POSTHOG_HOST,
-  person_profiles: 'identified_only'
-});
-const Experience = lazy(() => import('./components/canvas/Experience'));
+
 import './styles/main.scss';
 import { 
   ENTRANCE_TEXTURES, 
@@ -40,10 +33,10 @@ import {
   filterTexturesByDevice 
 } from './config/texturePreloadList';
 
-// Эхлээд Experience-ийг lazy-аар дуудах
+// 🔥 Experience-ийг зөвхөн ганцхан удаа энд зарлана
 const Experience = lazy(() => import('./components/canvas/Experience'));
 
-// PostHog Күлэгжүүлэлт
+// PostHog Күлэгжүүлэлт / Идэвхжүүлэлт
 if (typeof window !== 'undefined' && import.meta.env.VITE_POSTHOG_KEY) {
   posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
     api_host: import.meta.env.VITE_POSTHOG_HOST || 'https://us.i.posthog.com',
@@ -98,7 +91,6 @@ const SceneStyling = (): JSX.Element => {
   const { scene } = useThree();
   
   useEffect(() => {
-    // ЗАССАН ХЭСЭГ: THREE.FogLinear-ийг зөв хувилбар болох THREE.Fog болгож солив
     scene.fog = new THREE.Fog('#f6f3e8', 20, 65);
     return () => {
       scene.fog = null;
@@ -107,7 +99,6 @@ const SceneStyling = (): JSX.Element => {
 
   return (
     <>
-      {/* Бүх зүйлсийг зөөлөн шар туяатай харагдуулах орчны гэрлүүд */}
       <ambientLight intensity={0.7} color="#fffbee" />
       <directionalLight position={[5, 15, 5]} intensity={0.6} color="#ffeaa7" castShadow />
       <pointLight position={[-10, 10, -10]} intensity={0.3} color="#fab1a0" />
@@ -174,10 +165,7 @@ function AppContent(): JSX.Element {
               dpr={settings.dpr} 
               shadows={settings.shadows}
             >
-              {/* Суурь өнгийг маш гоё дулаахан пастел сүүн шаргал болгов */}
               <color attach="background" args={['#f6f3e8']} />
-              
-              {/* Арын хэсгийг гоё болгох гэрэл болон манан */}
               <SceneStyling />
 
               <PerformanceMonitor onDecline={() => downgradeTier()} flipflops={3} onFallback={() => downgradeTier()} />
