@@ -16,16 +16,16 @@ import { useScene } from "../../../../context/SceneContext";
 gsap.registerPlugin(Observer);
 import { useAchievements } from "../../../../context/AchievementsContext";
 import PaperMaterial from "./PaperMaterial";
-import MathClouds from "./MathClouds";
+import GalleryClouds from "./GalleryClouds";
 import { useAudio } from "../../../../context/AudioManager";
-import { usePaintMaterial } from "./usePaintMaterial";
+import { usePaintMaterial } from "./PaperMaterial";
 const _tempScale = new THREE.Vector3();
 export const AUDIO_SETTINGS = {
   volume: 0.6,
   distance: 2,
   rolloff: 1.5,
 };
-export const MATH_INTERACTION_AUDIO_SETTINGS = {
+export const GALLERY_INTERACTION_AUDIO_SETTINGS = {
   volume: 0.6,
   distance: 2,
   rolloff: 2,
@@ -97,7 +97,7 @@ const GAP = 2.5;
 const BIRD_WIDTH = 0.49;
 const BIRD_HEIGHT = 0.35;
 const RIGHT_CROP_AMOUNT = 0.2;
-const MathRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
+const GalleryRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
   const { openOverlay, isTeleporting } = useScene();
   const { showTutorial, unlockAchievement, hidePopup } = useAchievements();
   const { globalVolume, isMuted } = useAudio();
@@ -443,11 +443,13 @@ const MathRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
         />
       )}
       <group position={[0, -0.7, -2]}>
+        {}
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
           <shapeGeometry args={[floorShape]} />
           <primitive object={materials.floor} />
         </mesh>
 
+        {}
         <line rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
           <bufferGeometry>
             <float32BufferAttribute
@@ -465,6 +467,7 @@ const MathRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
           />
         </line>
 
+        {}
         <mesh position={[0, RAILING_HEIGHT / 2, -3.9]}>
           <planeGeometry args={[20, RAILING_HEIGHT]} />
           <meshBasicMaterial
@@ -478,14 +481,17 @@ const MathRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
           />
         </mesh>
 
+        {}
         <mesh position={[0, 0.01, -3.9]} rotation={[-Math.PI / 2, 0, 0]}>
           <planeGeometry args={[15, 0.15]} />
           <primitive object={materials.threshold} />
         </mesh>
 
+        {}
         <group position={[0, 1.6, -4]}>
           <mesh geometry={ropeGeometry} material={materials.rope} />
 
+          {}
           {projects.map((project, i) => (
             <ProjectCard
               key={i}
@@ -508,6 +514,8 @@ const MathRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
           ))}
         </group>
 
+        {}
+        {}
         <mesh position={[0, -1, -9]} scale={[1, 1, 1]}>
           <planeGeometry args={[15, 15 / 2.357]} />
           <meshBasicMaterial
@@ -519,6 +527,7 @@ const MathRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
             onBeforeCompile={onBeforeCompile}
           />
         </mesh>
+        {}
         <mesh position={[-15, -1, -9]} scale={[-1, 1, 1]}>
           <planeGeometry args={[15, 15 / 2.357]} />
           <meshBasicMaterial
@@ -530,6 +539,7 @@ const MathRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
             onBeforeCompile={onBeforeCompile}
           />
         </mesh>
+        {}
         <RightSideHouses
           texture={housesTexture}
           baseWidth={15}
@@ -537,6 +547,7 @@ const MathRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
           cropAmount={RIGHT_CROP_AMOUNT}
         />
 
+        {}
         <mesh position={[0, 3.4, -17]} scale={[1, 1, 1]}>
           <planeGeometry args={[30, 30 / 2.357]} />
           <meshBasicMaterial
@@ -548,6 +559,7 @@ const MathRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
             onBeforeCompile={onBeforeCompile}
           />
         </mesh>
+        {}
         <mesh position={[-30, 3.4, -17]} scale={[-1, 1, 1]}>
           <planeGeometry args={[30, 30 / 2.357]} />
           <meshBasicMaterial
@@ -559,6 +571,7 @@ const MathRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
             onBeforeCompile={onBeforeCompile}
           />
         </mesh>
+        {}
         <mesh position={[30, 3.4, -17]} scale={[-1, 1, 1]}>
           <planeGeometry args={[30, 30 / 2.357]} />
           <meshBasicMaterial
@@ -571,10 +584,13 @@ const MathRoom = ({ showRoom, onReady, isExiting, isWarmup }) => {
           />
         </mesh>
 
+        {}
         <FlyingBird texture={birdTexture} />
 
-        <MathClouds count={65} seed={123} />
+        {}
+        <GalleryClouds count={65} seed={123} />
 
+        {}
         <mesh position={[0, 5, -20]}>
           <sphereGeometry args={[40, 32, 32]} />
           <meshBasicMaterial
@@ -695,7 +711,7 @@ const ProjectCard = memo(
         if (paperAudioRef.current) {
           const vol = isMuted
             ? 0
-            : MATH_INTERACTION_AUDIO_SETTINGS.volume * globalVolume;
+            : GALLERY_INTERACTION_AUDIO_SETTINGS.volume * globalVolume;
           paperAudioRef.current.setVolume(vol);
           if (paperAudioRef.current.isPlaying) paperAudioRef.current.stop();
           paperAudioRef.current.play();
@@ -1112,6 +1128,7 @@ const ProjectCard = memo(
             }
           }}
         >
+          {}
           <mesh position={[0, -0.08, 0.15]} rotation={[0, 0, Math.PI]}>
             <planeGeometry args={[0.3, 0.2]} />
             <meshBasicMaterial
@@ -1123,6 +1140,7 @@ const ProjectCard = memo(
             />
           </mesh>
 
+          {}
           <group ref={paperRef} position={[0, -1.1, 0]}>
             <mesh>
               <planeGeometry args={[1.5, 2, 16, 16]} />
@@ -1139,11 +1157,13 @@ const ProjectCard = memo(
               />
             </mesh>
 
+            {}
             <group
               ref={buttonGroupRef}
               position={[0, 0.75, 0]}
               rotation={[Math.PI, 0, 0]}
             >
+              {}
               <mesh>
                 <planeGeometry args={[1.2, 1.2 / 3.613]} />
                 <meshBasicMaterial
@@ -1154,6 +1174,7 @@ const ProjectCard = memo(
                 />
               </mesh>
 
+              {}
               <Text
                 ref={openTextRef}
                 position={[0, 0, 0.01]}
@@ -1167,6 +1188,7 @@ const ProjectCard = memo(
                 OPEN PROJECT
               </Text>
 
+              {}
               <mesh
                 position={[0, 0, 0.02]}
                 onClick={(e) => {
@@ -1197,6 +1219,7 @@ const ProjectCard = memo(
               </mesh>
             </group>
 
+            {}
             <group
               ref={detailsGroupRef}
               position={[0, -0.5, 0]}
@@ -1233,6 +1256,7 @@ const ProjectCard = memo(
               </Text>
             </group>
 
+            {}
             <group
               ref={techStackGroupRef}
               position={[0, 0.3, 0]}
@@ -1251,6 +1275,7 @@ const ProjectCard = memo(
                 TECH STACK
               </Text>
 
+              {}
               <group position={[0, -0.05, 0.01]}>
                 {project.techStack &&
                   project.techStack.map((logoPath, idx) => {
@@ -1269,6 +1294,7 @@ const ProjectCard = memo(
               </group>
             </group>
 
+            {}
             <Text
               ref={textRef}
               position={[0, 0.7, 0]}
@@ -1286,8 +1312,8 @@ const ProjectCard = memo(
               ref={paperAudioRef}
               url="/sounds/papersound.mp3"
               distanceModel="exponential"
-              rolloffFactor={MATH_INTERACTION_AUDIO_SETTINGS.rolloff}
-              refDistance={MATH_INTERACTION_AUDIO_SETTINGS.distance}
+              rolloffFactor={GALLERY_INTERACTION_AUDIO_SETTINGS.rolloff}
+              refDistance={GALLERY_INTERACTION_AUDIO_SETTINGS.distance}
               loop={false}
             />
           </group>
@@ -1328,4 +1354,4 @@ const TechStackLogo = ({ path, position }) => {
     </mesh>
   );
 };
-export default MathRoom;
+export default GalleryRoom;
