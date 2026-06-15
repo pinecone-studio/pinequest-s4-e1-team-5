@@ -5,6 +5,39 @@ import * as THREE from "three";
 import posthog from "posthog-js";
 
 // Бүрэлдэхүүн хэсгүүдийг импортлох
+import Preloader from './components/dom/Preloader';
+import PaperTransition from './components/dom/PaperTransition';
+import { AudioProvider, useAudio } from './context/AudioManager';
+import { initAudio } from './utils/audioManager';
+import { PerformanceProvider, usePerformance } from './context/PerformanceContext';
+import { SceneProvider, useScene } from './context/SceneContext';
+import NavigationUI from './components/ui/NavigationUI';
+import GlobalOverlay from './components/ui/GlobalOverlay';
+import ScreenReaderOverlay from './components/ui/ScreenReaderOverlay';
+import CircuitCanvas from './components/ui/CircuitCanvas';
+import SchoolAssistant from './components/ui/SchoolAssistant';
+import MathRoomAssistant from './components/ui/MathRoomAssistant';
+import MathFormulaPanel from './components/ui/MathFormulaPanel';
+import { AchievementsProvider } from './context/AchievementsContext';
+import MathQuizPanel from './components/ui/MathQuizPanel';
+
+import './styles/main.scss';
+import { 
+  ENTRANCE_TEXTURES, 
+  CORRIDOR_TEXTURES, 
+  UI_TEXTURES, 
+  PRELOAD_ALL, 
+  PRELOAD_LOADER, 
+  ABOUT_TEXTURES, 
+  IMAGE_ASSETS, 
+  filterTexturesByDevice 
+} from './config/texturePreloadList';
+
+// 🔥 Experience-ийг зөвхөн ганцхан удаа энд зарлана
+const Experience = lazy(() => import('./components/canvas/Experience'));
+
+// PostHog Күлэгжүүлэлт / Идэвхжүүлэлт
+if (typeof window !== 'undefined' && import.meta.env.VITE_POSTHOG_KEY) {
 import Preloader from "./components/dom/Preloader";
 import PaperTransition from "./components/dom/PaperTransition";
 import { AudioProvider, useAudio } from "./context/AudioManager";
@@ -102,6 +135,7 @@ const SceneStyling = (): JSX.Element => {
   const { scene } = useThree();
 
   useEffect(() => {
+    scene.fog = new THREE.Fog('#f6f3e8', 20, 65);
     scene.fog = new THREE.Fog("#f6f3e8", 20, 65);
     return () => {
       scene.fog = null;
@@ -185,6 +219,7 @@ function AppContent(): JSX.Element {
               dpr={settings.dpr}
               shadows={settings.shadows}
             >
+              <color attach="background" args={['#f6f3e8']} />
               <color attach="background" args={["#f6f3e8"]} />
               <SceneStyling />
 
