@@ -42,12 +42,20 @@ body {
     z-index: 1;
 }
 
-.physics-circuit-overlay {
+
+@keyframes physics-lab-appear {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.physics-lab {
     position: fixed;
     inset: 0;
-    z-index: 80;
-    background: #f8f8f2;
+    padding-top: 56px;
+    z-index: 45;
     pointer-events: auto;
+    background: transparent;
+    animation: physics-lab-appear 0.3s ease both;
 }
 
 .ui-overlay {

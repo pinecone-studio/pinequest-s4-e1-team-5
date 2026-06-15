@@ -119,11 +119,11 @@ const GeometryCard = memo(
               // Stop sway and lunge card toward camera (+5 in Z)
               tl.to(cardRef.current.rotation, { x: 0, y: 0, z: 0, duration: 0.15, ease: 'power2.out' }, 0);
               tl.to(cardRef.current.position, {
-                z: savedPos.current.z + 5,
+                z: savedPos.current.z + 4.5,
                 duration: 0.4,
                 ease: 'power3.out',
               }, 0);
-              tl.to(cardRef.current.scale, { x: 1.15, y: 1.15, z: 1.15, duration: 0.35, ease: 'back.out(1.5)' }, 0);
+              tl.to(cardRef.current.scale, { x: 1.05, y: 1.05, z: 1.15, duration: 0.35, ease: 'back.out(1.5)' }, 0);
               // Flip paper
               tl.to(paperRef.current.rotation, { y: Math.PI, duration: 0.45, ease: 'power2.inOut' }, 0.08);
             });
@@ -558,7 +558,7 @@ const GeometryCard = memo(
                 <group position={[0, -1.11, 0]}>
                   {quiz.phase === 'idle' && (
                     <group>
-                      <Text position={[0, 0.18, 0.01]} fontSize={0.075} color="#2a5a2a" font={FONT} anchorX="center" anchorY="middle" fillOpacity={backOpacity} depthTest={false}>
+                      <Text position={[0, 0.18, 0.01]} fontSize={0.099} color="#2a5a2a" font={FONT} anchorX="center" anchorY="middle" fillOpacity={backOpacity} depthTest={false}>
                         AI Quiz  →
                       </Text>
                     </group>

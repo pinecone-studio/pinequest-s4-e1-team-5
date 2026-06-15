@@ -49,7 +49,7 @@ const CorridorSegment = ({
         label: "PHYSICS",
         icon: "★",
         color: "#efe6f5",
-        enterDistance: 25,
+        enterDistance: 8,
       },
       {
         id: `geometry-${segmentIndex}`,
