@@ -1,36 +1,3 @@
-export type TutorSubject = "math" | "physics" | "geometry" | "chemistry";
-
-export type TutorSolveAnswer = {
-  problemType: string;
-  subject: TutorSubject;
-  grade: number;
-  topic: string;
-  givenValues: string[];
-  unknownValue: string;
-  formulaUsed: string;
-  whyFormula: string;
-  solutionSteps: string[];
-  finalAnswer: string;
-  wolframQuery: string;
-};
-
-export type TutorSolveResponse = {
-  solvedProblemId?: string | number;
-  cacheHit: boolean;
-  answer: TutorSolveAnswer;
-  verification?: {
-    ok: boolean;
-    query: string;
-    result: string;
-  };
-};
-
-export type TutorSolveInput = {
-  problem: string;
-  grade: number;
-  subject: TutorSubject;
-};
-
 export type StudioSearchItem = {
   id: string;
   platform: "youtube" | "blog" | "tiktok";
@@ -93,13 +60,6 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   return response.json() as Promise<T>;
-}
-
-export function solveTutorProblem(input: TutorSolveInput) {
-  return apiFetch<TutorSolveResponse>("/api/tutor/solve", {
-    method: "POST",
-    body: JSON.stringify(input)
-  });
 }
 
 export function searchStudioContent(query: string) {

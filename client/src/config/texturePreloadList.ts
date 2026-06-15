@@ -72,8 +72,6 @@ export const CORRIDOR_TEXTURES = [
   "/textures/corridor/doors/klamkadodrzwi_painted.webp",
 ];
 export const IMAGE_ASSETS = [
-  "/images/avatar-thinking.webp",
-  "/images/avatar-hero.webp",
   "/images/ink-splash.webp",
   "/images/map.webp",
   "/images/map_about_painted.webp",

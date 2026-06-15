@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { useTexture, PositionalAudio } from '@react-three/drei';
+import { useTexture, PositionalAudio, Text } from '@react-three/drei';
 import * as THREE from 'three';
 import gsap from 'gsap';
 import RoomInterior from './RoomInterior';

@@ -7,11 +7,11 @@ import PaperTransition from './components/dom/PaperTransition';
 import { AudioProvider, useAudio } from './context/AudioManager';
 import { initAudio } from './utils/audioManager';
 import { PerformanceProvider, usePerformance } from './context/PerformanceContext';
-import { SceneProvider } from './context/SceneContext';
+import { SceneProvider, useScene } from './context/SceneContext';
 import NavigationUI from './components/ui/NavigationUI';
 import GlobalOverlay from './components/ui/GlobalOverlay';
 import ScreenReaderOverlay from './components/ui/ScreenReaderOverlay';
-import ChatbotWidget from './components/ui/ChatbotWidget';
+import CircuitCanvas from './components/ui/CircuitCanvas';
 import posthog from 'posthog-js';
 posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
   api_host: import.meta.env.VITE_POSTHOG_HOST,
@@ -82,6 +82,22 @@ const PaperSceneBackground = () => {
   }, [scene, texture]);
   return null;
 };
+const PhysicsCircuitOverlay = () => {
+  const { currentRoom } = useScene();
+
+  if (currentRoom !== 'physics') {
+    return null;
+  }
+
+  return (
+    <div
+      className="physics-circuit-overlay"
+      aria-label="Physics circuit simulator"
+    >
+      <CircuitCanvas />
+    </div>
+  );
+};
 function AppContent() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [sceneReady, setSceneReady] = useState(false);
@@ -138,7 +154,7 @@ function AppContent() {
               <GlobalOverlay />
               <PaperTransition />
               <ScreenReaderOverlay />
-              <ChatbotWidget />
+              <PhysicsCircuitOverlay />
             </>}
 
           {}
