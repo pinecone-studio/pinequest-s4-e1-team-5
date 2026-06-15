@@ -18,10 +18,10 @@
   flex-direction: column;
   background:
     linear-gradient(rgba(252, 250, 244, 0.97), rgba(252, 250, 244, 0.97)),
-    url('/textures/paper-texture.webp') center / cover;
+    url("/textures/paper-texture.webp") center / cover;
   border: 2px solid rgba(25, 25, 25, 0.78);
   padding: clamp(1.2rem, 3vw, 2rem);
-  font-family: 'Cabin Sketch', 'Inter', sans-serif;
+  font-family: "Cabin Sketch", "Inter", sans-serif;
   color: #151515;
   box-shadow:
     8px 8px 0 rgba(25, 25, 25, 0.1),
@@ -62,7 +62,7 @@
 
 .mfp-title {
   margin: 0;
-  font-family: 'Rubik Scribble', 'Cabin Sketch', cursive;
+  font-family: "Rubik Scribble", "Cabin Sketch", cursive;
   font-size: clamp(1.4rem, 3.5vw, 2rem);
   line-height: 1.1;
   font-weight: 800;
@@ -89,7 +89,9 @@
     fill: none;
   }
 
-  &:hover { background: rgba(25, 25, 25, 0.08); }
+  &:hover {
+    background: rgba(25, 25, 25, 0.08);
+  }
 }
 
 .mfp-tabs {
@@ -106,13 +108,15 @@
   border: 2px solid transparent;
   border-bottom: none;
   background: transparent;
-  font-family: 'Cabin Sketch', 'Inter', sans-serif;
+  font-family: "Cabin Sketch", "Inter", sans-serif;
   font-size: 0.95rem;
   font-weight: 700;
   color: #666;
   cursor: pointer;
   border-radius: 4px 4px 0 0;
-  transition: color 0.15s, background 0.15s;
+  transition:
+    color 0.15s,
+    background 0.15s;
 
   &--active {
     border-color: rgba(25, 25, 25, 0.22);
@@ -136,24 +140,33 @@
   scrollbar-width: thin;
   scrollbar-color: rgba(25, 25, 25, 0.25) transparent;
 
-  &::-webkit-scrollbar { width: 5px; }
-  &::-webkit-scrollbar-track { background: transparent; }
-  &::-webkit-scrollbar-thumb { background: rgba(25, 25, 25, 0.22); border-radius: 9px; }
+  &::-webkit-scrollbar {
+    width: 5px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(25, 25, 25, 0.22);
+    border-radius: 9px;
+  }
 }
 
-// ── Formulas tab ──────────────────────────────────────────────────────────────
 .mfp-search {
   width: 100%;
   padding: 9px 14px;
   border: 2px solid rgba(25, 25, 25, 0.25);
   background: rgba(255, 255, 255, 0.6);
-  font-family: 'Cabin Sketch', 'Inter', sans-serif;
+  font-family: "Cabin Sketch", "Inter", sans-serif;
   font-size: 0.9rem;
   border-radius: 2px 255px 4px 255px / 255px 4px 225px 3px;
   margin-bottom: 1rem;
   box-sizing: border-box;
 
-  &:focus { outline: none; border-color: rgba(25, 25, 25, 0.5); }
+  &:focus {
+    outline: none;
+    border-color: rgba(25, 25, 25, 0.5);
+  }
 }
 
 .mfp-topic {
@@ -162,7 +175,7 @@
 
 .mfp-topic-title {
   margin: 0 0 0.5rem;
-  font-family: 'Cabin Sketch', 'Inter', sans-serif;
+  font-family: "Cabin Sketch", "Inter", sans-serif;
   font-size: 1rem;
   font-weight: 700;
   color: #3a3430;
@@ -206,7 +219,6 @@
   padding: 2rem 0;
 }
 
-// ── Problem tab ───────────────────────────────────────────────────────────────
 .mfp-problem,
 .mfp-image {
   display: flex;
@@ -226,14 +238,17 @@
   padding: 10px 14px;
   border: 2px solid rgba(25, 25, 25, 0.25);
   background: rgba(255, 255, 255, 0.6);
-  font-family: 'Cabin Sketch', 'Inter', sans-serif;
+  font-family: "Cabin Sketch", "Inter", sans-serif;
   font-size: 0.9rem;
   line-height: 1.5;
   resize: vertical;
   border-radius: 3px;
   box-sizing: border-box;
 
-  &:focus { outline: none; border-color: rgba(25, 25, 25, 0.5); }
+  &:focus {
+    outline: none;
+    border-color: rgba(25, 25, 25, 0.5);
+  }
 }
 
 .mfp-btn {
@@ -242,15 +257,17 @@
   border: 2px solid #191919;
   background:
     linear-gradient(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.6)),
-    url('/textures/paper-texture.webp') center / cover;
+    url("/textures/paper-texture.webp") center / cover;
   color: #151515;
-  font-family: 'Cabin Sketch', 'Inter', sans-serif;
+  font-family: "Cabin Sketch", "Inter", sans-serif;
   font-size: 0.95rem;
   font-weight: 700;
   border-radius: 2px 255px 4px 255px / 255px 5px 225px 3px;
   box-shadow: 3px 3px 0 rgba(25, 25, 25, 0.14);
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 
   &:hover:not(:disabled) {
     transform: translateY(-2px);
@@ -301,7 +318,7 @@
 }
 
 .mfp-solve-formula {
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   background: rgba(25, 25, 25, 0.06);
   padding: 1px 6px;
   border-radius: 3px;
@@ -317,7 +334,9 @@
     flex-direction: column;
     gap: 4px;
 
-    li { line-height: 1.45; }
+    li {
+      line-height: 1.45;
+    }
   }
 }
 
@@ -327,7 +346,6 @@
   border-top: 1px dashed rgba(25, 25, 25, 0.2);
 }
 
-// ── Image tab ─────────────────────────────────────────────────────────────────
 .mfp-dropzone {
   min-height: 160px;
   border: 2px dashed rgba(25, 25, 25, 0.3);
@@ -336,7 +354,9 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
   overflow: hidden;
 
   &:hover {
@@ -392,7 +412,7 @@
 }
 
 .mfp-detect-formula {
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   font-size: 0.88rem;
   background: rgba(25, 25, 25, 0.06);
   padding: 3px 8px;
