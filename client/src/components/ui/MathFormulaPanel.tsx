@@ -24,6 +24,7 @@ const MathFormulaPanel = () => {
 
   const [formulas, setFormulas] = useState<FormulaRow[]>([]);
   const [formulasLoading, setFormulasLoading] = useState(false);
+  const [formulasError, setFormulasError] = useState('');
   const [formulaSearch, setFormulaSearch] = useState('');
 
   const [problem, setProblem] = useState('');
@@ -68,11 +69,13 @@ const MathFormulaPanel = () => {
 
   const loadFormulas = async () => {
     setFormulasLoading(true);
+    setFormulasError('');
     try {
       const res = await getFormulasBySubject('math');
       setFormulas(res.data);
-    } catch {
+    } catch (e: unknown) {
       setFormulas([]);
+      setFormulasError(e instanceof Error ? e.message : 'Серверт холбогдож чадсангүй');
     } finally {
       setFormulasLoading(false);
     }
@@ -206,6 +209,8 @@ const MathFormulaPanel = () => {
               />
               {formulasLoading ? (
                 <div className="mfp-loader">Томьёо ачааллаж байна…</div>
+              ) : formulasError ? (
+                <div className="mfp-error">{formulasError}</div>
               ) : Object.keys(groupedFormulas).length === 0 ? (
                 <div className="mfp-empty">Томьёо олдсонгүй</div>
               ) : (
