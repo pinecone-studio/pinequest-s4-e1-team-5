@@ -4,13 +4,13 @@ import * as THREE from 'three';
 
 type Props = {
   topicId: string;
-  /** Normalized 0–1 values per param */
   norms: number[];
   accent: string;
   isSelected: boolean;
 };
 
-const MAX = 0.092;
+// Дүрсийг картын баруун талын жижиг зайд гоё багтах хэмжээтэй болгов
+const MAX = 0.18;
 
 export default function GeometryShapePreview({ topicId, norms, accent, isSelected }: Props) {
   const groupRef = useRef<THREE.Group>(null);
@@ -23,9 +23,9 @@ export default function GeometryShapePreview({ topicId, norms, accent, isSelecte
   });
 
   const geo = useMemo(() => {
-    const a = MAX * (0.3 + n0 * 0.7);
-    const b = MAX * (0.3 + n1 * 0.7);
-    const c = MAX * (0.3 + n2 * 0.7);
+    const a = MAX * (0.4 + n0 * 0.6);
+    const b = MAX * (0.4 + n1 * 0.6);
+    const c = MAX * (0.4 + n2 * 0.6);
 
     switch (topicId) {
       case 'sphere':
@@ -34,9 +34,8 @@ export default function GeometryShapePreview({ topicId, norms, accent, isSelecte
         return new THREE.CylinderGeometry(a, a, b * 2.2, 24, 1);
       case 'circle':
         return new THREE.CylinderGeometry(a, a, 0.020, 32, 1);
-      case 'rectangle': {
+      case 'rectangle':
         return new THREE.BoxGeometry(a * 2, b * 2, 0.018);
-      }
       case 'triangle': {
         const shape = new THREE.Shape();
         shape.moveTo(-a, -b);
@@ -62,9 +61,8 @@ export default function GeometryShapePreview({ topicId, norms, accent, isSelecte
         shape.closePath();
         return new THREE.ExtrudeGeometry(shape, { depth: 0.020, bevelEnabled: false });
       }
-      case 'coordinate': {
-        return new THREE.SphereGeometry(0.016, 8, 6);
-      }
+      case 'coordinate':
+        return new THREE.SphereGeometry(0.04, 12, 8);
       default:
         return new THREE.SphereGeometry(MAX, 12, 8);
     }
@@ -75,18 +73,23 @@ export default function GeometryShapePreview({ topicId, norms, accent, isSelecte
   }, [geo]);
 
   return (
+    // renderOrder-ийг 60 болгон өсгөж, depthTest-ийг зөв тохируулснаар картын урд талд цэвэрхэн харагдана
     <group ref={groupRef} rotation={[0.28, 0, 0]}>
-      <mesh geometry={geo} renderOrder={56}>
+      <mesh geometry={geo} renderOrder={60}>
         <meshBasicMaterial
           color={accent}
           transparent
-          opacity={0.30}
+          opacity={0.65}
           side={THREE.DoubleSide}
-          depthTest={false}
+          depthTest={true}
         />
       </mesh>
-      <mesh geometry={geo} renderOrder={57}>
-        <meshBasicMaterial color={accent} wireframe depthTest={false} />
+      <mesh geometry={geo} renderOrder={61}>
+        <meshBasicMaterial 
+          color={accent} 
+          wireframe 
+          depthTest={true} 
+        />
       </mesh>
     </group>
   );

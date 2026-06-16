@@ -1,7 +1,7 @@
 export const PLATFORM_CONFIG = {
   molecules: {
-    color: '#FF0000',
-    accentColor: '#cc0000',
+    color: '#4a8070',
+    accentColor: '#3a6d5e',
     label: 'Molecules',
     shape: 'tv'
   },
@@ -23,64 +23,64 @@ const RAW_CONTENT_DATA = [ {
   platform: 'molecules',
   title: 'МОЛЕКУЛ',
   description: 'Молекулуудын бүтцийг судалж, тэдгээрийн химийн шинж чанарыг танин мэдэх.',
-  frontTexture: '/textures/studio/molecules_painted.png',
-  paintedFrontTexture: '/textures/studio/molecules_painted.png',
+  frontTexture: '/textures/studio/molecules_full.png',
+  paintedFrontTexture: '/textures/studio/molecules_full.png',
   url: 'https://formula-billduluu-billduluus-projects.vercel.app/chemistry/formulas/library1',
 }, {
   id: 'yt-002',
  platform: 'molecules',
   title: 'МОЛЕКУЛ',
   description: 'Молекулуудын бүтцийг судалж, тэдгээрийн химийн шинж чанарыг танин мэдэх.',
-  frontTexture: '/textures/studio/molecules_painted.png',
-  paintedFrontTexture: '/textures/studio/molecules_painted.png',
+  frontTexture: '/textures/studio/molecules_full.png',
+  paintedFrontTexture: '/textures/studio/molecules_full.png',
  url: 'https://formula-billduluu-billduluus-projects.vercel.app/chemistry/formulas/library1',
 }, {
   id: 'yt-003',
  platform: 'molecules',
   title: 'МОЛЕКУЛ',
   description: 'Молекулуудын бүтцийг судалж, тэдгээрийн химийн шинж чанарыг танин мэдэх.',
-  frontTexture: '/textures/studio/molecules_painted.png',
-  paintedFrontTexture: '/textures/studio/molecules_painted.png',
+  frontTexture: '/textures/studio/molecules_full.png',
+  paintedFrontTexture: '/textures/studio/molecules_full.png',
   url: 'https://formula-billduluu-billduluus-projects.vercel.app/chemistry/formulas/library1',
 }, {
   id: 'yt-004',
  platform: 'molecules',
   title: 'МОЛЕКУЛ',
   description: 'Молекулуудын бүтцийг судалж, тэдгээрийн химийн шинж чанарыг танин мэдэх.',
-  frontTexture: '/textures/studio/molecules_painted.png',
-  paintedFrontTexture: '/textures/studio/molecules_painted.png',
+  frontTexture: '/textures/studio/molecules_full.png',
+  paintedFrontTexture: '/textures/studio/molecules_full.png',
   url: 'https://formula-billduluu-billduluus-projects.vercel.app/chemistry/formulas/library1',
 }, {
   id: 'yt-005',
   platform: 'molecules',
   title: 'МОЛЕКУЛ',
   description: 'Молекулуудын бүтцийг судалж, тэдгээрийн химийн шинж чанарыг танин мэдэх.',
-  frontTexture: '/textures/studio/molecules_painted.png',
-  paintedFrontTexture: '/textures/studio/molecules_painted.png',
+  frontTexture: '/textures/studio/molecules_full.png',
+  paintedFrontTexture: '/textures/studio/molecules_full.png',
   url: 'https://formula-billduluu-billduluus-projects.vercel.app/chemistry/formulas/library1',
 }, {
   id: 'yt-006',
   platform: 'molecules',
   title: 'МОЛЕКУЛ',
   description: 'Молекулуудын бүтцийг судалж, тэдгээрийн химийн шинж чанарыг танин мэдэх.',
-  frontTexture: '/textures/studio/molecules_painted.png',
-  paintedFrontTexture: '/textures/studio/molecules_painted.png',
+  frontTexture: '/textures/studio/molecules_full.png',
+  paintedFrontTexture: '/textures/studio/molecules_full.png',
   url: 'https://formula-billduluu-billduluus-projects.vercel.app/chemistry/formulas/library1',
 }, {
   id: 'yt-007',
  platform: 'molecules',
   title: 'МОЛЕКУЛ',
   description: 'Молекулуудын бүтцийг судалж, тэдгээрийн химийн шинж чанарыг танин мэдэх.',
-  frontTexture: '/textures/studio/molecules_painted.png',
-  paintedFrontTexture: '/textures/studio/molecules_painted.png',
+  frontTexture: '/textures/studio/molecules_full.png',
+  paintedFrontTexture: '/textures/studio/molecules_full.png',
   url: 'https://formula-billduluu-billduluus-projects.vercel.app/chemistry/formulas/library1',
 }, {
   id: 'yt-008',
   platform: 'molecules',
   title: 'МОЛЕКУЛ',
   description: 'Молекулуудын бүтцийг судалж, тэдгээрийн химийн шинж чанарыг танин мэдэх.',
-  frontTexture: '/textures/studio/molecules_painted.png',
-  paintedFrontTexture: '/textures/studio/molecules_painted.png',
+  frontTexture: '/textures/studio/molecules_full.png',
+  paintedFrontTexture: '/textures/studio/molecules_full.png',
   url: 'https://formula-billduluu-billduluus-projects.vercel.app/chemistry/formulas/library1',
 },
  {
@@ -244,8 +244,8 @@ const RAW_CONTENT_DATA = [ {
   paintedFrontTexture: '/textures/studio/chemistry_table.png',
   url: 'https://formula-billduluu-billduluus-projects.vercel.app/chemistry/elementss',
 }];
-const ytTextures = '/textures/studio/molecules_painted.png';
-const ytPaintedTextures = '/textures/studio/molecules_painted.png';
+const ytTextures = '/textures/studio/molecules_full.png';
+const ytPaintedTextures = '/textures/studio/molecules_full.png';
 const blogPaintedTextures = '/textures/studio/lab_painted.png';
 const ttTextures = '/textures/studio/chemistry_table.png';
 const ttPaintedTextures = '/textures/studio/chemistry_table.png';

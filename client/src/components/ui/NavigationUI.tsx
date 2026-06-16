@@ -6,23 +6,23 @@ import { setMusicVolume, getMusicVolume } from '../../utils/audioManager';
 import { useAchievements } from '../../context/AchievementsContext';
 import '../../styles/NavigationUI.scss';
 const ROOMS = [{
-  id: 'about',
-  label: 'About',
+  id: 'physics',
+  label: 'Physics',
   x: 43,
   y: 38
 }, {
-  id: 'gallery',
-  label: 'Gallery',
+  id: 'math',
+  label: 'Mathematic',
   x: 43,
   y: 72
 }, {
-  id: 'contact',
-  label: 'Contact',
+  id: 'geometry',
+  label: 'Geometry',
   x: 57,
   y: 25
 }, {
-  id: 'studio',
-  label: 'Studio',
+  id: 'chemistry',
+  label: 'Chemistry',
   x: 57,
   y: 55
 }];
@@ -70,36 +70,36 @@ const NavigationUI = () => {
     return () => window.removeEventListener('inspectChange', handleInspectChange);
   }, []);
   const paintedMapsRefs = {
-    about: useRef(),
-    gallery: useRef(),
-    contact: useRef(),
-    studio: useRef()
+    physics: useRef(),
+    math: useRef(),
+    geometry: useRef(),
+    chemistry: useRef()
   };
   useEffect(() => {
-    if (paintedMapsRefs.about.current) {
-      gsap.to(paintedMapsRefs.about.current, {
-        clipPath: hoveredRoom === 'about' || currentRoom === 'about' ? 'polygon(10% 20%, 40% 20%, 40% 55%, 10% 55%)' : 'polygon(10% 20%, 10% 20%, 10% 55%, 10% 55%)',
+    if (paintedMapsRefs.physics.current) {
+      gsap.to(paintedMapsRefs.physics.current, {
+        clipPath: hoveredRoom === 'physics' || currentRoom === 'physics' ? 'polygon(10% 20%, 40% 20%, 40% 55%, 10% 55%)' : 'polygon(10% 20%, 10% 20%, 10% 55%, 10% 55%)',
         duration: 0.5,
         ease: "power2.out"
       });
     }
-    if (paintedMapsRefs.gallery.current) {
-      gsap.to(paintedMapsRefs.gallery.current, {
-        clipPath: hoveredRoom === 'gallery' || currentRoom === 'gallery' ? 'polygon(10% 57%, 40% 57%, 40% 92%, 10% 92%)' : 'polygon(10% 57%, 10% 57%, 10% 92%, 10% 92%)',
+    if (paintedMapsRefs.math.current) {
+      gsap.to(paintedMapsRefs.math.current, {
+        clipPath: hoveredRoom === 'math' || currentRoom === 'math' ? 'polygon(10% 57%, 40% 57%, 40% 92%, 10% 92%)' : 'polygon(10% 57%, 10% 57%, 10% 92%, 10% 92%)',
         duration: 0.5,
         ease: "power2.out"
       });
     }
-    if (paintedMapsRefs.contact.current) {
-      gsap.to(paintedMapsRefs.contact.current, {
-        clipPath: hoveredRoom === 'contact' || currentRoom === 'contact' ? 'polygon(60% 10%, 95% 10%, 95% 35%, 60% 35%)' : 'polygon(95% 10%, 95% 10%, 95% 35%, 95% 35%)',
+    if (paintedMapsRefs.geometry.current) {
+      gsap.to(paintedMapsRefs.geometry.current, {
+        clipPath: hoveredRoom === 'geometry' || currentRoom === 'geometry' ? 'polygon(60% 10%, 95% 10%, 95% 35%, 60% 35%)' : 'polygon(95% 10%, 95% 10%, 95% 35%, 95% 35%)',
         duration: 0.5,
         ease: "power2.out"
       });
     }
-    if (paintedMapsRefs.studio.current) {
-      gsap.to(paintedMapsRefs.studio.current, {
-        clipPath: hoveredRoom === 'studio' || currentRoom === 'studio' ? 'polygon(60% 41%, 85% 41%, 85% 81%, 60% 81%)' : 'polygon(85% 41%, 85% 41%, 85% 81%, 85% 81%)',
+    if (paintedMapsRefs.chemistry.current) {
+      gsap.to(paintedMapsRefs.chemistry.current, {
+        clipPath: hoveredRoom === 'chemistry' || currentRoom === 'chemistry' ? 'polygon(60% 41%, 85% 41%, 85% 81%, 60% 81%)' : 'polygon(85% 41%, 85% 41%, 85% 81%, 85% 81%)',
         duration: 0.5,
         ease: "power2.out"
       });
@@ -240,24 +240,24 @@ const NavigationUI = () => {
                             <img src="/images/map.webp" alt="Portfolio Map" className="map-image" />
 
                             {}
-                            <img ref={paintedMapsRefs.about} src="/images/map_about_painted.webp" alt="" className="painted-map-layer" style={{
+                            <img ref={paintedMapsRefs.physics} src="/images/map_about_painted.webp" alt="" className="painted-map-layer" style={{
             clipPath: 'polygon(10% 20%, 10% 20%, 10% 55%, 10% 55%)'
           }} />
-                            <img ref={paintedMapsRefs.gallery} src="/images/map_gallery_painted.webp" alt="" className="painted-map-layer" style={{
+                            <img ref={paintedMapsRefs.math} src="/images/map_gallery_painted.webp" alt="" className="painted-map-layer" style={{
             clipPath: 'polygon(10% 57%, 10% 57%, 10% 92%, 10% 92%)'
           }} />
-                            <img ref={paintedMapsRefs.contact} src="/images/map_contact_painted.webp" alt="" className="painted-map-layer" style={{
+                            <img ref={paintedMapsRefs.geometry} src="/images/map_contact_painted.webp" alt="" className="painted-map-layer" style={{
             clipPath: 'polygon(95% 10%, 95% 10%, 95% 35%, 95% 35%)'
           }} />
-                            <img ref={paintedMapsRefs.studio} src="/images/map_studio_painted.webp" alt="" className="painted-map-layer" style={{
+                            <img ref={paintedMapsRefs.chemistry} src="/images/map_studio_painted.webp" alt="" className="painted-map-layer" style={{
             clipPath: 'polygon(85% 41%, 85% 41%, 85% 81%, 85% 81%)'
           }} />
 
                             {}
-                            <button type="button" className="map-hover-zone zone-about" onMouseEnter={() => setHoveredRoom('about')} onMouseLeave={() => setHoveredRoom(null)} onFocus={() => setHoveredRoom('about')} onBlur={() => setHoveredRoom(null)} onClick={() => handleRoomClick('about')} aria-label="Teleport to About room" />
-                            <button type="button" className="map-hover-zone zone-gallery" onMouseEnter={() => setHoveredRoom('gallery')} onMouseLeave={() => setHoveredRoom(null)} onFocus={() => setHoveredRoom('gallery')} onBlur={() => setHoveredRoom(null)} onClick={() => handleRoomClick('gallery')} aria-label="Teleport to Gallery room" />
-                            <button type="button" className="map-hover-zone zone-contact" onMouseEnter={() => setHoveredRoom('contact')} onMouseLeave={() => setHoveredRoom(null)} onFocus={() => setHoveredRoom('contact')} onBlur={() => setHoveredRoom(null)} onClick={() => handleRoomClick('contact')} aria-label="Teleport to Contact room" />
-                            <button type="button" className="map-hover-zone zone-studio" onMouseEnter={() => setHoveredRoom('studio')} onMouseLeave={() => setHoveredRoom(null)} onFocus={() => setHoveredRoom('studio')} onBlur={() => setHoveredRoom(null)} onClick={() => handleRoomClick('studio')} aria-label="Teleport to Studio room" />
+                            <button type="button" className="map-hover-zone zone-physics" onMouseEnter={() => setHoveredRoom('physics')} onMouseLeave={() => setHoveredRoom(null)} onFocus={() => setHoveredRoom('physics')} onBlur={() => setHoveredRoom(null)} onClick={() => handleRoomClick('physics')} aria-label="Физикийн өрөө" />
+                            <button type="button" className="map-hover-zone zone-math" onMouseEnter={() => setHoveredRoom('math')} onMouseLeave={() => setHoveredRoom(null)} onFocus={() => setHoveredRoom('math')} onBlur={() => setHoveredRoom(null)} onClick={() => handleRoomClick('math')} aria-label="Математикийн өрөө" />
+                            <button type="button" className="map-hover-zone zone-geometry" onMouseEnter={() => setHoveredRoom('geometry')} onMouseLeave={() => setHoveredRoom(null)} onFocus={() => setHoveredRoom('geometry')} onBlur={() => setHoveredRoom(null)} onClick={() => handleRoomClick('geometry')} aria-label="Геометрийн өрөө" />
+                            <button type="button" className="map-hover-zone zone-chemistry" onMouseEnter={() => setHoveredRoom('chemistry')} onMouseLeave={() => setHoveredRoom(null)} onFocus={() => setHoveredRoom('chemistry')} onBlur={() => setHoveredRoom(null)} onClick={() => handleRoomClick('chemistry')} aria-label="Химийн өрөө" />
 
                             {}
                             <div className="map-room-label about">PHYSICS</div>

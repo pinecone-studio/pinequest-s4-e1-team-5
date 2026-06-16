@@ -11,10 +11,10 @@ import { AudioProvider, useAudio } from './context/AudioManager';
 import { initAudio } from './utils/audioManager';
 import { PerformanceProvider, usePerformance } from './context/PerformanceContext';
 import { SceneProvider, useScene } from './context/SceneContext';
+import CircuitCanvas from './components/ui/CircuitCanvas';
 import NavigationUI from './components/ui/NavigationUI';
 import GlobalOverlay from './components/ui/GlobalOverlay';
 import ScreenReaderOverlay from './components/ui/ScreenReaderOverlay';
-import CircuitCanvas from './components/ui/CircuitCanvas';
 import SchoolAssistant from './components/ui/SchoolAssistant';
 import MathRoomAssistant from './components/ui/MathRoomAssistant';
 import MathFormulaPanel from './components/ui/MathFormulaPanel';
@@ -22,6 +22,16 @@ import { AchievementsProvider } from './context/AchievementsContext';
 import MathQuizPanel from './components/ui/MathQuizPanel';
  
 import './styles/main.scss';
+
+const PhysicsLab = (): JSX.Element | null => {
+  const { currentRoom } = useScene();
+  if (currentRoom !== 'physics') return null;
+  return (
+    <div className="physics-lab">
+      <CircuitCanvas />
+    </div>
+  );
+};
 import {
   ENTRANCE_TEXTURES,
   CORRIDOR_TEXTURES,
@@ -105,32 +115,8 @@ const SceneStyling = (): JSX.Element => {
     </>
   );
 };
- 
-// Физикийн лаб-ын Overlay
-const PhysicsCircuitOverlay = (): JSX.Element | null => {
-  const { currentRoom } = useScene();
-  const [shouldShowSimulator, setShouldShowSimulator] = useState<boolean>(false);
- 
-  useEffect(() => {
-    if (currentRoom !== 'physics') {
-      setShouldShowSimulator(false);
-      return;
-    }
-    const timeoutId = window.setTimeout(() => {
-      setShouldShowSimulator(true);
-    }, 180);
-    return () => window.clearTimeout(timeoutId);
-  }, [currentRoom]);
- 
-  if (currentRoom !== 'physics') return null;
- 
-  return (
-    <div className="physics-circuit-overlay" aria-label="Physics circuit simulator">
-      {shouldShowSimulator && <CircuitCanvas />}
-    </div>
-  );
-};
- 
+
+
 // Үндсэн апп-ын дотор тал
 function AppContent(): JSX.Element {
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
@@ -185,9 +171,9 @@ function AppContent(): JSX.Element {
               <MathRoomAssistant />
               <MathFormulaPanel />
               <MathQuizPanel />
+              <PhysicsLab />
               <PaperTransition />
               <ScreenReaderOverlay />
-              <PhysicsCircuitOverlay />
             </>
           )}
  

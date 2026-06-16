@@ -316,42 +316,42 @@
         color: inherit;
     }
 
-    .zone-about {
+    .zone-physics {
         top: 0;
         left: 0;
         width: 30%;
         height: 35%;
-        
+
         margin-top: 20%;
         margin-left: 10%;
     }
 
-    .zone-gallery {
+    .zone-math {
         bottom: 0;
         left: 0;
         width: 30%;
         height: 35%;
-        
+
         margin-bottom: 8%;
         margin-left: 10%;
     }
 
-    .zone-contact {
+    .zone-geometry {
         top: 0;
         right: 0;
         width: 35%;
         height: 25%;
-        
+
         margin-top: 10%;
         margin-right: 5%;
     }
 
-    .zone-studio {
+    .zone-chemistry {
         bottom: 0;
         right: 0;
         width: 25%;
         height: 40%;
-        
+
         margin-bottom: 19%;
         margin-right: 15%;
     }
@@ -375,22 +375,22 @@
             -1px 1px 0 #fff,
             1px 1px 0 #fff;
 
-        &.about {
+        &.physics {
             top: 28%;
             left: 26%;
         }
 
-        &.gallery {
+        &.math {
             top: 94%;
             left: 26%;
         }
 
-        &.contact {
+        &.geometry {
             top: 14%;
             left: 76%;
         }
 
-        &.studio {
+        &.chemistry {
             top: 75%;
             left: 72%;
         }
