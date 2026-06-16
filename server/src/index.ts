@@ -7,17 +7,28 @@ import { studioRouter } from "./router/studio.router";
 
 const app = new Hono();
 
-const clientUrl = Bun.env.CLIENT_URL ?? "http://localhost:3000";
+const clientUrls = (Bun.env.CLIENT_URL ?? "http://localhost:3000")
+  .split(",")
+  .map((u) => u.trim())
+  .filter(Boolean);
+
 const allowedOrigins = new Set([
-  clientUrl,
+  ...clientUrls,
   "http://localhost:3000",
   "http://127.0.0.1:3000",
 ]);
 
+function isAllowedOrigin(origin: string): boolean {
+  if (allowedOrigins.has(origin)) return true;
+  // Vercel preview deployment URLs: https://*.vercel.app
+  if (/^https:\/\/[^.]+\.vercel\.app$/.test(origin)) return true;
+  return false;
+}
+
 app.use(
   "*",
   cors({
-    origin: (origin) => (allowedOrigins.has(origin) ? origin : null),
+    origin: (origin) => (isAllowedOrigin(origin) ? origin : null),
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allowHeaders: ["Content-Type", "Authorization"],
   }),
