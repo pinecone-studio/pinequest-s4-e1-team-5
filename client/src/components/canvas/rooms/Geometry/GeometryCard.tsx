@@ -3,18 +3,17 @@ import {
   memo,
   useCallback,
   useImperativeHandle,
-  useMemo,
   useRef,
   useState,
 } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Text } from '@react-three/drei';
-import GeometryShapePreview from './GeometryShapePreview';
 import * as THREE from 'three';
 import gsap from 'gsap';
 import { useScene } from '../../../../context/SceneContext';
 import PaperMaterial from '../Mathematic/PaperMaterial';
 import { generateMathQuiz, type QuizQuestion } from '../../../../lib/api';
+import GeometryShapePreview from './GeometryShapePreview';
 import {
   type TopicData,
   CARD_COUNT,
@@ -88,48 +87,45 @@ const GeometryCard = memo(
       const cardRef = useRef<THREE.Group>(null!);
       const paperRef = useRef<THREE.Group>(null!);
       const materialRef = useRef<any>(null);
+      const savedPos = useRef(new THREE.Vector3());
       const [isAnimating, setIsAnimating] = useState(false);
       const [quiz, setQuiz] = useState<QuizState>({ phase: 'idle' });
-      const [paramVals, setParamVals] = useState(() =>
-        topic.interactive.params.map(p => p.default),
-      );
-      const calcResult = topic.interactive.calculate(paramVals[0], paramVals[1], paramVals[2]);
       const swayOffset = useRef(Math.random() * 100);
       const swaySpeed = useRef(0.22 + Math.random() * 0.18);
 
-      useScene();
+      const [paramValues, setParamValues] = useState<number[]>(() => 
+        topic.interactive?.params.map(p => p.default) || []
+      );
+
+      const { openOverlay } = useScene();
 
       useImperativeHandle(ref, () => ({
         openCard: () =>
           new Promise<void>((resolve) => {
-            setIsAnimating(true);
+            // Let useFrame keep positioning the card during the rope scroll
             scrollToIndex(index, () => {
-              const isMobile = window.innerWidth < 768;
-              const parentPos = cardRef.current.position;
-              const tX = -parentPos.x;
-              const tY = (isMobile ? -0.2 : 0.1) - parentPos.y;
-              const tZ = (isMobile ? 0.5 : 1.6) - parentPos.z;
+              setIsAnimating(true);
+              // Snapshot rope position so closeCard can restore it exactly
+              savedPos.current.copy(cardRef.current.position);
+              // Reset paper to default hanging position before flip
+              paperRef.current.position.set(0, PAPER_REF_Y, 0);
+              paperRef.current.rotation.set(0, 0, 0);
+              paperRef.current.scale.set(1, 1, 1);
+              if (materialRef.current) materialRef.current.bend = 0;
 
               const tl = gsap.timeline({
                 onComplete: () => { setIsAnimating(false); resolve(); },
               });
-
-              tl.to(cardRef.current.rotation, { x: 0, y: 0, z: 0, duration: 0.25, ease: 'power2.out' }, 0);
-              if (materialRef.current) materialRef.current.bend = 0;
-
-              tl.to(paperRef.current.position, { y: PAPER_REF_Y - 0.42, duration: 0.15, ease: 'power2.out' });
-              tl.to(paperRef.current.rotation, { x: 0.42, z: -0.04, duration: 0.15, ease: 'power2.out' }, '<');
-              if (materialRef.current) tl.to(materialRef.current, { bend: 0.8, duration: 0.15, ease: 'power2.out' }, '<');
-
-              tl.to(paperRef.current.position, { y: PAPER_REF_Y + 1.5, x: tX * 0.2, z: tZ * 0.2, duration: 0.4, ease: 'power1.out' });
-              // 🔥 FIX: Y тэнхлэгээр эргүүлж ард талыг харуулна
-              tl.to(paperRef.current.rotation, { x: 0, y: Math.PI, z: 0, duration: 0.4, ease: 'power1.inOut' }, '<');
-              if (materialRef.current) tl.to(materialRef.current, { bend: -0.3, duration: 0.4, ease: 'power1.inOut' }, '<');
-
-              tl.to(paperRef.current.position, { y: tY, x: tX, z: tZ, duration: 0.4, ease: 'power3.out' });
-              tl.to(paperRef.current.rotation, { x: 0, y: Math.PI, z: 0, duration: 0.4, ease: 'power3.out' }, '<');
-              if (materialRef.current) tl.to(materialRef.current, { bend: 0, duration: 0.5, ease: 'power2.out' }, '<');
-              tl.to(paperRef.current.scale, { x: 1.1, y: 1.1, z: 1.1, duration: 0.3, ease: 'sine.out' }, '-=0.4');
+              // Stop sway and lunge card toward camera (+5 in Z)
+              tl.to(cardRef.current.rotation, { x: 0, y: 0, z: 0, duration: 0.15, ease: 'power2.out' }, 0);
+              tl.to(cardRef.current.position, {
+                z: savedPos.current.z + 4.5,
+                duration: 0.4,
+                ease: 'power3.out',
+              }, 0);
+              tl.to(cardRef.current.scale, { x: 1.05, y: 1.05, z: 1.15, duration: 0.35, ease: 'back.out(1.5)' }, 0);
+              // Flip paper
+              tl.to(paperRef.current.rotation, { y: Math.PI, duration: 0.45, ease: 'power2.inOut' }, 0.08);
             });
           }),
 
@@ -137,17 +133,22 @@ const GeometryCard = memo(
           new Promise<void>((resolve) => {
             setIsAnimating(true);
             setQuiz({ phase: 'idle' });
-            setParamVals(topic.interactive.params.map(p => p.default));
+            setParamValues(topic.interactive?.params.map(p => p.default) || []);
             const tl = gsap.timeline({
               onComplete: () => { setIsAnimating(false); resolve(); },
             });
-            tl.to(paperRef.current.position, { y: PAPER_REF_Y + 0.55, x: 0, z: 0.9, duration: 0.35, ease: 'power2.in' });
-            tl.to(paperRef.current.rotation, { x: 0, y: 0, z: 0, duration: 0.35, ease: 'power2.in' }, '<');
-            tl.to(paperRef.current.scale, { x: 1, y: 1, z: 1, duration: 0.3, ease: 'sine.inOut' }, '<');
-            if (materialRef.current) tl.to(materialRef.current, { bend: 0.6, duration: 0.3, ease: 'power2.in' }, '<');
-            tl.to(paperRef.current.position, { y: PAPER_REF_Y, x: 0, z: 0, duration: 0.25, ease: 'power3.out' });
-            tl.to(paperRef.current.rotation, { x: 0, y: 0, z: 0, duration: 0.25, ease: 'power3.out' }, '<');
-            if (materialRef.current) tl.to(materialRef.current, { bend: 0, duration: 0.3, ease: 'power2.out' }, '<');
+            // Flip back
+            tl.to(paperRef.current.rotation, { y: 0, duration: 0.38, ease: 'power2.inOut' }, 0);
+            // Restore rope position and scale
+            tl.to(cardRef.current.position, {
+              x: savedPos.current.x,
+              y: savedPos.current.y,
+              z: savedPos.current.z,
+              duration: 0.35,
+              ease: 'power2.in',
+            }, 0.1);
+            tl.to(cardRef.current.scale, { x: 1, y: 1, z: 1, duration: 0.3, ease: 'power2.in' }, 0.1);
+            tl.to(paperRef.current.position, { y: PAPER_REF_Y, x: 0, z: 0, duration: 0.2, ease: 'power3.out' }, 0);
           }),
       }));
 
@@ -203,42 +204,25 @@ const GeometryCard = memo(
         else setQuiz({ phase: 'idle' });
       }, [quiz]);
 
-      const normalizedParams = topic.interactive.params.map((p, i) =>
-        (paramVals[i] - p.min) / (p.max - p.min),
-      );
+      const handleInteractive = useCallback(() => {
+        openOverlay({
+          title: topic.title,
+          description: topic.fullDetail,
+          platformConfig: { label: 'ГЕОМЕТР' },
+          topicData: topic,
+        });
+      }, [openOverlay, topic]);
 
-      const handleTrackDown = useCallback((e: Parameters<NonNullable<JSX.IntrinsicElements['mesh']['onPointerDown']>>[0], pi: number) => {
-        e.stopPropagation();
-        const p = topic.interactive.params[pi];
-
-        // Set value from UV on initial click
-        let startVal = paramVals[pi];
-        if (e.uv) {
-          startVal = Math.round(p.min + e.uv.x * (p.max - p.min));
-          setParamVals(prev => { const n = [...prev]; n[pi] = startVal; return n; });
-        }
-
-        const startClientX = e.clientX;
-        const range = p.max - p.min;
-        const pixelsForRange = 280;
-
-        const onMove = (we: PointerEvent) => {
-          const dx = we.clientX - startClientX;
-          const delta = Math.round((dx / pixelsForRange) * range);
-          const newVal = Math.max(p.min, Math.min(p.max, startVal + delta));
-          setParamVals(prev => { const n = [...prev]; n[pi] = newVal; return n; });
-        };
-
-        const onUp = () => {
-          setCursor('auto');
-          window.removeEventListener('pointermove', onMove);
-          window.removeEventListener('pointerup', onUp);
-        };
-
-        setCursor('ew-resize');
-        window.addEventListener('pointermove', onMove);
-        window.addEventListener('pointerup', onUp);
-      }, [paramVals, topic.interactive.params]);
+      const handleSliderClick = useCallback((paramIdx: number, step: number) => {
+        if (!topic.interactive) return;
+        const targetParam = topic.interactive.params[paramIdx];
+        setParamValues(prev => {
+          const next = [...prev];
+          const updatedVal = THREE.MathUtils.clamp(next[paramIdx] + step, targetParam.min, targetParam.max);
+          next[paramIdx] = Math.round(updatedVal * 10) / 10;
+          return next;
+        });
+      }, [topic.interactive]);
 
       const setCursor = (val: string) => { document.body.style.cursor = val; };
 
@@ -247,6 +231,18 @@ const GeometryCard = memo(
       const q = quiz.phase === 'questions' ? quiz.questions[quiz.idx] : null;
       const qChosen = quiz.phase === 'questions' ? quiz.chosen[quiz.idx] : null;
       const isLastQ = quiz.phase === 'questions' && quiz.idx === quiz.questions.length - 1;
+
+      const calculatedResult = topic.interactive 
+        ? topic.interactive.calculate(paramValues[0] || 0, paramValues[1] || 0, paramValues[2] || 0).toFixed(1)
+        : '0';
+
+      // Нормалчлал [0, 1] муж руу
+      const normalizedNorms = topic.interactive
+        ? topic.interactive.params.map((p, pi) => {
+            const val = paramValues[pi] ?? p.default;
+            return (val - p.min) / (p.max - p.min || 1);
+          })
+        : [0.5, 0.5, 0.5];
 
       return (
         <group
@@ -260,7 +256,6 @@ const GeometryCard = memo(
             <planeGeometry args={[0.28, 0.18]} />
             <meshBasicMaterial color="#ffffff" map={clothespinTexture} transparent alphaTest={0.1} side={THREE.DoubleSide} />
           </mesh>
-
 
           <group ref={paperRef} position={[0, PAPER_REF_Y, 0]}>
             <mesh>
@@ -387,112 +382,129 @@ const GeometryCard = memo(
               дарж дэлгэрэнгүй үзнэ үү
             </Text>
 
-            {/* ── 🔥 FIX: BACK FACE ЗАССАН ХЕСЭГ ── */}
+            {/* ── BACK FACE ── */}
             {isSelected && (
               <group rotation={[0, Math.PI, 0]} position={[0, 0, -0.015]} renderOrder={50}>
                 
-                {/* Section 1: Interactive Calculator */}
-                <group position={[0, 0.65, 0]}>
-                  {/* Header */}
-                  <mesh position={[0, 0.37, 0]}>
-                    <planeGeometry args={[1.3, 0.068]} />
-                    <meshBasicMaterial color={accent} side={THREE.DoubleSide} depthTest={false} />
+                {/* Section 1: Interactive */}
+                <group position={[0, 1.0, 0]}>
+                  <mesh
+                    onClick={(e) => { e.stopPropagation(); handleInteractive(); }}
+                    onPointerEnter={(e) => { e.stopPropagation(); setCursor('pointer'); }}
+                    onPointerLeave={(e) => { e.stopPropagation(); setCursor('auto'); }}
+                  >
+                    <planeGeometry args={[1.05, 0.16]} />
+                    <meshBasicMaterial color="#ffffff" map={buttonTexture} transparent alphaTest={0.05} side={THREE.DoubleSide} depthTest={false} />
                   </mesh>
-                  <Text position={[0, 0.37, 0.01]} fontSize={0.044} color="#ffffff" font={FONT} anchorX="center" anchorY="middle" letterSpacing={0.07} fillOpacity={backOpacity} depthTest={false}>
-                    ИНТЕРАКТИВ ТООЦОО
+                  <Text
+                    position={[0, 0, 0.01]}
+                    fontSize={0.068}
+                    color="#1c1c1c"
+                    font={FONT}
+                    anchorX="center"
+                    anchorY="middle"
+                    fillOpacity={backOpacity}
+                    depthTest={false}
+                  >
+                    Интерактив
                   </Text>
 
-                  {/* 3D Shape Preview */}
-                  <mesh position={[0, 0.215, -0.002]}>
-                    <planeGeometry args={[0.50, 0.295]} />
-                    <meshBasicMaterial color={accent} transparent opacity={0.16} side={THREE.DoubleSide} depthTest={false} />
-                  </mesh>
-                  <mesh position={[0, 0.215, -0.001]}>
-                    <planeGeometry args={[0.48, 0.275]} />
-                    <meshBasicMaterial color="#f5ede0" transparent opacity={0.94} side={THREE.DoubleSide} depthTest={false} />
-                  </mesh>
-                  <group position={[0, 0.215, 0.01]} renderOrder={56}>
-                    <GeometryShapePreview
-                      topicId={topic.id}
-                      norms={normalizedParams}
-                      accent={accent}
-                      isSelected={isSelected}
-                    />
-                  </group>
+                  {/* Слайдерууд болон 3D Preview */}
+                  {topic.interactive && (
+                    <group position={[0, -0.22, 0]}>
+                      
+                      {/* 🌟 ЗАССАН: 3D Дүрсийг баруун талд нь маш тодорхой байрлуулав (Z тэнхлэг урагшаа чиглэлтэй) */}
+                      <group position={[0.34, -0.06, 0.05]}>
+                        <GeometryShapePreview 
+                          topicId={topic.id} 
+                          norms={normalizedNorms} 
+                          accent={accent} 
+                          isSelected={isSelected} 
+                        />
+                      </group>
 
-                  {/* Param slider rows */}
-                  {topic.interactive.params.map((param, pi) => {
-                    const yp = 0.025 - pi * 0.128;
-                    const val = paramVals[pi];
-                    const pct = Math.max(0, Math.min(1, (val - param.min) / (param.max - param.min)));
-                    const TW = 0.52, TX = 0.07;
-                    return (
-                      <group key={param.name} position={[0, yp, 0.01]}>
-                        {/* Label */}
-                        <Text position={[-0.62, 0, 0.01]} fontSize={0.040} color="#444" font={FONT} anchorX="left" anchorY="middle" fillOpacity={backOpacity} depthTest={false}>
-                          {param.label}
-                        </Text>
-                        {/* Track bg */}
-                        <mesh position={[TX, 0, 0]}>
-                          <planeGeometry args={[TW, 0.014]} />
-                          <meshBasicMaterial color="#d0d0d0" side={THREE.DoubleSide} depthTest={false} />
+                      {topic.interactive.params.map((p, pi) => {
+                        const yOffset = -pi * 0.14;
+                        const currentVal = paramValues[pi] ?? p.default;
+                        return (
+                          <group key={p.name} position={[0, yOffset, 0]}>
+                            {/* Хувьсагчийн нэр (3D дүрстэй давхцахгүй зайтай) */}
+                            <Text
+                              position={[-0.54, 0, 0.01]}
+                              fontSize={0.046}
+                              color="#333333"
+                              font={FONT}
+                              anchorX="left"
+                              anchorY="middle"
+                              maxWidth={0.42}
+                              fillOpacity={backOpacity}
+                              depthTest={false}
+                            >
+                              {p.label}: {currentVal}
+                            </Text>
+
+                            {/* Хасах товчлуур (-) */}
+                            <group position={[-0.04, 0, 0.01]}>
+                              <mesh
+                                onClick={(e) => { e.stopPropagation(); handleSliderClick(pi, -1); }}
+                                onPointerEnter={(e) => { e.stopPropagation(); setCursor('pointer'); }}
+                                onPointerLeave={(e) => { e.stopPropagation(); setCursor('auto'); }}
+                              >
+                                <planeGeometry args={[0.08, 0.07]} />
+                                <meshBasicMaterial color="#eecccc" transparent opacity={0.9} side={THREE.DoubleSide} depthTest={false} />
+                              </mesh>
+                              <Text position={[0, 0, 0.01]} fontSize={0.046} color="#883333" font={FONT} anchorX="center" anchorY="middle" fillOpacity={backOpacity} depthTest={false}>-</Text>
+                            </group>
+
+                            {/* Нэмэх товчлуур (+) */}
+                            <group position={[0.08, 0, 0.01]}>
+                              <mesh
+                                onClick={(e) => { e.stopPropagation(); handleSliderClick(pi, 1); }}
+                                onPointerEnter={(e) => { e.stopPropagation(); setCursor('pointer'); }}
+                                onPointerLeave={(e) => { e.stopPropagation(); setCursor('auto'); }}
+                              >
+                                <planeGeometry args={[0.08, 0.07]} />
+                                <meshBasicMaterial color="#cceebb" transparent opacity={0.9} side={THREE.DoubleSide} depthTest={false} />
+                              </mesh>
+                              <Text position={[0, 0, 0.01]} fontSize={0.046} color="#336633" font={FONT} anchorX="center" anchorY="middle" fillOpacity={backOpacity} depthTest={false}>+</Text>
+                            </group>
+                          </group>
+                        );
+                      })}
+
+                      {/* Бодолтын хариу */}
+                      <group position={[0, -0.44, 0.01]}>
+                        <mesh>
+                          <planeGeometry args={[1.1, 0.09]} />
+                          <meshBasicMaterial color="#f5fdf5" transparent opacity={0.85} side={THREE.DoubleSide} depthTest={false} />
                         </mesh>
-                        {/* Track fill */}
-                        {pct > 0.005 && (
-                          <mesh position={[TX - TW / 2 + (pct * TW) / 2, 0, 0.001]}>
-                            <planeGeometry args={[pct * TW, 0.014]} />
-                            <meshBasicMaterial color={accent} transparent opacity={0.72} side={THREE.DoubleSide} depthTest={false} />
-                          </mesh>
-                        )}
-                        {/* Thumb circle */}
-                        <mesh position={[TX - TW / 2 + pct * TW, 0, 0.003]}>
-                          <circleGeometry args={[0.020, 12]} />
-                          <meshBasicMaterial color={accent} side={THREE.DoubleSide} depthTest={false} />
-                        </mesh>
-                        {/* Invisible drag hitbox */}
-                        <mesh
-                          position={[TX, 0, 0.005]}
-                          onPointerDown={(e) => handleTrackDown(e, pi)}
-                          onPointerEnter={(e) => { e.stopPropagation(); setCursor('ew-resize'); }}
-                          onPointerLeave={(e) => { e.stopPropagation(); setCursor('auto'); }}
+                        <Text
+                          position={[0, 0, 0.01]}
+                          fontSize={0.052}
+                          color="#2a5a2a"
+                          font={FONT}
+                          anchorX="center"
+                          anchorY="middle"
+                          fillOpacity={backOpacity}
+                          depthTest={false}
                         >
-                          <planeGeometry args={[TW + 0.06, 0.065]} />
-                          <meshBasicMaterial transparent opacity={0} side={THREE.DoubleSide} depthTest={false} />
-                        </mesh>
-                        {/* Value */}
-                        <Text position={[TX + TW / 2 + 0.09, 0, 0.003]} fontSize={0.060} color={accent} font={FONT} anchorX="center" anchorY="middle" fillOpacity={backOpacity} depthTest={false}>
-                          {val}
+                          Хариу: {calculatedResult} {topic.interactive.unit}
                         </Text>
                       </group>
-                    );
-                  })}
-
-                  {/* Result */}
-                  <group position={[0, 0.025 - topic.interactive.params.length * 0.128 - 0.082, 0]}>
-                    <mesh position={[0, 0, -0.002]}>
-                      <planeGeometry args={[1.32, 0.112]} />
-                      <meshBasicMaterial color={accent} transparent opacity={0.22} side={THREE.DoubleSide} depthTest={false} />
-                    </mesh>
-                    <mesh position={[0, 0, -0.001]}>
-                      <planeGeometry args={[1.30, 0.108]} />
-                      <meshBasicMaterial color="#fdf6e0" transparent opacity={0.9} side={THREE.DoubleSide} depthTest={false} />
-                    </mesh>
-                    <Text position={[0, 0, 0.003]} fontSize={0.070} color={accent} font={FONT} anchorX="center" anchorY="middle" fillOpacity={backOpacity} depthTest={false}>
-                      = {calcResult.toFixed(2)} {topic.interactive.unit}
-                    </Text>
-                  </group>
+                    </group>
+                  )}
                 </group>
 
                 {/* Divider 1 */}
-                <mesh position={[0, 0.05, 0]}>
+                <mesh position={[0, 0.22, 0]}>
                   <planeGeometry args={[1.3, 0.003]} />
                   <meshBasicMaterial color="#cccccc" side={THREE.DoubleSide} depthTest={false} />
                 </mesh>
 
                 {/* Section 2: Full explanation */}
-                <group position={[0, -0.50, 0]}>
+                <group position={[0, -0.34, 0]}>
                   <Text
-                    position={[0, 0.32, 0.01]}
+                    position={[0, 0.16, 0.01]}
                     fontSize={0.050}
                     color="#5080b8"
                     font={FONT}
@@ -505,32 +517,31 @@ const GeometryCard = memo(
                     ТОМЬЁОНЫ ТАЙЛБАР
                   </Text>
 
-                 
-                  <mesh position={[0, 0.282, 0]}>
+                  <mesh position={[0, 0.12, 0]}>
                     <planeGeometry args={[1.25, 0.006]} />
                     <meshBasicMaterial color="#5080b8" side={THREE.DoubleSide} depthTest={false} />
                   </mesh>
-                  <mesh position={[0, -0.162, 0]}>
+                  <mesh position={[0, -0.32, 0]}>
                     <planeGeometry args={[1.25, 0.003]} />
                     <meshBasicMaterial color="#9ab0cc" side={THREE.DoubleSide} depthTest={false} />
                   </mesh>
-                  <mesh position={[-0.600, 0.06, 0]}>
+                  <mesh position={[-0.600, -0.10, 0]}>
                     <planeGeometry args={[0.010, 0.44]} />
                     <meshBasicMaterial color="#5080b8" side={THREE.DoubleSide} depthTest={false} />
                   </mesh>
 
                   <Text
-                    position={[-0.54, 0.26, 0.01]}
-                    fontSize={0.046}
+                    position={[-0.54, 0.09, 0.01]}
+                    fontSize={0.044}
                     color="#2a3a55"
                     font={FONT}
                     anchorX="left"
                     anchorY="top"
-                    maxWidth={1.18}
+                    maxWidth={1.14}
                     textAlign="left"
-                    lineHeight={1.24}
+                    lineHeight={1.28}
                     fillOpacity={backOpacity}
-                    clipRect={[-0.56, -0.44, 0.56, 0.02]}
+                    clipRect={[-0.56, -0.30, 0.56, 0.10]}
                     depthTest={false}
                   >
                     {topic.fullDetail}
@@ -538,29 +549,17 @@ const GeometryCard = memo(
                 </group>
 
                 {/* Divider 2 */}
-                <mesh position={[0, -0.25, 0]}>
+                <mesh position={[0, -0.42, 0]}>
                   <planeGeometry args={[1.3, 0.003]} />
                   <meshBasicMaterial color="#cccccc" side={THREE.DoubleSide} depthTest={false} />
                 </mesh>
 
-           {/* Section 3: AI Quiz */}
-               <group position={[0, -1.15, 0]}>
-                 
-
+                {/* Section 3: AI Quiz */}
+                <group position={[0, -1.11, 0]}>
                   {quiz.phase === 'idle' && (
                     <group>
-                      <mesh
-                        position={[0, 0.18, 0]}
-                        onClick={(e) => { e.stopPropagation(); startQuiz(); }}
-                        onPointerEnter={(e) => { e.stopPropagation(); setCursor('pointer'); }}
-                        onPointerLeave={(e) => { e.stopPropagation(); setCursor('auto'); }}
-                      >
-                        <planeGeometry args={[0.92, 0.14]} />
-                        <meshBasicMaterial color="#ddeedd" transparent opacity={0.9} side={THREE.DoubleSide} depthTest={false} />
-                      </mesh>
-                      <Text position={[0, 0.18, 0.01]} fontSize={0.075} color="#2a5a2a" font={FONT} anchorX="center" anchorY="middle" fillOpacity={backOpacity} depthTest={false}>
-                        Ai Quiz
-                        
+                      <Text position={[0, 0.18, 0.01]} fontSize={0.099} color="#2a5a2a" font={FONT} anchorX="center" anchorY="middle" fillOpacity={backOpacity} depthTest={false}>
+                        AI Quiz  →
                       </Text>
                     </group>
                   )}
@@ -579,7 +578,6 @@ const GeometryCard = memo(
 
                   {quiz.phase === 'questions' && q && (
                     <group>
-                      {/* Асуултыг дахиж доошлуулсан хэсэг */}
                       <Text
                         position={[0, 0.26, 0.01]}
                         fontSize={0.056}
@@ -596,7 +594,6 @@ const GeometryCard = memo(
                         {q.question}
                       </Text>
 
-                      {/* Сонголтуудыг доошлуулав */}
                       <group position={[0, -0.04, 0]}>
                         {q.options.map((opt, oi) => {
                           const yPos = -oi * 0.105;
@@ -632,7 +629,6 @@ const GeometryCard = memo(
                         })}
                       </group>
 
-                      {/* Дараах / Дуусгах товчлуурыг хамгийн доор нь байрлуулав */}
                       {qChosen !== null && (
                         <group position={[0, -0.48, 0]}>
                           <mesh

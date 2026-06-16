@@ -70,14 +70,14 @@ const TOOLBAR_H = 54;
 const MAX_HISTORY = 60;
 
 // ─── Paper/sketch palette ─────────────────────────────────────────────────────
-const INK = '#2a2218';
-const INK_SOFT = '#5a4a3a';
-const PAPER = '#f9f6ef';
-const PAPER_DARK = '#f0ebe0';
-const PAPER_MID = '#e8e2d4';
-const SEPIA = '#6b3a1f';
-const COPPER_DARK = '#6f2a1c';
-const COPPER_MID = '#d28a70';
+const INK = '#ffccee';
+const INK_SOFT = '#cc88bb';
+const PAPER = '#130020';
+const PAPER_DARK = '#0a0018';
+const PAPER_MID = '#1a0030';
+const SEPIA = '#e040a0';
+const COPPER_DARK = '#8800aa';
+const COPPER_MID = '#e040a0';
 const FONT_SKETCH = "'Cabin Sketch', 'Caveat', cursive, system-ui, sans-serif";
 
 const shelfItems = [
@@ -402,12 +402,19 @@ function drawToolbar(
   ctx.stroke();
   ctx.restore();
 
+  // ── Two-tone title ─────────────────────────────────────────────────────────
   ctx.save();
-  ctx.font = `bold 18px ${FONT_SKETCH}`;
+  ctx.font = `bold 17px ${FONT_SKETCH}`;
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'left';
-  ctx.fillStyle = SEPIA;
-  ctx.fillText('⚡ Хэлхээний лаборатори', 16, TOOLBAR_H / 2);
+  const titleY = TOOLBAR_H / 2;
+  const prefix = '⚡ Хэлхээний ';
+  const lastWord = 'лаборатори';
+  ctx.fillStyle = '#cc88cc';
+  ctx.fillText(prefix, 16, titleY);
+  const prefixW = ctx.measureText(prefix).width;
+  ctx.fillStyle = '#ff66cc';
+  ctx.fillText(lastWord, 16 + prefixW, titleY);
   ctx.restore();
 
   const btns = getToolbarButtons(size.width);
@@ -429,40 +436,40 @@ function drawToolbar(
     ctx.restore();
   });
 
-  const statusX = size.width - 260;
-  const statusY = 10;
-  const statusW = 240;
-  const statusH = 34;
+  const statusW = 310;
+  const statusX = size.width - statusW - 16;
+  const statusY = 8;
+  const statusH = 40;
 
   ctx.save();
   if (closedCircuit) {
-    ctx.fillStyle = 'rgba(50,120,50,0.15)';
-    ctx.strokeStyle = '#4a8030';
+    ctx.fillStyle = 'rgba(64,220,120,0.13)';
+    ctx.strokeStyle = '#40d080';
   } else {
-    ctx.fillStyle = 'rgba(140,100,20,0.12)';
-    ctx.strokeStyle = '#8a6020';
+    ctx.fillStyle = 'rgba(224,64,160,0.14)';
+    ctx.strokeStyle = '#e040a0';
   }
-  ctx.lineWidth = 1.5;
-  roundRect(ctx, statusX, statusY, statusW, statusH, 17);
+  ctx.lineWidth = 2.5;
+  roundRect(ctx, statusX, statusY, statusW, statusH, 20);
   ctx.fill();
   ctx.stroke();
 
   if (closedCircuit) {
-    ctx.fillStyle = '#1a4a1a';
-    ctx.font = `bold 13px ${FONT_SKETCH}`;
+    ctx.fillStyle = '#60eea0';
+    ctx.font = `bold 11px ${FONT_SKETCH}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(
-      `● Хэлхээ ON  ${voltage.toFixed(0)}В  ${current.toFixed(2)}А  ${(voltage * current).toFixed(2)}Вт`,
+      `● ON  ${voltage.toFixed(0)}В · ${current.toFixed(2)}А · ${(voltage * current).toFixed(2)}Вт`,
       statusX + statusW / 2,
       statusY + statusH / 2
     );
   } else {
-    ctx.fillStyle = '#4a3000';
-    ctx.font = `bold 13px ${FONT_SKETCH}`;
+    ctx.fillStyle = '#e878c8';
+    ctx.font = `bold 11px ${FONT_SKETCH}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('○ Хэлхээ нээлттэй — холбоод унтраалга хааж', statusX + statusW / 2, statusY + statusH / 2);
+    ctx.fillText('○ Нээлттэй — унтраалга хааж асаа', statusX + statusW / 2, statusY + statusH / 2);
   }
   ctx.restore();
 }
@@ -1133,14 +1140,14 @@ function drawSourcePreview(
 
 function drawBottomBar(ctx: CanvasRenderingContext2D, size: CanvasSize) {
   ctx.save();
-  ctx.fillStyle = 'rgba(232,226,212,0.95)';
+  ctx.fillStyle = 'rgba(4,0,14,0.82)';
   ctx.fillRect(0, size.height - 44, size.width, 44);
-  ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+  ctx.strokeStyle = 'rgba(224,64,160,0.3)';
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(0, size.height - 44); ctx.lineTo(size.width, size.height - 44); ctx.stroke();
 
-  ctx.fillStyle = INK_SOFT;
+  ctx.fillStyle = '#cc60a8';
   ctx.font = `14px ${FONT_SKETCH}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
@@ -1155,15 +1162,10 @@ function drawBottomBar(ctx: CanvasRenderingContext2D, size: CanvasSize) {
 // ─── Background ───────────────────────────────────────────────────────────────
 
 function drawBackground(ctx: CanvasRenderingContext2D, size: CanvasSize) {
-  const grad = ctx.createLinearGradient(0, 0, 0, size.height);
-  grad.addColorStop(0, '#f9f6f0');
-  grad.addColorStop(1, '#f2ecd8');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, size.width, size.height);
-
+  // transparent — let the 3D background show through
   ctx.save();
-  ctx.globalAlpha = 0.18;
-  ctx.fillStyle = '#a08040';
+  ctx.globalAlpha = 0.22;
+  ctx.fillStyle = '#e040a0';
   for (let x = 0; x < size.width; x += GRID) {
     for (let y = TOOLBAR_H; y < size.height - 44; y += GRID) {
       ctx.beginPath();
@@ -1536,14 +1538,14 @@ export default function CircuitCanvas() {
   };
 
   return (
-    <div ref={containerRef} style={{ width: '100%', height: '100%', overflow: 'hidden' }}>
+    <div ref={containerRef} style={{ width: '100%', height: '100%', overflow: 'hidden', background: 'transparent' }}>
       <canvas
         ref={canvasRef}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
-        style={{ display: 'block', width: '100%', height: '100%', cursor: isDragging ? 'grabbing' : 'default' }}
+        style={{ display: 'block', width: '100%', height: '100%', cursor: isDragging ? 'grabbing' : 'default', background: 'transparent' }}
       />
     </div>
   );
