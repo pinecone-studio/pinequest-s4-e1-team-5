@@ -260,10 +260,10 @@ const NavigationUI = () => {
                             <button type="button" className="map-hover-zone zone-studio" onMouseEnter={() => setHoveredRoom('studio')} onMouseLeave={() => setHoveredRoom(null)} onFocus={() => setHoveredRoom('studio')} onBlur={() => setHoveredRoom(null)} onClick={() => handleRoomClick('studio')} aria-label="Teleport to Studio room" />
 
                             {}
-                            <div className="map-room-label about">ABOUT</div>
-                            <div className="map-room-label gallery">THE<br />GALLERY</div>
-                            <div className="map-room-label contact">CONTACT</div>
-                            <div className="map-room-label studio">THE<br />STUDIO</div>
+                            <div className="map-room-label about">PHYSICS</div>
+                            <div className="map-room-label gallery">MATHEMATICS</div>
+                            <div className="map-room-label contact">GEOMETRY</div>
+                            <div className="map-room-label studio">CHEMISTRY</div>
 
                             {}
                             {ROOMS.map(room => <button key={room.id} className={`pin-slot ${currentRoom === room.id ? 'active' : ''} ${hoveredRoom === room.id ? 'hovered' : ''}`} style={{
