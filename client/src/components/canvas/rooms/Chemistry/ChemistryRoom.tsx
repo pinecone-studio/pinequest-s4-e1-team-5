@@ -11,6 +11,7 @@ import { useAudio } from '../../../../context/AudioManager';
 import '../../shaders/RevealMaterial';
 import { isTouchDevice } from '../../../../utils/deviceDetect';
 import { usePaintMaterial } from './usePaintMaterial';
+import ChemistryBackground from './ChemistryBackground';
 const STUDIO_PAINT_CONFIG = {
   dirX: 0.0,
   dirY: -1.0,
@@ -378,6 +379,8 @@ const ChemistryRoom = ({
   return <group ref={groupRef} position={[0, -1.2, 0]}>
             {!isWarmup && <PositionalAudio ref={audioRef} url="/sounds/szummonitorow.mp3" distanceModel="exponential" refDistance={AUDIO_SETTINGS.distance} rolloffFactor={AUDIO_SETTINGS.rolloff} loop autoplay volume={effectiveVolume} />}
 
+            <ChemistryBackground />
+
             {}
             <group ref={towerRef} position={[0, TOWER_Y_START, TOWER_Z_START]} onPointerDown={handlePointerDown}>
                 {}
@@ -436,10 +439,13 @@ const MonitorBlock = memo(({
   const tvTop = useLoader(TextureLoader, '/textures/studio/tv_top.webp');
   const tvBottom = useLoader(TextureLoader, '/textures/studio/tv_bottom.webp');
   const tvSide = useLoader(TextureLoader, '/textures/studio/tv_side.webp');
+  const tvFront = useLoader(TextureLoader, '/textures/studio/tv_front.webp');
+  const moleculesFull = useLoader(TextureLoader, '/textures/studio/molecules_full.png');
   const tvBackPainted = useLoader(TextureLoader, isTouch ? dummyTex : '/textures/studio/tv_back_painted.webp');
   const tvTopPainted = useLoader(TextureLoader, isTouch ? dummyTex : '/textures/studio/tv_top_painted.webp');
   const tvBottomPainted = useLoader(TextureLoader, isTouch ? dummyTex : '/textures/studio/tv_bottom_painted.webp');
   const tvSidePainted = useLoader(TextureLoader, isTouch ? dummyTex : '/textures/studio/tv_side_painted.webp');
+  const tvFrontPainted = useLoader(TextureLoader, isTouch ? dummyTex : '/textures/studio/tv_front_painted.webp');
   const phoneBack = useLoader(TextureLoader, '/textures/studio/phone_back.webp');
   const phoneSide = useLoader(TextureLoader, '/textures/studio/phone_side.webp');
   const phoneBackPainted = useLoader(TextureLoader, isTouch ? dummyTex : '/textures/studio/phone_back_painted.webp');
@@ -479,8 +485,8 @@ const MonitorBlock = memo(({
         sketch: tvBottom,
         painted: tvBottomPainted
       }, {
-        sketch: frontTex,
-        painted: frontPaintedTex
+        sketch: moleculesFull,
+        painted: moleculesFull
       }, {
         sketch: tvBack,
         painted: tvBackPainted
@@ -507,12 +513,28 @@ const MonitorBlock = memo(({
       }];
     }
     return null;
-  }, [isBlogMonitor, isTvMonitor, isPhoneMonitor, frontTex, frontPaintedTex, monitorBack, monitorTop, monitorBottom, monitorLeft, monitorRight, monitorBackPainted, monitorTopPainted, monitorBottomPainted, monitorLeftPainted, monitorRightPainted, tvBack, tvTop, tvBottom, tvSide, tvBackPainted, tvTopPainted, tvBottomPainted, tvSidePainted, phoneBack, phoneSide, phoneBackPainted, phoneSidePainted]);
+  }, [isBlogMonitor, isTvMonitor, isPhoneMonitor, frontTex, frontPaintedTex, monitorBack, monitorTop, monitorBottom, monitorLeft, monitorRight, monitorBackPainted, monitorTopPainted, monitorBottomPainted, monitorLeftPainted, monitorRightPainted, tvBack, tvTop, tvBottom, tvSide, tvFront, tvBackPainted, tvTopPainted, tvBottomPainted, tvSidePainted, tvFrontPainted, phoneBack, phoneSide, phoneBackPainted, phoneSidePainted]);
+  const faceColor = useCallback((faceIndex: number) => {
+    if (isTvMonitor) {
+      if (faceIndex === 4) return '#ffffff';   // molecules front — natural image colors
+      return '#b8ddd0';                        // TV frame — soft teal
+    }
+    if (isBlogMonitor) {
+      if (faceIndex === 4) return '#78aad8';   // lab screen — vivid sky blue
+      return '#b8cce8';                        // monitor frame — soft blue
+    }
+    if (isPhoneMonitor) {
+      if (faceIndex === 4) return '#d4b84a';   // periodic table screen — warm amber
+      return '#e8dca0';                        // phone frame — light gold
+    }
+    return '#dedad4';
+  }, [isTvMonitor, isBlogMonitor, isPhoneMonitor]);
+
   const paintedMaterials = useMemo(() => {
     if (!faceConfig) return null;
-    return faceConfig.map(f => {
+    return faceConfig.map((f, i) => {
       const mat = new THREE.MeshBasicMaterial({
-        color: '#e0e0e0',
+        color: faceColor(i),
         map: f.painted || f.sketch
       });
       if (paintOnBeforeCompile) {
@@ -523,13 +545,13 @@ const MonitorBlock = memo(({
       }
       return mat;
     });
-  }, [faceConfig, paintOnBeforeCompile]);
+  }, [faceConfig, paintOnBeforeCompile, faceColor]);
   const sketchMaterials = useMemo(() => {
     if (!faceConfig) return null;
-    return faceConfig.map(f => {
+    return faceConfig.map((f, i) => {
       if (f.painted) return null;
       const mat = new THREE.MeshBasicMaterial({
-        color: '#e0e0e0',
+        color: faceColor(i),
         map: f.sketch
       });
       if (paintOnBeforeCompile) {
@@ -540,7 +562,7 @@ const MonitorBlock = memo(({
       }
       return mat;
     });
-  }, [faceConfig, paintOnBeforeCompile]);
+  }, [faceConfig, paintOnBeforeCompile, faceColor]);
   const isHoveredRef = useRef(false);
   const updatePaintState = useCallback(() => {
     if (!faceConfig) return;
@@ -604,12 +626,13 @@ const MonitorBlock = memo(({
                 <boxGeometry args={[item.width, item.height, item.depth]} />
                 {faceConfig.map((face, i) => {
         if (face.painted) {
-          return <revealMaterial color="#e0e0e0" key={`s${i}`} ref={matRefs[i]} attach={`material-${i}`} map={face.sketch} transparent={true} alphaTest={0.1} paintUniforms={paintUniforms} paintConfig={STUDIO_PAINT_CONFIG} uProgress={0.0} />;
+          return <revealMaterial color={faceColor(i)} key={`s${i}`} ref={matRefs[i]} attach={`material-${i}`} map={face.sketch} transparent={true} alphaTest={0.1} paintUniforms={paintUniforms} paintConfig={STUDIO_PAINT_CONFIG} uProgress={0.0} />;
         } else {
           return <primitive key={`s${i}`} attach={`material-${i}`} object={sketchMaterials[i]} />;
         }
       })}
             </mesh>
+
         </group>;
 });
 export default ChemistryRoom;
